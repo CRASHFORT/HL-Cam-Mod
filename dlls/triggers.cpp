@@ -2135,42 +2135,12 @@ void CTriggerChangeTarget::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, U
 	}
 }
 
+/*
+	CRASH FORT:
+*/
+#include "triggers.h"
+#include "Cam File\CamFile.hpp"
 
-
-
-#define SF_CAMERA_PLAYER_POSITION	1
-#define SF_CAMERA_PLAYER_TARGET		2
-#define SF_CAMERA_PLAYER_TAKECONTROL 4
-
-class CTriggerCamera : public CBaseDelay
-{
-public:
-	void Spawn( void );
-	void KeyValue( KeyValueData *pkvd );
-	void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
-	void EXPORT FollowTarget( void );
-	void Move(void);
-
-	virtual int		Save( CSave &save );
-	virtual int		Restore( CRestore &restore );
-	virtual int	ObjectCaps( void ) { return CBaseEntity :: ObjectCaps() & ~FCAP_ACROSS_TRANSITION; }
-	static	TYPEDESCRIPTION m_SaveData[];
-
-	EHANDLE m_hPlayer;
-	EHANDLE m_hTarget;
-	CBaseEntity *m_pentPath;
-	int	  m_sPath;
-	float m_flWait;
-	float m_flReturnTime;
-	float m_flStopTime;
-	float m_moveDistance;
-	float m_targetSpeed;
-	float m_initialSpeed;
-	float m_acceleration;
-	float m_deceleration;
-	int	  m_state;
-	
-};
 LINK_ENTITY_TO_CLASS( trigger_camera, CTriggerCamera );
 
 // Global Savedata for changelevel friction modifier
@@ -2191,7 +2161,7 @@ TYPEDESCRIPTION	CTriggerCamera::m_SaveData[] =
 	DEFINE_FIELD( CTriggerCamera, m_state, FIELD_INTEGER ),
 };
 
-IMPLEMENT_SAVERESTORE(CTriggerCamera,CBaseDelay);
+IMPLEMENT_SAVERESTORE(CTriggerCamera, CBaseDelay);
 
 void CTriggerCamera::Spawn( void )
 {
@@ -2238,6 +2208,22 @@ void CTriggerCamera :: KeyValue( KeyValueData *pkvd )
 
 void CTriggerCamera::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
 {
+	/*
+		CRASH FORT:
+		Our cameras have special behaviour in which they do not have
+		a return time. Probably best to just remove the think function
+		overall like this so it doesn't get called when our view is elsewhere.
+	*/
+	if (IsHLCam)
+	{
+		if (useType == USE_OFF)
+		{
+			m_state = 0;
+			SetThink(nullptr);
+			return;
+		}
+	}
+
 	if ( !ShouldToggle( useType, m_state ) )
 		return;
 
@@ -2268,10 +2254,17 @@ void CTriggerCamera::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 		m_hTarget = GetNextTarget();
 	}
 
-	// Nothing to look at!
-	if ( m_hTarget == NULL )
+	/*
+		CRASH FORT:
+		Cameras with a fixed angle do not require a target to look at.
+	*/
+	if (!IsHLCam)
 	{
-		return;
+		// Nothing to look at!
+		if (m_hTarget == NULL)
+		{
+			return;
+		}
 	}
 
 
@@ -2316,12 +2309,29 @@ void CTriggerCamera::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 
 	SET_MODEL(ENT(pev), STRING(pActivator->pev->model) );
 
-	// follow the player down
-	SetThink( &CTriggerCamera::FollowTarget );
-	pev->nextthink = gpGlobals->time;
+	bool usedefaultthink = false;
 
-	m_moveDistance = 0;
-	Move();
+	if (!IsHLCam)
+	{
+		usedefaultthink = true;
+	}
+
+	else if (IsHLCam && HLCam.LookType == Cam::CameraLookType::AtPlayer)
+	{
+		usedefaultthink = true;
+	}
+	
+	if (usedefaultthink)
+	{
+		// follow the player down
+		SetThink(&CTriggerCamera::FollowTarget);
+		pev->nextthink = gpGlobals->time;
+
+		m_moveDistance = 0;
+		Move();
+	}
+
+	m_hPlayer->pev->fov = HLCam.FOV;
 }
 
 
@@ -2330,17 +2340,36 @@ void CTriggerCamera::FollowTarget( )
 	if (m_hPlayer == NULL)
 		return;
 
-	if (m_hTarget == NULL || m_flReturnTime < gpGlobals->time)
+	if (!IsHLCam)
 	{
-		if (m_hPlayer->IsAlive( ))
+		if (m_hTarget == NULL || m_flReturnTime < gpGlobals->time)
 		{
-			SET_VIEW( m_hPlayer->edict(), m_hPlayer->edict() );
-			((CBasePlayer *)((CBaseEntity *)m_hPlayer))->EnableControl(TRUE);
+			if (m_hPlayer->IsAlive())
+			{
+				SET_VIEW(m_hPlayer->edict(), m_hPlayer->edict());
+				((CBasePlayer *)((CBaseEntity *)m_hPlayer))->EnableControl(TRUE);
+			}
+
+			SUB_UseTargets(this, USE_TOGGLE, 0);
+			pev->avelocity = Vector(0, 0, 0);
+			m_state = 0;
+			
+			return;
 		}
-		SUB_UseTargets( this, USE_TOGGLE, 0 );
-		pev->avelocity = Vector( 0, 0, 0 );
-		m_state = 0;
-		return;
+	}
+
+	if (IsHLCam && HLCam.FOVType == Cam::CameraFOVType::OnDistance)
+	{
+		/*float newfov;
+
+		const auto& campos = pev->origin;
+		const auto& playerpos = m_hPlayer->pev->origin;
+
+		auto length = (campos - playerpos).Length();
+
+		newfov = HLCam.FOV / (length / HLCam.FOVFactorDistances[1]);
+
+		m_hPlayer->pev->fov = newfov;*/
 	}
 
 	Vector vecGoal = UTIL_VecToAngles( m_hTarget->pev->origin - pev->origin );
@@ -2365,9 +2394,34 @@ void CTriggerCamera::FollowTarget( )
 	if (dy > 180) 
 		dy = dy - 360;
 
-	pev->avelocity.x = dx * 40 * gpGlobals->frametime;
-	pev->avelocity.y = dy * 40 * gpGlobals->frametime;
+	if (IsHLCam)
+	{
+		float endspeed = HLCam.MaxSpeed / 100.0f;
 
+		if (HLCam.PlaneType == Cam::CameraPlaneType::Both)
+		{
+			pev->avelocity.x = dx * endspeed;
+			pev->avelocity.y = dy * endspeed;
+		}
+
+		else if (HLCam.PlaneType == Cam::CameraPlaneType::Vertical)
+		{
+			pev->avelocity.x = dx * endspeed;
+			pev->avelocity.y = 0;
+		}
+
+		else if (HLCam.PlaneType == Cam::CameraPlaneType::Horizontal)
+		{
+			pev->avelocity.x = 0;
+			pev->avelocity.y = dy * endspeed;
+		}
+	}
+
+	else
+	{
+		pev->avelocity.x = dx * 40 * gpGlobals->frametime;
+		pev->avelocity.y = dy * 40 * gpGlobals->frametime;
+	}
 
 	if (!(FBitSet (pev->spawnflags, SF_CAMERA_PLAYER_TAKECONTROL)))	
 	{

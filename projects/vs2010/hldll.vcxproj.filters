@@ -34,6 +34,9 @@
     <Filter Include="Header Files\pm_shared">
       <UniqueIdentifier>{37941113-16fa-4ce0-9bdd-a72a1ced8902}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\dlls\Cam File">
+      <UniqueIdentifier>{219312cb-6ee3-4bb8-8d50-bb4f7dcdb6a5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\dlls\aflock.cpp">
@@ -342,6 +345,9 @@
     <ClCompile Include="..\..\dlls\xen.cpp">
       <Filter>Source Files\dlls</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\dlls\Cam File\CamFile.cpp">
+      <Filter>Source Files\dlls\Cam File</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\dlls\doors.h">
@@ -477,6 +483,12 @@
       <Filter>Header Files\dlls</Filter>
     </ClInclude>
     <ClInclude Include="..\..\dlls\vector.h">
+      <Filter>Header Files\dlls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\dlls\Cam File\CamFile.hpp">
+      <Filter>Source Files\dlls\Cam File</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\dlls\triggers.h">
       <Filter>Header Files\dlls</Filter>
     </ClInclude>
   </ItemGroup>

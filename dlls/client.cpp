@@ -699,6 +699,8 @@ void ServerDeactivate( void )
 	//
 }
 
+#include "Cam File\CamFile.hpp"
+
 void ServerActivate( edict_t *pEdictList, int edictCount, int clientMax )
 {
 	int				i;
@@ -706,6 +708,21 @@ void ServerActivate( edict_t *pEdictList, int edictCount, int clientMax )
 
 	// Every call to ServerActivate should be matched by a call to ServerDeactivate
 	g_serveractive = 1;
+
+	/*
+		CRASH FORT:
+		We have to clear up our own runtime created entities before
+		the game links back the original.
+		If we remove our stuff after the game, our ents become invalid.
+	*/
+	auto curmapname = STRING(gpGlobals->mapname);
+
+	if (strcmp(curmapname, Cam::GetLastMap()) != 0)
+	{
+
+	}
+
+	Cam::OnNewMap(curmapname);
 
 	// Clients have not been initialized yet
 	for ( i = 0; i < edictCount; i++ )
@@ -763,13 +780,21 @@ void PlayerPostThink( edict_t *pEntity )
 	CBasePlayer *pPlayer = (CBasePlayer *)GET_PRIVATE(pEntity);
 
 	if (pPlayer)
-		pPlayer->PostThink( );
+	{
+		pPlayer->PostThink();
+
+		/*
+			CRASH FORT:
+		*/
+		Cam::OnPlayerPostUpdate(pPlayer);
+	}
 }
 
 
 
 void ParmsNewLevel( void )
 {
+
 }
 
 
@@ -912,6 +937,11 @@ void ClientPrecache( void )
 
 	if (giPrecacheGrunt)
 		UTIL_PrecacheOther("monster_human_grunt");
+
+	/*
+		CRASH FORT:
+	*/
+	Cam::OnInit();
 }
 
 /*
