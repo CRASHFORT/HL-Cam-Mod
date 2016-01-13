@@ -65,17 +65,11 @@ void CHud::Think(void)
 
 	// the clients fov is actually set in the client data update section of the hud
 
-	// Set a new sensitivity
-	if ( m_iFOV == default_fov->value )
-	{  
-		// reset to saved sensitivity
-		m_flMouseSensitivity = 0;
-	}
-	else
-	{  
-		// set a new sensitivity that is proportional to the change from the FOV default
-		m_flMouseSensitivity = sensitivity->value * ((float)newfov / (float)default_fov->value) * CVAR_GET_FLOAT("zoom_sensitivity_ratio");
-	}
+	/*
+		CRASH FORT:
+		Always use the assigned sensitivity with no override.
+	*/
+	m_flMouseSensitivity = 0;
 
 	// think about default fov
 	if ( m_iFOV == 0 )
