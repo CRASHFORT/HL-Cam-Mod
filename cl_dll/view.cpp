@@ -803,7 +803,7 @@ void V_CalcNormalRefdef ( struct ref_params_s *pparams )
 			pitch += 360;
 
 		// Player pitch is inverted
-		pitch /= -3.0;
+		pitch /= 3.0;
 
 		// Slam local player's pitch value
 		ent->angles[ 0 ] = pitch;
