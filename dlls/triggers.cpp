@@ -2331,7 +2331,8 @@ void CTriggerCamera::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 		Move();
 	}
 
-	m_hPlayer->pev->fov = HLCam.FOV;
+	auto playerptr = static_cast<CBasePlayer*>(Instance(m_hPlayer.Get()));
+	playerptr->pev->fov = playerptr->m_iFOV = HLCam.FOV;
 }
 
 
