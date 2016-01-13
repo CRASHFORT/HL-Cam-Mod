@@ -117,10 +117,7 @@ namespace
 		TheCamMap.Cameras.reserve(512);
 		TheCamMap.Triggers.reserve(512);
 
-		wchar_t buf[8192];
-		GetCurrentDirectoryW(8192, buf);
-
-		std::string relativepath = "MapCams\\" + mapname + ".json";
+		std::string relativepath = "cammod\\MapCams\\" + mapname + ".json";
 
 		auto mapdata = Utility::FileSystem::ReadAllBytes(relativepath);
 
