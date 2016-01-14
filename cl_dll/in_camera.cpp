@@ -69,7 +69,7 @@ vec3_t cam_ofs;
 
 
 // In third person
-int cam_thirdperson;
+int cam_thirdperson = 1;
 int cam_mousemove; //true if we are moving the cam with the mouse, False if not
 int iMouseInUse=0;
 int cam_distancemove;
@@ -476,8 +476,8 @@ void CAM_Init( void )
 	gEngfuncs.pfnAddCommand( "-camin", CAM_InUp );
 	gEngfuncs.pfnAddCommand( "+camout", CAM_OutDown );
 	gEngfuncs.pfnAddCommand( "-camout", CAM_OutUp );
-	gEngfuncs.pfnAddCommand( "thirdperson", CAM_ToThirdPerson );
-	gEngfuncs.pfnAddCommand( "firstperson", CAM_ToFirstPerson );
+	//gEngfuncs.pfnAddCommand( "thirdperson", CAM_ToThirdPerson );
+	//gEngfuncs.pfnAddCommand( "firstperson", CAM_ToFirstPerson );
 	gEngfuncs.pfnAddCommand( "+cammousemove",CAM_StartMouseMove);
 	gEngfuncs.pfnAddCommand( "-cammousemove",CAM_EndMouseMove);
 	gEngfuncs.pfnAddCommand( "+camdistance", CAM_StartDistance );
@@ -512,7 +512,7 @@ void CAM_ClearStates( void )
 	cam_in.state = 0;
 	cam_out.state = 0;
 
-	cam_thirdperson = 0;
+	cam_thirdperson = 1;
 	cam_command->value = 0;
 	cam_mousemove=0;
 
