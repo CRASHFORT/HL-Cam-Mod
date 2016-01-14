@@ -937,11 +937,6 @@ void ClientPrecache( void )
 
 	if (giPrecacheGrunt)
 		UTIL_PrecacheOther("monster_human_grunt");
-
-	/*
-		CRASH FORT:
-	*/
-	Cam::OnInit();
 }
 
 /*
