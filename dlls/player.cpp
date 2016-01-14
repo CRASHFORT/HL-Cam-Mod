@@ -3836,6 +3836,30 @@ Called every frame by the player PreThink
 */
 void CBasePlayer::ItemPreFrame()
 {
+	/*
+		CRASH FORT:
+	*/
+	if (!AimGuide)
+	{
+		AimGuide = Cam::Entity::CamAimGuide::CreateSpot();
+	}
+
+	auto oldaimpos = AimGuide->pev->origin;
+
+	UTIL_MakeVectors(pev->v_angle);
+	Vector startpos = GetGunPosition();;
+	Vector aimvec = gpGlobals->v_forward;
+
+	TraceResult trace;
+	UTIL_TraceLine(startpos, startpos + aimvec * 8192, dont_ignore_monsters, ENT(pev), &trace);
+
+	UTIL_SetOrigin(AimGuide->pev, trace.vecEndPos);
+
+	if (oldaimpos != AimGuide->pev->origin)
+	{
+		AimGuide->OnMoved();
+	}
+
 #if defined( CLIENT_WEAPONS )
     if ( m_flNextAttack > 0 )
 #else

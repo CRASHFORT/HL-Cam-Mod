@@ -85,6 +85,33 @@ enum sbar_data
 
 #define CHAT_INTERVAL 1.0f
 
+/*
+	CRASH FORT:
+*/
+namespace Cam
+{
+	namespace Entity
+	{
+		class CamAimGuide : public CBaseEntity
+		{
+		public:
+			void Spawn();
+			void Precache();
+			int	ObjectCaps();
+
+			void OnMoved();
+			
+			void Suspend(float suspendtime);
+			void EXPORT Revive();
+
+			static CamAimGuide* CreateSpot();
+
+		private:
+			int TrailSprite;
+		};
+	}
+}
+
 class CBasePlayer : public CBaseMonster
 {
 public:
@@ -229,6 +256,11 @@ public:
 	void PackDeadPlayerItems( void );
 	void RemoveAllItems( BOOL removeSuit );
 	BOOL SwitchWeapon( CBasePlayerItem *pWeapon );
+
+	/*
+		CRASH FORT:
+	*/
+	Cam::Entity::CamAimGuide* AimGuide;
 
 	// JOHN:  sends custom messages if player HUD data has changed  (eg health, ammo)
 	virtual void UpdateClientData( void );

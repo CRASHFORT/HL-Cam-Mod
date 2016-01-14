@@ -9,7 +9,6 @@ class CBasePlayer;
 */
 namespace Cam
 {
-
 	/*
 		External event functions that we respond to.
 	*/
