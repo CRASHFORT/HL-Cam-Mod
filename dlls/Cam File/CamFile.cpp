@@ -488,11 +488,45 @@ namespace
 
 		g_engfuncs.pfnAlertMessage(at_console, &endstr[0]);
 	}
+
+	void HLCAM_CreateTrigger()
+	{
+
+	}
+
+	void HLCAM_CreateCamera()
+	{
+
+	}
+
+	void HLCAM_CreateCamera_Named()
+	{
+		if (g_engfuncs.pfnCmd_Argc() != 2)
+		{
+			return;
+		}
+
+		auto name = g_engfuncs.pfnCmd_Argv(1);
+	}
+
+	void HLCAM_SaveMap()
+	{
+
+	}
 }
 
 void Cam::OnInit()
 {
 	g_engfuncs.pfnAddServerCommand("hlcam_printcam", &HLCAM_PrintCam);
+
+	/*
+		These commands are used to edit camera maps in game.
+	*/
+	g_engfuncs.pfnAddServerCommand("hlcam_createtrigger", &HLCAM_CreateTrigger);
+	g_engfuncs.pfnAddServerCommand("hlcam_createcamera", &HLCAM_CreateCamera);
+	g_engfuncs.pfnAddServerCommand("hlcam_createcamera_named", &HLCAM_CreateCamera_Named);
+
+	g_engfuncs.pfnAddServerCommand("hlcam_savemap", &HLCAM_SaveMap);
 }
 
 const char* Cam::GetLastMap()
