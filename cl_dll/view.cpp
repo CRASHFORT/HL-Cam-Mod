@@ -823,7 +823,7 @@ void V_CalcNormalRefdef ( struct ref_params_s *pparams )
 			VectorCopy( viewentity->angles, pparams->viewangles );
 
 			// Store off overridden viewangles
-			v_angles = pparams->viewangles;
+			//v_angles = pparams->viewangles;
 		}
 	}
 
