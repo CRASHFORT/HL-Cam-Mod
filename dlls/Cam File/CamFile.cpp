@@ -148,6 +148,32 @@ namespace
 		std::string CurrentMapName;
 
 		Cam::MapTrigger* ActiveTrigger = nullptr;
+
+		enum class StateType
+		{
+			/*
+				Any other action can be performed
+			*/
+			Inactive,
+
+			/*
+				No other action can be performed, 2 corners need
+				to be set for this trigger box before it can proceed.
+			*/
+			CreatingTriggerPart1,
+			CreatingTriggerPart2,
+
+			/*
+				This is the state after creating a trigger. The camera
+				created here will be linked to the last created trigger.
+
+				Named cameras can just be created independetly with
+				"hlcam_createcamera_named" "name"
+			*/
+			NeedsToCreateCamera,
+		};
+
+		StateType CurrentState = StateType::Inactive;
 	};
 
 	static MapCam TheCamMap;
@@ -491,18 +517,87 @@ namespace
 
 	void HLCAM_CreateTrigger()
 	{
+		if (TheCamMap.CurrentState != MapCam::StateType::Inactive)
+		{
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive");
+			return;
+		}
 
+		TheCamMap.CurrentState = MapCam::StateType::CreatingTriggerPart1;
 	}
 
 	void HLCAM_CreateCamera()
 	{
+		if (TheCamMap.CurrentState != MapCam::StateType::NeedsToCreateCamera)
+		{
+			g_engfuncs.pfnAlertMessage
+			(
+				at_console,
+				"HLCAM: Need to create linked trigger first. "
+				"Use \"hlcam_createcamera_named\" \"name\" to have a "
+				"camera fired by an in game entity. This could be the name of "
+				"another entity so they are both fired at the same time.\n"
+			);
 
+			return;
+		}
 	}
 
 	void HLCAM_CreateCamera_Named()
 	{
+		if (TheCamMap.CurrentState != MapCam::StateType::Inactive)
+		{
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive");
+			return;
+		}
+
 		if (g_engfuncs.pfnCmd_Argc() != 2)
 		{
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Missing name argument");
+			return;
+		}
+
+		auto name = g_engfuncs.pfnCmd_Argv(1);
+	}
+
+	void HLCAM_RemoveCamera()
+	{
+		if (TheCamMap.CurrentState != MapCam::StateType::Inactive)
+		{
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive");
+			return;
+		}
+
+		if (g_engfuncs.pfnCmd_Argc() != 2)
+		{
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Missing index argument");
+			return;
+		}
+
+		size_t index;
+
+		try
+		{
+			index = std::stoul(g_engfuncs.pfnCmd_Argv(1));
+		}
+
+		catch (const std::invalid_argument&)
+		{
+			return;
+		}
+	}
+
+	void HLCAM_RemoveCamera_Named()
+	{
+		if (TheCamMap.CurrentState != MapCam::StateType::Inactive)
+		{
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive");
+			return;
+		}
+
+		if (g_engfuncs.pfnCmd_Argc() != 2)
+		{
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Missing name argument");
 			return;
 		}
 
@@ -511,7 +606,11 @@ namespace
 
 	void HLCAM_SaveMap()
 	{
-
+		if (TheCamMap.CurrentState != MapCam::StateType::Inactive)
+		{
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive");
+			return;
+		}
 	}
 }
 
@@ -525,6 +624,9 @@ void Cam::OnInit()
 	g_engfuncs.pfnAddServerCommand("hlcam_createtrigger", &HLCAM_CreateTrigger);
 	g_engfuncs.pfnAddServerCommand("hlcam_createcamera", &HLCAM_CreateCamera);
 	g_engfuncs.pfnAddServerCommand("hlcam_createcamera_named", &HLCAM_CreateCamera_Named);
+	
+	g_engfuncs.pfnAddServerCommand("hlcam_removecamera_pair", &HLCAM_RemoveCamera);
+	g_engfuncs.pfnAddServerCommand("hlcam_removecamera_named", &HLCAM_RemoveCamera_Named);
 
 	g_engfuncs.pfnAddServerCommand("hlcam_savemap", &HLCAM_SaveMap);
 }
