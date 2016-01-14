@@ -96,17 +96,11 @@ namespace Cam
 		void CamAimGuide::Precache()
 		{
 			PRECACHE_MODEL("sprites/laserdot.spr");
-			TrailSprite = PRECACHE_MODEL("sprites/smoke.spr");
 		}
 
 		int CamAimGuide::ObjectCaps()
 		{
 			return FCAP_DONT_SAVE;
-		}
-		
-		void Cam::Entity::CamAimGuide::OnMoved()
-		{
-			
 		}
 
 		void CamAimGuide::Suspend(float suspendtime)

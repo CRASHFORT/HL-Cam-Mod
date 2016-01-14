@@ -95,11 +95,9 @@ namespace Cam
 		class CamAimGuide : public CBaseEntity
 		{
 		public:
-			void Spawn();
-			void Precache();
-			int	ObjectCaps();
-
-			void OnMoved();
+			virtual void Spawn() override;
+			virtual void Precache() override;
+			virtual int ObjectCaps() override;
 			
 			void Suspend(float suspendtime);
 			void EXPORT Revive();
@@ -107,7 +105,7 @@ namespace Cam
 			static CamAimGuide* CreateSpot();
 
 		private:
-			int TrailSprite;
+			
 		};
 	}
 }

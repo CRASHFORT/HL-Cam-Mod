@@ -3844,8 +3844,6 @@ void CBasePlayer::ItemPreFrame()
 		AimGuide = Cam::Entity::CamAimGuide::CreateSpot();
 	}
 
-	auto oldaimpos = AimGuide->pev->origin;
-
 	UTIL_MakeVectors(pev->v_angle);
 	Vector startpos = GetGunPosition();;
 	Vector aimvec = gpGlobals->v_forward;
@@ -3854,11 +3852,6 @@ void CBasePlayer::ItemPreFrame()
 	UTIL_TraceLine(startpos, startpos + aimvec * 8192, dont_ignore_monsters, ENT(pev), &trace);
 
 	UTIL_SetOrigin(AimGuide->pev, trace.vecEndPos);
-
-	if (oldaimpos != AimGuide->pev->origin)
-	{
-		AimGuide->OnMoved();
-	}
 
 #if defined( CLIENT_WEAPONS )
     if ( m_flNextAttack > 0 )
