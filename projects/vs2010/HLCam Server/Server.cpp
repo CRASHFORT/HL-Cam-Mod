@@ -305,7 +305,7 @@ namespace
 
 		if (mapdata.empty())
 		{
-			conmessage(at_console, "HLCAM: No camera file for \"%s\"", mapname.c_str());
+			conmessage(at_console, "HLCAM: No camera file for \"%s\"\n", mapname.c_str());
 			return;
 		}
 
@@ -321,7 +321,7 @@ namespace
 
 		if (entitr == document.MemberEnd())
 		{
-			conmessage(at_console, "HLCAM: Missing \"Entity\" array for \"%s\"", mapname.c_str());
+			conmessage(at_console, "HLCAM: Missing \"Entity\" array for \"%s\"\n", mapname.c_str());
 			return;
 		}
 
@@ -349,7 +349,7 @@ namespace
 
 						if (positr == trigval.MemberEnd())
 						{
-							conmessage(at_console, "HLCAM: Missing \"Position\" entry in \"Trigger\" for \"%s\"", mapname.c_str());
+							conmessage(at_console, "HLCAM: Missing \"Position\" entry in \"Trigger\" for \"%s\"\n", mapname.c_str());
 							return;
 						}
 
@@ -365,7 +365,7 @@ namespace
 
 						if (angitr == trigval.MemberEnd())
 						{
-							conmessage(at_console, "HLCAM: Missing \"Size\" entry in \"Trigger\" for \"%s\"", mapname.c_str());
+							conmessage(at_console, "HLCAM: Missing \"Size\" entry in \"Trigger\" for \"%s\"\n", mapname.c_str());
 							return;
 						}
 
@@ -383,7 +383,7 @@ namespace
 
 				if (camit == entryval.MemberEnd())
 				{
-					conmessage(at_console, "HLCAM: Missing \"Camera\" array entry for \"%s\"", mapname.c_str());
+					conmessage(at_console, "HLCAM: Missing \"Camera\" array entry for \"%s\"\n", mapname.c_str());
 					return;
 				}
 
@@ -394,7 +394,7 @@ namespace
 
 					if (positr == camval.MemberEnd())
 					{
-						conmessage(at_console, "HLCAM: Missing \"Position\" entry in \"Camera\" for \"%s\"", mapname.c_str());
+						conmessage(at_console, "HLCAM: Missing \"Position\" entry in \"Camera\" for \"%s\"\n", mapname.c_str());
 						return;
 					}
 
@@ -410,7 +410,7 @@ namespace
 
 					if (angitr == camval.MemberEnd())
 					{
-						conmessage(at_console, "HLCAM: Missing \"Angle\" entry in \"Camera\" for \"%s\"", mapname.c_str());
+						conmessage(at_console, "HLCAM: Missing \"Angle\" entry in \"Camera\" for \"%s\"\n", mapname.c_str());
 						return;
 					}
 
@@ -503,7 +503,7 @@ namespace
 
 					if (nameit == camval.MemberEnd())
 					{
-						conmessage(at_console, "HLCAM: Camera triggered by name missing name in \"%s\"", mapname.c_str());
+						conmessage(at_console, "HLCAM: Camera triggered by name missing name in \"%s\"\n", mapname.c_str());
 						return;
 					}
 
@@ -551,7 +551,7 @@ namespace
 
 		if (!linkedcam)
 		{
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Camera has no linked trigger");
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Camera has no linked trigger\n");
 			return;
 		}
 
@@ -573,7 +573,7 @@ namespace
 
 				if (!linkedcam)
 				{
-					g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Trigger has no linked camera");
+					g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Trigger has no linked camera\n");
 					return;
 				}
 
@@ -623,7 +623,7 @@ namespace
 	{
 		if (TheCamMap.CurrentState != MapCam::StateType::Inactive)
 		{
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive");
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
 			return;
 		}
 
@@ -642,7 +642,7 @@ namespace
 	{
 		if (TheCamMap.CurrentState != MapCam::StateType::Inactive)
 		{
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive");
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
 			return;
 		}
 
@@ -653,7 +653,7 @@ namespace
 		{
 			if (g_engfuncs.pfnCmd_Argc() != 2)
 			{
-				g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Missing name argument");
+				g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Missing name argument\n");
 				return;
 			}
 
@@ -692,13 +692,13 @@ namespace
 	{
 		if (TheCamMap.CurrentState != MapCam::StateType::Inactive)
 		{
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive");
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
 			return;
 		}
 
 		if (g_engfuncs.pfnCmd_Argc() != 2)
 		{
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Missing ID argument");
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Missing ID argument\n");
 			return;
 		}
 
@@ -711,7 +711,7 @@ namespace
 
 		catch (const std::invalid_argument&)
 		{
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Argument not a number");
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Argument not a number\n");
 			return;
 		}
 
@@ -719,7 +719,7 @@ namespace
 
 		if (!targetcamera)
 		{
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: No camera with ID \"%u\"", camindex);
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: No camera with ID \"%u\"\n", camindex);
 			return;
 		}
 
@@ -727,7 +727,7 @@ namespace
 
 		if (!hastrigger)
 		{
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Camera is named, use hlcam_removecamera_named");
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Camera is named, use hlcam_removecamera_named\n");
 			return;
 		}
 
@@ -750,13 +750,13 @@ namespace
 	{
 		if (TheCamMap.CurrentState != MapCam::StateType::Inactive)
 		{
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive");
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
 			return;
 		}
 
 		if (g_engfuncs.pfnCmd_Argc() != 2)
 		{
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Missing name argument");
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Missing name argument\n");
 			return;
 		}
 
@@ -778,7 +778,7 @@ namespace
 
 		if (!targetcam)
 		{
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: No camera with name \"%s\"", name);
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: No camera with name \"%s\"\n", name);
 			return;
 		}
 
@@ -795,7 +795,7 @@ namespace
 	{
 		if (TheCamMap.IsEditing)
 		{
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Already editing");
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Already editing\n");
 			return;
 		}
 
@@ -810,13 +810,13 @@ namespace
 	{
 		if (!TheCamMap.IsEditing)
 		{
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Can only save in edit mode");
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Can only save in edit mode\n");
 			return;
 		}
 
 		if (TheCamMap.CurrentState != MapCam::StateType::Inactive)
 		{
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive");
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
 			return;
 		}
 
