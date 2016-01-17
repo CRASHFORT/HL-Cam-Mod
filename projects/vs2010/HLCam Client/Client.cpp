@@ -94,7 +94,7 @@ namespace
 
 			Cameras.erase
 			(
-				std::remove_if(Cameras.begin(), Cameras.end(), [camera](const Cam::ClientTrigger& other)
+				std::remove_if(Cameras.begin(), Cameras.end(), [camera](const Cam::ClientCamera& other)
 				{
 					return other.ID == camera->ID;
 				})
