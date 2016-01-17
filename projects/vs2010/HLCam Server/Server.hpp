@@ -20,6 +20,7 @@ namespace Cam
 		Internal output functions that we answer.
 	*/
 	const char* GetLastMap();
+	bool IsInEditMode();
 
 	/*
 		Our own layer checks if the player is within

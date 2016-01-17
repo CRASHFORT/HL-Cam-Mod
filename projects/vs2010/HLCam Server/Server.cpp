@@ -855,6 +855,11 @@ const char* Cam::GetLastMap()
 	return TheCamMap.CurrentMapName.c_str();
 }
 
+bool Cam::IsInEditMode()
+{
+	return TheCamMap.IsEditing;
+}
+
 void Cam::OnPlayerPostUpdate(const CBasePlayer* player)
 {
 	const auto& playerposmax = player->pev->absmax;
