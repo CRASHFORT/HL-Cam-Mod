@@ -640,17 +640,17 @@ namespace
 
 	void HLCAM_CreateCamera()
 	{
+		if (TheCamMap.CurrentState != MapCam::StateType::Inactive)
+		{
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive");
+			return;
+		}
+
 		bool isnamed = g_engfuncs.pfnCmd_Argc() == 2;
 		const char* name;
 
 		if (isnamed)
 		{
-			if (TheCamMap.CurrentState != MapCam::StateType::Inactive)
-			{
-				g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive");
-				return;
-			}
-
 			if (g_engfuncs.pfnCmd_Argc() != 2)
 			{
 				g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Missing name argument");
