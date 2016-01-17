@@ -766,7 +766,15 @@ void PlayerPreThink( edict_t *pEntity )
 	CBasePlayer *pPlayer = (CBasePlayer *)GET_PRIVATE(pEntity);
 
 	if (pPlayer)
-		pPlayer->PreThink( );
+	{
+		pPlayer->PreThink();
+
+		/*
+			CRASH FORT:
+		*/
+		Cam::OnPlayerPreUpdate(pPlayer);
+	}
+
 }
 
 /*

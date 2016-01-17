@@ -22,10 +22,7 @@ namespace Cam
 	const char* GetLastMap();
 	bool IsInEditMode();
 
-	/*
-		Our own layer checks if the player is within
-		any trigger bounds.
-	*/
+	void OnPlayerPreUpdate(const CBasePlayer* player);
 	void OnPlayerPostUpdate(const CBasePlayer* player);
 
 	/*

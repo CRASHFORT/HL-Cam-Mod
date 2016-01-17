@@ -161,6 +161,8 @@ namespace
 
 		bool IsEditing = false;
 
+		bool NeedsToSendResetMessage = false;
+
 		/*
 			Current trigger the player is making, in between
 			part 1 and 2 states
@@ -287,10 +289,8 @@ namespace
 
 	void ResetCurrentMap()
 	{
-		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_MapReset, nullptr, TheCamMap.LocalPlayer->pev);
-		MESSAGE_END();
-		
 		TheCamMap = MapCam();
+		TheCamMap.NeedsToSendResetMessage = true;
 	}
 
 	/*
@@ -870,6 +870,17 @@ const char* Cam::GetLastMap()
 bool Cam::IsInEditMode()
 {
 	return TheCamMap.IsEditing;
+}
+
+void Cam::OnPlayerPreUpdate(const CBasePlayer* player)
+{
+	if (TheCamMap.NeedsToSendResetMessage)
+	{
+		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_MapReset, nullptr, TheCamMap.LocalPlayer->pev);
+		MESSAGE_END();
+
+		TheCamMap.NeedsToSendResetMessage = false;
+	}
 }
 
 void Cam::OnPlayerPostUpdate(const CBasePlayer* player)
