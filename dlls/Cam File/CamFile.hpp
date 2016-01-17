@@ -14,6 +14,7 @@ namespace Cam
 	*/
 	void OnNewMap(const char* name);
 	void OnInit();
+	void OnPlayerSpawn(CBasePlayer* player);
 
 	/*
 		Internal output functions that we answer.
@@ -72,9 +73,10 @@ namespace Cam
 	struct MapCamera
 	{
 		/*
-			ID that is used for restoring a cached map.
+			ID that is used for referencing this camera in game.
 		*/
 		size_t ID = 0;
+		size_t LinkedTriggerID;
 
 		float Position[3] = {0};
 		float Angle[3] = {0};
@@ -102,6 +104,12 @@ namespace Cam
 
 	struct MapTrigger
 	{
+		/*
+			ID that is used for referencing this trigger in game.
+		*/
+		size_t ID = 0;
+		size_t LinkedCameraID;
+
 		float Position[3] = {0};
 		float Size[3] = {0};
 		
@@ -111,7 +119,5 @@ namespace Cam
 			again until another trigger is entered.
 		*/
 		bool Active = false;
-
-		size_t LinkedCameraIndex;
 	};
 }

@@ -188,7 +188,40 @@ int gmsgTeamNames = 0;
 int gmsgStatusText = 0;
 int gmsgStatusValue = 0; 
 
+/*
+	SHORT: ID
+	BYTE: Is Named
+	COORD x 3: Position XYZ
 
+	If this is a named camera, MsgHLCAM_OnCreateTrigger
+	will be sent after this to make the player create a
+	linked trigger.
+*/
+int MsgHLCAM_OnCameraCreated = 0;
+
+/*	
+	SHORT: ID
+	SHORT: Camera ID
+	BYTE: Part	
+	
+	->	Part == 0:
+		COORD x 3: Start corner XYZ
+	->	Part == 1:
+		COORD x 3: End corner XYZ
+*/
+int MsgHLCAM_OnCreateTrigger = 0;
+
+/*
+	SHORT: ID
+	BYTE: Has trigger
+	
+	->	Has trigger:
+		SHORT: Trigger ID
+
+	If a trigger is linked to this camera
+	it will be removed too.
+*/
+int MsgHLCAM_OnCameraRemoved = 0;
 
 void LinkUserMessages( void )
 {
@@ -199,6 +232,11 @@ void LinkUserMessages( void )
 	}
 
 	gmsgSelAmmo = REG_USER_MSG("SelAmmo", sizeof(SelAmmo));
+
+	MsgHLCAM_OnCameraCreated = REG_USER_MSG("CamCreate", 9);
+	MsgHLCAM_OnCreateTrigger = REG_USER_MSG("TrgCreate", 11);
+	MsgHLCAM_OnCameraRemoved = REG_USER_MSG("CamRem", 5);
+
 	gmsgCurWeapon = REG_USER_MSG("CurWeapon", 3);
 	gmsgGeigerRange = REG_USER_MSG("Geiger", 1);
 	gmsgFlashlight = REG_USER_MSG("Flashlight", 2);

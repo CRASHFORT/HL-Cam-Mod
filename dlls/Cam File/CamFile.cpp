@@ -13,6 +13,12 @@
 
 #include "rapidjson\document.h"
 
+#include <algorithm>
+
+extern int MsgHLCAM_OnCameraCreated;
+extern int MsgHLCAM_OnCreateTrigger;
+extern int MsgHLCAM_OnCameraRemoved;
+
 /*
 	General one file content because Half-Life's project structure is awful.
 */
@@ -141,7 +147,116 @@ namespace
 
 		std::string CurrentMapName;
 
+		/*
+			Current trigger the player is inside
+		*/
 		Cam::MapTrigger* ActiveTrigger = nullptr;
+
+		/*
+			Current camera the view is at
+		*/
+		Cam::MapCamera* ActiveCamera = nullptr;
+
+		/*
+			Current trigger the player is making, in between
+			part 1 and 2 states
+		*/
+		size_t CreationTriggerID = 0;
+		size_t LastCreatedCameraID = 0;
+
+		CBasePlayer* LocalPlayer = nullptr;
+
+		size_t NextTriggerID = 0;
+		size_t NextCameraID = 0;
+
+		Cam::MapTrigger* FindTriggerByID(size_t id)
+		{
+			for (auto& trig : Triggers)
+			{
+				if (trig.ID == id)
+				{
+					return &trig;
+				}
+			}
+			
+			return nullptr;
+		}
+
+		Cam::MapCamera* FindCameraByID(size_t id)
+		{
+			for (auto& cam : Cameras)
+			{
+				if (cam.ID == id)
+				{
+					return &cam;
+				}
+			}
+
+			return nullptr;
+		}
+
+		Cam::MapCamera* GetLinkedCamera(Cam::MapTrigger& trigger)
+		{
+			return FindCameraByID(trigger.LinkedCameraID);
+		}
+
+		Cam::MapTrigger* GetLinkedTrigger(Cam::MapCamera& camera)
+		{
+			return FindTriggerByID(camera.LinkedTriggerID);
+		}
+
+		void RemoveTrigger(Cam::MapTrigger* trigger)
+		{
+			if (!trigger)
+			{
+				return;
+			}
+
+			Triggers.erase
+			(
+				std::remove_if(Triggers.begin(), Triggers.end(), [trigger](const Cam::MapTrigger& other)
+				{
+					return other.ID == trigger->ID;
+				})
+			);
+		}
+
+		/*
+			Also removes its linked trigger if it's
+			of that type.
+		*/
+		void RemoveCamera(Cam::MapCamera* camera)
+		{
+			if (!camera)
+			{
+				return;
+			}
+
+			if (camera->TargetCamera)
+			{
+				if (camera == ActiveCamera)
+				{
+					/*
+						Return back to first person mode or something
+					*/
+				}
+
+				UTIL_Remove(camera->TargetCamera);
+			}
+
+			if (camera->TriggerType == Cam::CameraTriggerType::ByUserTrigger)
+			{
+				RemoveTrigger(FindTriggerByID(camera->LinkedTriggerID));
+			}
+
+			Cameras.erase
+			(
+				std::remove_if(Cameras.begin(), Cameras.end(), [camera](const Cam::MapCamera& other)
+				{
+					return other.ID == camera->ID;
+				})
+			);
+		}
 
 		enum class StateType
 		{
@@ -174,21 +289,7 @@ namespace
 
 	void ResetCurrentMap()
 	{
-		/*
-			I don't think this actually is needed because
-			it causes a lot of problems where sometimes the entities
-			are valid but sometimes not, it might make sense for the engine
-			to remove all entities on a new map so.
-		*/
-		/*for (auto& entcam : TheCamMap.Cameras)
-		{
-			UTIL_Remove(entcam.TargetCamera);
-		}*/
-
-		TheCamMap.Cameras.clear();
-		TheCamMap.Triggers.clear();
-
-		TheCamMap.ActiveTrigger = nullptr;
+		TheCamMap = MapCam();
 	}
 
 	/*
@@ -397,6 +498,8 @@ namespace
 					curcam.TargetCamera->pev->spawnflags |= SF_CAMERA_PLAYER_TARGET;
 				}
 
+				curcam.ID = TheCamMap.NextCameraID;
+
 				if (curcam.TriggerType == Cam::CameraTriggerType::ByName)
 				{
 					const auto& nameit = camval.FindMember("Name");
@@ -414,24 +517,22 @@ namespace
 
 				else
 				{
-					size_t endindex = 0;
+					curtrig.ID = TheCamMap.NextTriggerID;
 
-					if (!TheCamMap.Cameras.empty())
-					{
-						endindex = TheCamMap.Cameras.size();
-					}
+					TheCamMap.NextTriggerID++;
 
-					curtrig.LinkedCameraIndex = endindex;
+					curtrig.LinkedCameraID = curcam.ID;
+					curcam.LinkedTriggerID = curtrig.ID;
 
-					int a = 5;
-					a = a;
+					TheCamMap.Triggers.push_back(curtrig);
 				}
+
+				TheCamMap.NextCameraID++;
 
 				curcam.TargetCamera->IsHLCam = true;
 				curcam.TargetCamera->HLCam = curcam;
 
 				TheCamMap.Cameras.push_back(curcam);
-				TheCamMap.Triggers.push_back(curtrig);
 			}
 		}
 	}
@@ -449,12 +550,17 @@ namespace
 
 	void ActivateNewCamera(Cam::MapTrigger& trig)
 	{
-		auto& linkedcam = TheCamMap.Cameras[trig.LinkedCameraIndex];
+		auto linkedcam = TheCamMap.GetLinkedCamera(trig);
 
-		if (linkedcam.TargetCamera)
+		if (!linkedcam)
 		{
-			auto cam = linkedcam.TargetCamera;
-			cam->Use(nullptr, nullptr, USE_ON, 1);
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Camera has no linked trigger");
+			return;
+		}
+
+		if (linkedcam->TargetCamera)
+		{
+			linkedcam->TargetCamera->Use(nullptr, nullptr, USE_ON, 1);
 		}
 	}
 
@@ -466,15 +572,21 @@ namespace
 			{
 				TheCamMap.ActiveTrigger->Active = false;
 
-				auto& linkedcam = TheCamMap.Cameras[trig.LinkedCameraIndex];
+				auto linkedcam = TheCamMap.GetLinkedCamera(*TheCamMap.ActiveTrigger);
 
-				if (linkedcam.TargetCamera)
+				if (!linkedcam)
+				{
+					g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Trigger has no linked camera");
+					return;
+				}
+
+				if (linkedcam->TargetCamera)
 				{
 					/*
 						Previous camera has to be told to be disabled to allow us
 						to change to a new one.
 					*/
-					linkedcam.TargetCamera->Use(nullptr, nullptr, USE_OFF, 0.0f);
+					linkedcam->TargetCamera->Use(nullptr, nullptr, USE_OFF, 0.0f);
 				}
 			}
 
@@ -495,7 +607,8 @@ namespace
 {
 	void HLCAM_PrintCam()
 	{
-		auto player = CBaseEntity::Instance(g_engfuncs.pfnPEntityOfEntIndex(1));
+		auto player = TheCamMap.LocalPlayer;
+
 		const auto& pos = player->pev->origin;
 		const auto& ang = player->pev->v_angle;
 
@@ -522,36 +635,55 @@ namespace
 
 	void HLCAM_CreateCamera()
 	{
-		if (TheCamMap.CurrentState != MapCam::StateType::NeedsToCreateCamera)
-		{
-			g_engfuncs.pfnAlertMessage
-			(
-				at_console,
-				"HLCAM: Need to create linked trigger first. "
-				"Use \"hlcam_createcamera_named\" \"name\" to have a "
-				"camera fired by an in game entity. This could be the name of "
-				"another entity so they are both fired at the same time.\n"
-			);
+		bool isnamed = g_engfuncs.pfnCmd_Argc() == 2;
+		const char* name;
 
-			return;
-		}
-	}
-
-	void HLCAM_CreateCamera_Named()
-	{
-		if (TheCamMap.CurrentState != MapCam::StateType::Inactive)
+		if (isnamed)
 		{
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive");
-			return;
+			if (TheCamMap.CurrentState != MapCam::StateType::Inactive)
+			{
+				g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive");
+				return;
+			}
+
+			if (g_engfuncs.pfnCmd_Argc() != 2)
+			{
+				g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Missing name argument");
+				return;
+			}
+
+			name = g_engfuncs.pfnCmd_Argv(1);
 		}
 
-		if (g_engfuncs.pfnCmd_Argc() != 2)
+		else
 		{
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Missing name argument");
-			return;
+			if (TheCamMap.CurrentState != MapCam::StateType::NeedsToCreateCamera)
+			{
+				g_engfuncs.pfnAlertMessage
+					(
+						at_console,
+						"HLCAM: Need to create linked trigger first. "
+						"Use \"hlcam_createcamera_named\" \"name\" to have a "
+						"camera fired by an in game entity. This could be the name of "
+						"another entity so they are both fired at the same time.\n"
+						);
+
+				return;
+			}
 		}
 
-		auto name = g_engfuncs.pfnCmd_Argv(1);
+		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCameraCreated, nullptr, TheCamMap.LocalPlayer->pev);
+
+		WRITE_SHORT(TheCamMap.NextCameraID);
+		WRITE_BYTE(isnamed);
+		
+		WRITE_COORD(0);
+		WRITE_COORD(0);
+		WRITE_COORD(0);
+
+		MESSAGE_END();
+
+		TheCamMap.NextCameraID++;
 	}
 
 	void HLCAM_RemoveCamera()
@@ -564,21 +696,52 @@ namespace
 
 		if (g_engfuncs.pfnCmd_Argc() != 2)
 		{
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Missing index argument");
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Missing ID argument");
 			return;
 		}
 
-		size_t index;
+		size_t camindex;
 
 		try
 		{
-			index = std::stoul(g_engfuncs.pfnCmd_Argv(1));
+			camindex = std::stoul(g_engfuncs.pfnCmd_Argv(1));
 		}
 
 		catch (const std::invalid_argument&)
 		{
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Argument not a number");
 			return;
 		}
+
+		auto targetcamera = TheCamMap.FindCameraByID(camindex);
+
+		if (!targetcamera)
+		{
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: No camera with ID \"%u\"", camindex);
+			return;
+		}
+
+		bool hastrigger = targetcamera->TriggerType == Cam::CameraTriggerType::ByUserTrigger;
+
+		if (!hastrigger)
+		{
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Camera is named, use hlcam_removecamera_named");
+			return;
+		}
+
+		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCameraRemoved, nullptr, TheCamMap.LocalPlayer->pev);
+		
+		WRITE_SHORT(targetcamera->ID);
+		WRITE_BYTE(hastrigger);
+		
+		if (hastrigger)
+		{
+			WRITE_SHORT(targetcamera->LinkedTriggerID);
+		}
+
+		MESSAGE_END();
+
+		TheCamMap.RemoveCamera(targetcamera);
 	}
 
 	void HLCAM_RemoveCamera_Named()
@@ -596,6 +759,34 @@ namespace
 		}
 
 		auto name = g_engfuncs.pfnCmd_Argv(1);
+
+		Cam::MapCamera* targetcam = nullptr;
+
+		for (auto& cam : TheCamMap.Cameras)
+		{
+			if (cam.TriggerType == Cam::CameraTriggerType::ByName)
+			{
+				if (strcmp(cam.Name, name))
+				{
+					targetcam = &cam;
+					break;
+				}
+			}
+		}
+
+		if (!targetcam)
+		{
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: No camera with name \"%s\"", name);
+			return;
+		}
+
+		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCameraRemoved, nullptr, TheCamMap.LocalPlayer->pev);
+
+		WRITE_SHORT(targetcam->ID);
+		WRITE_BYTE(false);
+		MESSAGE_END();
+
+		TheCamMap.RemoveCamera(targetcam);
 	}
 
 	void HLCAM_SaveMap()
@@ -605,6 +796,11 @@ namespace
 			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive");
 			return;
 		}
+	}
+
+	void HLCAM_FirstPerson()
+	{
+
 	}
 }
 
@@ -617,12 +813,20 @@ void Cam::OnInit()
 	*/
 	g_engfuncs.pfnAddServerCommand("hlcam_createtrigger", &HLCAM_CreateTrigger);
 	g_engfuncs.pfnAddServerCommand("hlcam_createcamera", &HLCAM_CreateCamera);
-	g_engfuncs.pfnAddServerCommand("hlcam_createcamera_named", &HLCAM_CreateCamera_Named);
+	g_engfuncs.pfnAddServerCommand("hlcam_createcamera_named", &HLCAM_CreateCamera);
 	
-	g_engfuncs.pfnAddServerCommand("hlcam_removecamera_pair", &HLCAM_RemoveCamera);
+	g_engfuncs.pfnAddServerCommand("hlcam_removecamera", &HLCAM_RemoveCamera);
 	g_engfuncs.pfnAddServerCommand("hlcam_removecamera_named", &HLCAM_RemoveCamera_Named);
 
+	g_engfuncs.pfnQueryClientCvarValue2
+
+	g_engfuncs.pfnAddServerCommand("hlcam_firstperson", &HLCAM_FirstPerson);
 	g_engfuncs.pfnAddServerCommand("hlcam_savemap", &HLCAM_SaveMap);
+}
+
+void Cam::OnPlayerSpawn(CBasePlayer* player)
+{
+	TheCamMap.LocalPlayer = player;
 }
 
 const char* Cam::GetLastMap()

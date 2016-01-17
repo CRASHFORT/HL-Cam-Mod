@@ -40,6 +40,8 @@
 #include "netadr.h"
 #include "pm_shared.h"
 
+#include "HLCam Server\HLCamServer.hpp"
+
 #if !defined ( _WIN32 )
 #include <ctype.h>
 #endif
@@ -209,6 +211,8 @@ void ClientPutInServer( edict_t *pEntity )
 
 	pPlayer->pev->iuser1 = 0;	// disable any spec modes
 	pPlayer->pev->iuser2 = 0; 
+
+	Cam::OnPlayerSpawn(pPlayer);
 }
 
 #include "voice_gamemgr.h"
@@ -699,8 +703,6 @@ void ServerDeactivate( void )
 	//
 }
 
-#include "Cam File\CamFile.hpp"
-
 void ServerActivate( edict_t *pEdictList, int edictCount, int clientMax )
 {
 	int				i;
@@ -708,21 +710,6 @@ void ServerActivate( edict_t *pEdictList, int edictCount, int clientMax )
 
 	// Every call to ServerActivate should be matched by a call to ServerDeactivate
 	g_serveractive = 1;
-
-	/*
-		CRASH FORT:
-		We have to clear up our own runtime created entities before
-		the game links back the original.
-		If we remove our stuff after the game, our ents become invalid.
-	*/
-	auto curmapname = STRING(gpGlobals->mapname);
-
-	if (strcmp(curmapname, Cam::GetLastMap()) != 0)
-	{
-
-	}
-
-	Cam::OnNewMap(curmapname);
 
 	// Clients have not been initialized yet
 	for ( i = 0; i < edictCount; i++ )
@@ -748,6 +735,21 @@ void ServerActivate( edict_t *pEdictList, int edictCount, int clientMax )
 
 	// Link user messages here to make sure first client can get them...
 	LinkUserMessages();
+
+	/*
+		CRASH FORT:
+		We have to clear up our own runtime created entities before
+		the game links back the original.
+		If we remove our stuff after the game, our ents become invalid.
+	*/
+	auto curmapname = STRING(gpGlobals->mapname);
+
+	if (strcmp(curmapname, Cam::GetLastMap()) != 0)
+	{
+
+	}
+
+	Cam::OnNewMap(curmapname);
 }
 
 
