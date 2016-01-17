@@ -229,6 +229,11 @@ int MsgHLCAM_OnCameraRemoved = 0;
 */
 int MsgHLCAM_MapEditStateChanged = 0;
 
+/*
+	Message to reset client stuff
+*/
+int MsgHLCAM_MapReset = 0;
+
 void LinkUserMessages( void )
 {
 	// Already taken care of?
@@ -243,6 +248,7 @@ void LinkUserMessages( void )
 	MsgHLCAM_OnCreateTrigger = REG_USER_MSG("TrgCreate", 7);
 	MsgHLCAM_OnCameraRemoved = REG_USER_MSG("CamRem", 2);
 	MsgHLCAM_MapEditStateChanged = REG_USER_MSG("CamEdit", 1);
+	MsgHLCAM_MapReset = REG_USER_MSG("CamReset", 0);
 
 	gmsgCurWeapon = REG_USER_MSG("CurWeapon", 3);
 	gmsgGeigerRange = REG_USER_MSG("Geiger", 1);

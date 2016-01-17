@@ -19,6 +19,7 @@ extern int MsgHLCAM_OnCameraCreated;
 extern int MsgHLCAM_OnCreateTrigger;
 extern int MsgHLCAM_OnCameraRemoved;
 extern int MsgHLCAM_MapEditStateChanged;
+extern int MsgHLCAM_MapReset;
 
 /*
 	General one file content because Half-Life's project structure is awful.
@@ -286,6 +287,9 @@ namespace
 
 	void ResetCurrentMap()
 	{
+		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_MapReset, nullptr, TheCamMap.LocalPlayer->pev);
+		MESSAGE_END();
+		
 		TheCamMap = MapCam();
 	}
 

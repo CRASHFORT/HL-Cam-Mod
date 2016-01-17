@@ -135,6 +135,16 @@ int HLCamClient_OnMapEditMessage(const char* name, int size, void* buffer)
 	return 1;
 }
 
+int HLCamClient_OnMapResetMessage(const char* name, int size, void* buffer)
+{
+	/*
+		Probably something more exciting later.
+	*/
+	TheCamClient = HLCamClient();
+	
+	return 1;
+}
+
 int HLCamClient_OnCameraCreatedMessage(const char* name, int size, void* buffer)
 {
 	BEGIN_READ(buffer, size);
