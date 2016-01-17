@@ -269,20 +269,14 @@ namespace
 			Inactive,
 
 			/*
-				No other action can be performed, 2 corners need
-				to be set for this trigger box before it can proceed.
-			*/
-			CreatingTriggerPart1,
-			CreatingTriggerPart2,
-
-			/*
-				This is the state after creating a trigger. The camera
-				created here will be linked to the last created trigger.
+				This is the state after creating a camera. The trigger
+				created here will be linked to the last created camera.
 
 				Named cameras can just be created independetly with
 				"hlcam_createcamera_named" "name"
 			*/
-			NeedsToCreateCamera,
+			NeedsToCreateTriggerCorner1,
+			NeedsToCreateTriggerCorner2,
 		};
 
 		StateType CurrentState = StateType::Inactive;
@@ -633,7 +627,7 @@ namespace
 			return;
 		}
 
-		TheCamMap.CurrentState = MapCam::StateType::CreatingTriggerPart1;
+		TheCamMap.CurrentState = MapCam::StateType::NeedsToCreateTriggerCorner1;
 	}
 
 	void HLCAM_CreateCamera()
@@ -660,19 +654,7 @@ namespace
 
 		else
 		{
-			if (TheCamMap.CurrentState != MapCam::StateType::NeedsToCreateCamera)
-			{
-				g_engfuncs.pfnAlertMessage
-					(
-						at_console,
-						"HLCAM: Need to create linked trigger first. "
-						"Use \"hlcam_createcamera_named\" \"name\" to have a "
-						"camera fired by an in game entity. This could be the name of "
-						"another entity so they are both fired at the same time.\n"
-						);
-
-				return;
-			}
+			
 		}
 
 		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCameraCreated, nullptr, TheCamMap.LocalPlayer->pev);
