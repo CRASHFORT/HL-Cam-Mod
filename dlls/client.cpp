@@ -40,7 +40,7 @@
 #include "netadr.h"
 #include "pm_shared.h"
 
-#include "HLCam Server\HLCamServer.hpp"
+#include "HLCam Server\Server.hpp"
 
 #if !defined ( _WIN32 )
 #include <ctype.h>

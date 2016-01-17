@@ -1,5 +1,5 @@
 #pragma once
-#include "Cam File\CamFile.hpp"
+#include "HLCam Server\Server.hpp"
 
 #define SF_CAMERA_PLAYER_POSITION	1
 #define SF_CAMERA_PLAYER_TARGET		2

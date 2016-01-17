@@ -345,8 +345,8 @@
     <ClCompile Include="..\..\dlls\xen.cpp">
       <Filter>Source Files\dlls</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\dlls\Cam File\CamFile.cpp">
-      <Filter>Source Files\dlls\Cam File</Filter>
+    <ClCompile Include="HLCam Server\Server.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -485,11 +485,11 @@
     <ClInclude Include="..\..\dlls\vector.h">
       <Filter>Header Files\dlls</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\dlls\Cam File\CamFile.hpp">
-      <Filter>Source Files\dlls\Cam File</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\dlls\triggers.h">
       <Filter>Header Files\dlls</Filter>
+    </ClInclude>
+    <ClInclude Include="HLCam Server\Server.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,4 +1,4 @@
-#include "CamFile.hpp"
+#include "Server.hpp"
 #include <vector>
 #include <unordered_map>
 #include <fstream>
@@ -817,8 +817,6 @@ void Cam::OnInit()
 	
 	g_engfuncs.pfnAddServerCommand("hlcam_removecamera", &HLCAM_RemoveCamera);
 	g_engfuncs.pfnAddServerCommand("hlcam_removecamera_named", &HLCAM_RemoveCamera_Named);
-
-	g_engfuncs.pfnQueryClientCvarValue2
 
 	g_engfuncs.pfnAddServerCommand("hlcam_firstperson", &HLCAM_FirstPerson);
 	g_engfuncs.pfnAddServerCommand("hlcam_savemap", &HLCAM_SaveMap);

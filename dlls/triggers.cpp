@@ -2139,7 +2139,7 @@ void CTriggerChangeTarget::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, U
 	CRASH FORT:
 */
 #include "triggers.h"
-#include "Cam File\CamFile.hpp"
+#include "HLCam Server\Server.hpp"
 
 LINK_ENTITY_TO_CLASS( trigger_camera, CTriggerCamera );
 
