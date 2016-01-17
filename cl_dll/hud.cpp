@@ -283,6 +283,7 @@ int __MsgFunc_AllowSpec(const char *pszName, int iSize, void *pbuf)
 /*
 	CRASH FORT:
 */
+int HLCamClient_OnMapEditMessage(const char* name, int size, void* buffer);
 int HLCamClient_OnCameraCreatedMessage(const char* name, int size, void* buffer);
 int HLCamClient_OnTriggerCreatedMessage(const char* name, int size, void* buffer);
 int HLCamClient_OnCameraRemovedMessage(const char* name, int size, void* buffer);
@@ -332,6 +333,7 @@ void CHud :: Init( void )
 	gEngfuncs.pfnHookUserMsg("CamCreate", &HLCamClient_OnCameraCreatedMessage);
 	gEngfuncs.pfnHookUserMsg("TrgCreate", &HLCamClient_OnTriggerCreatedMessage);
 	gEngfuncs.pfnHookUserMsg("CamRem", &HLCamClient_OnCameraRemovedMessage);
+	gEngfuncs.pfnHookUserMsg("CamEdit", &HLCamClient_OnMapEditMessage);
 
 	CVAR_CREATE( "hud_classautokill", "1", FCVAR_ARCHIVE | FCVAR_USERINFO );		// controls whether or not to suicide immediately on TF class switch
 	CVAR_CREATE( "hud_takesshots", "0", FCVAR_ARCHIVE );		// controls whether or not to automatically take screenshots at the end of a round

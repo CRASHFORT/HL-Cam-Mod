@@ -18,6 +18,7 @@
 extern int MsgHLCAM_OnCameraCreated;
 extern int MsgHLCAM_OnCreateTrigger;
 extern int MsgHLCAM_OnCameraRemoved;
+extern int MsgHLCAM_MapEditStateChanged;
 
 /*
 	General one file content because Half-Life's project structure is awful.
@@ -156,6 +157,8 @@ namespace
 			Current camera the view is at
 		*/
 		Cam::MapCamera* ActiveCamera = nullptr;
+
+		bool IsEditing = false;
 
 		/*
 			Current trigger the player is making, in between
@@ -798,13 +801,40 @@ namespace
 		TheCamMap.RemoveCamera(targetcam);
 	}
 
+	void HLCAM_StartEdit()
+	{
+		if (TheCamMap.IsEditing)
+		{
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Already editing");
+			return;
+		}
+
+		TheCamMap.IsEditing = true;
+
+		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_MapEditStateChanged, nullptr, TheCamMap.LocalPlayer->pev);
+		WRITE_BYTE(TheCamMap.IsEditing);		
+		MESSAGE_END();
+	}
+
 	void HLCAM_SaveMap()
 	{
+		if (!TheCamMap.IsEditing)
+		{
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Can only save in edit mode");
+			return;
+		}
+
 		if (TheCamMap.CurrentState != MapCam::StateType::Inactive)
 		{
 			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive");
 			return;
 		}
+
+		TheCamMap.IsEditing = false;
+
+		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_MapEditStateChanged, nullptr, TheCamMap.LocalPlayer->pev);
+		WRITE_BYTE(TheCamMap.IsEditing);
+		MESSAGE_END();
 	}
 
 	void HLCAM_FirstPerson()
@@ -826,6 +856,8 @@ void Cam::OnInit()
 	
 	g_engfuncs.pfnAddServerCommand("hlcam_removecamera", &HLCAM_RemoveCamera);
 	g_engfuncs.pfnAddServerCommand("hlcam_removecamera_named", &HLCAM_RemoveCamera_Named);
+
+	g_engfuncs.pfnAddServerCommand("hlcam_startedit", &HLCAM_StartEdit);
 
 	g_engfuncs.pfnAddServerCommand("hlcam_firstperson", &HLCAM_FirstPerson);
 	g_engfuncs.pfnAddServerCommand("hlcam_savemap", &HLCAM_SaveMap);
