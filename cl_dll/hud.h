@@ -533,6 +533,29 @@ private:
 	int 	m_nCompositeScore;
 };
 
+/*
+	CRASH FORT:
+	HUD element that shows current edit state.
+*/
+namespace Cam
+{
+	namespace ClientHUD
+	{
+		class HLCamStatusHUD : public CHudBase
+		{
+		public:
+			virtual int Init() override;
+			virtual int VidInit() override;
+			virtual int Draw(float time) override;
+
+			int MsgFunc_CamEdit(const char* name, int size, void* buffer);
+
+		private:
+			
+		};
+	}
+}
+
 //
 //-----------------------------------------------------
 //
@@ -611,6 +634,11 @@ public:
 	CHudTextMessage m_TextMessage;
 	CHudStatusIcons m_StatusIcons;
 	CHudBenchmark	m_Benchmark;
+
+	/*
+		CRASH FORT:
+	*/
+	Cam::ClientHUD::HLCamStatusHUD HLCamHUD;
 
 	void Init( void );
 	void VidInit( void );

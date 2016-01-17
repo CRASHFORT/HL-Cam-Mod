@@ -2,6 +2,8 @@
 
 namespace Cam
 {
+	void Init();
+
 	/*
 		Required data to render a client
 		preview of what the server has.
