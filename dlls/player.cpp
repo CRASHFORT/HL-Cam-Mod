@@ -204,23 +204,20 @@ int gmsgStatusValue = 0;
 int MsgHLCAM_OnCameraCreated = 0;
 
 /*	
-	SHORT: ID
-	SHORT: Camera ID
-	BYTE: Part	
+	BYTE: Part
 	
 	->	Part == 0:
-	|	COORD x 3: Start corner XYZ
+	|	SHORT: ID
+	|	SHORT: Camera ID
 	->	Part == 1:
-	|	COORD x 3: End corner XYZ
+	|	COORD x 3: Corner 1 XYZ
+	->	Part == 2:
+	|	COORD x 3: Corner 2 XYZ
 */
 int MsgHLCAM_OnCreateTrigger = 0;
 
 /*
 	SHORT: ID
-	BYTE: Has trigger
-	
-	->	Has trigger:
-	|	SHORT: Trigger ID
 
 	If a trigger is linked to this camera
 	it will be removed too.
@@ -243,8 +240,8 @@ void LinkUserMessages( void )
 	gmsgSelAmmo = REG_USER_MSG("SelAmmo", sizeof(SelAmmo));
 
 	MsgHLCAM_OnCameraCreated = REG_USER_MSG("CamCreate", -1);
-	MsgHLCAM_OnCreateTrigger = REG_USER_MSG("TrgCreate", 11);
-	MsgHLCAM_OnCameraRemoved = REG_USER_MSG("CamRem", 5);
+	MsgHLCAM_OnCreateTrigger = REG_USER_MSG("TrgCreate", 7);
+	MsgHLCAM_OnCameraRemoved = REG_USER_MSG("CamRem", 2);
 	MsgHLCAM_MapEditStateChanged = REG_USER_MSG("CamEdit", 1);
 
 	gmsgCurWeapon = REG_USER_MSG("CurWeapon", 3);
