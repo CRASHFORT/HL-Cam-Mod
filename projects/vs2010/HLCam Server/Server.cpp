@@ -611,16 +611,6 @@ namespace
 			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
 			return;
 		}
-
-		TheCamMap.CurrentState = Cam::Shared::StateType::NeedsToCreateTriggerCorner1;
-
-		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCreateTrigger, nullptr, TheCamMap.LocalPlayer->pev);
-		
-		WRITE_BYTE(0);
-		WRITE_SHORT(0);
-		WRITE_SHORT(0);
-
-		MESSAGE_END();
 	}
 
 	void HLCAM_CreateCamera()
@@ -669,6 +659,20 @@ namespace
 		}
 
 		MESSAGE_END();
+
+		if (!isnamed)
+		{
+			TheCamMap.CurrentState = Cam::Shared::StateType::NeedsToCreateTriggerCorner1;
+
+			MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCreateTrigger, nullptr, TheCamMap.LocalPlayer->pev);
+
+			WRITE_BYTE(0);
+			
+			WRITE_SHORT(TheCamMap.NextTriggerID);
+			WRITE_SHORT(TheCamMap.NextCameraID);
+
+			MESSAGE_END();
+		}
 
 		TheCamMap.NextCameraID++;
 	}
@@ -825,7 +829,7 @@ void Cam::OnInit()
 	/*
 		These commands are used to edit camera maps in game.
 	*/
-	g_engfuncs.pfnAddServerCommand("hlcam_createtrigger", &HLCAM_CreateTrigger);
+	//g_engfuncs.pfnAddServerCommand("hlcam_createtrigger", &HLCAM_CreateTrigger);
 	g_engfuncs.pfnAddServerCommand("hlcam_createcamera", &HLCAM_CreateCamera);
 	g_engfuncs.pfnAddServerCommand("hlcam_createcamera_named", &HLCAM_CreateCamera);
 	
