@@ -628,6 +628,14 @@ namespace
 		}
 
 		TheCamMap.CurrentState = MapCam::StateType::NeedsToCreateTriggerCorner1;
+
+		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCreateTrigger, nullptr, TheCamMap.LocalPlayer->pev);
+		
+		WRITE_BYTE(0);
+		WRITE_SHORT(0);
+		WRITE_SHORT(0);
+
+		MESSAGE_END();
 	}
 
 	void HLCAM_CreateCamera()
