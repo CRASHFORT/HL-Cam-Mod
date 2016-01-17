@@ -1,19 +1,18 @@
 #include "Server.hpp"
+#include "HLCam Shared\Shared.hpp"
 #include <vector>
 #include <unordered_map>
 #include <fstream>
 #include <string>
+#include <algorithm>
 
 #include "extdll.h"
 #include "util.h"
 #include "cbase.h"
 #include "player.h"
-
 #include "triggers.h"
 
 #include "rapidjson\document.h"
-
-#include <algorithm>
 
 extern int MsgHLCAM_OnCameraCreated;
 extern int MsgHLCAM_OnCreateTrigger;
@@ -264,25 +263,7 @@ namespace
 			);
 		}
 
-		enum class StateType
-		{
-			/*
-				Any other action can be performed
-			*/
-			Inactive,
-
-			/*
-				This is the state after creating a camera. The trigger
-				created here will be linked to the last created camera.
-
-				Named cameras can just be created independetly with
-				"hlcam_createcamera_named" "name"
-			*/
-			NeedsToCreateTriggerCorner1,
-			NeedsToCreateTriggerCorner2,
-		};
-
-		StateType CurrentState = StateType::Inactive;
+		Cam::Shared::StateType CurrentState = Cam::Shared::StateType::Inactive;
 	};
 
 	static MapCam TheCamMap;
@@ -625,13 +606,13 @@ namespace
 
 	void HLCAM_CreateTrigger()
 	{
-		if (TheCamMap.CurrentState != MapCam::StateType::Inactive)
+		if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
 		{
 			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
 			return;
 		}
 
-		TheCamMap.CurrentState = MapCam::StateType::NeedsToCreateTriggerCorner1;
+		TheCamMap.CurrentState = Cam::Shared::StateType::NeedsToCreateTriggerCorner1;
 
 		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCreateTrigger, nullptr, TheCamMap.LocalPlayer->pev);
 		
@@ -644,7 +625,7 @@ namespace
 
 	void HLCAM_CreateCamera()
 	{
-		if (TheCamMap.CurrentState != MapCam::StateType::Inactive)
+		if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
 		{
 			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
 			return;
@@ -694,7 +675,7 @@ namespace
 
 	void HLCAM_RemoveCamera()
 	{
-		if (TheCamMap.CurrentState != MapCam::StateType::Inactive)
+		if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
 		{
 			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
 			return;
@@ -752,7 +733,7 @@ namespace
 
 	void HLCAM_RemoveCamera_Named()
 	{
-		if (TheCamMap.CurrentState != MapCam::StateType::Inactive)
+		if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
 		{
 			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
 			return;
@@ -818,7 +799,7 @@ namespace
 			return;
 		}
 
-		if (TheCamMap.CurrentState != MapCam::StateType::Inactive)
+		if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
 		{
 			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
 			return;

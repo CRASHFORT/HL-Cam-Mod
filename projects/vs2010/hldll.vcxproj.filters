@@ -491,5 +491,8 @@
     <ClInclude Include="HLCam Server\Server.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="HLCam Shared\Shared.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

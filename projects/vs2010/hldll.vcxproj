@@ -261,6 +261,7 @@
     <ClInclude Include="..\..\pm_shared\pm_movevars.h" />
     <ClInclude Include="..\..\pm_shared\pm_shared.h" />
     <ClInclude Include="HLCam Server\Server.hpp" />
+    <ClInclude Include="HLCam Shared\Shared.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

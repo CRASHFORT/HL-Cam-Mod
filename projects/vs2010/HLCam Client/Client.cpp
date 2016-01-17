@@ -1,4 +1,5 @@
 #include "Client.hpp"
+#include "HLCam Shared\Shared.hpp"
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -94,14 +95,7 @@ namespace
 			);
 		}
 
-		enum class StateType
-		{
-			Inactive,
-			NeedsToCreateTriggerCorner1,
-			NeedsToCreateTriggerCorner2,
-		};
-
-		StateType CurrentState = StateType::Inactive;
+		Cam::Shared::StateType CurrentState = Cam::Shared::StateType::Inactive;
 
 		size_t CurrentTriggerID;
 	};
@@ -273,19 +267,19 @@ namespace Cam
 
 				switch (TheCamClient.CurrentState)
 				{
-					case HLCamClient::StateType::Inactive:
+					case Cam::Shared::StateType::Inactive:
 					{
 						item.Text = "Current Mode: Inactive";
 						break;
 					}
 					
-					case HLCamClient::StateType::NeedsToCreateTriggerCorner1:
+					case Cam::Shared::StateType::NeedsToCreateTriggerCorner1:
 					{
 						item.Text = "Current Mode: Need to create first trigger corner";
 						break;
 					}
 
-					case HLCamClient::StateType::NeedsToCreateTriggerCorner2:
+					case Cam::Shared::StateType::NeedsToCreateTriggerCorner2:
 					{
 						item.Text = "Current Mode: Need to create second trigger corner";
 						break;
@@ -392,7 +386,7 @@ int HLCamClient_OnTriggerCreatedMessage(const char* name, int size, void* buffer
 			newtrig.LinkedCameraID = READ_SHORT();
 
 			TheCamClient.CurrentTriggerID = newtrig.ID;
-			TheCamClient.CurrentState = HLCamClient::StateType::NeedsToCreateTriggerCorner1;
+			TheCamClient.CurrentState = Cam::Shared::StateType::NeedsToCreateTriggerCorner1;
 
 			TheCamClient.Triggers.push_back(newtrig);
 			break;
@@ -406,7 +400,7 @@ int HLCamClient_OnTriggerCreatedMessage(const char* name, int size, void* buffer
 			trigger->Corner1[1] = READ_COORD();
 			trigger->Corner1[2] = READ_COORD();
 
-			TheCamClient.CurrentState = HLCamClient::StateType::NeedsToCreateTriggerCorner2;
+			TheCamClient.CurrentState = Cam::Shared::StateType::NeedsToCreateTriggerCorner2;
 			break;
 		}
 
@@ -418,7 +412,7 @@ int HLCamClient_OnTriggerCreatedMessage(const char* name, int size, void* buffer
 			trigger->Corner2[1] = READ_COORD();
 			trigger->Corner2[2] = READ_COORD();
 
-			TheCamClient.CurrentState = HLCamClient::StateType::Inactive;
+			TheCamClient.CurrentState = Cam::Shared::StateType::Inactive;
 			break;
 		}
 	}

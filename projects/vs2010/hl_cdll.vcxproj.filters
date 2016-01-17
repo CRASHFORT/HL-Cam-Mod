@@ -434,6 +434,9 @@
     <ClInclude Include="HLCam Client\Client.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="HLCam Shared\Shared.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Library Include="..\..\lib\public\game_controls.lib" />
