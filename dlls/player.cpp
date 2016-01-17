@@ -190,10 +190,14 @@ int gmsgStatusValue = 0;
 
 /*
 	SHORT: ID
-	BYTE: Is Named
+	BYTE: Is named
 	COORD x 3: Position XYZ
+	COORD x 3: Angle XYZ
 
-	If this is a named camera, MsgHLCAM_OnCreateTrigger
+	->	Is named:
+	|	STRING: Camera name
+
+	If this is not a named camera, MsgHLCAM_OnCreateTrigger
 	will be sent after this to make the player create a
 	linked trigger.
 */
@@ -205,9 +209,9 @@ int MsgHLCAM_OnCameraCreated = 0;
 	BYTE: Part	
 	
 	->	Part == 0:
-		COORD x 3: Start corner XYZ
+	|	COORD x 3: Start corner XYZ
 	->	Part == 1:
-		COORD x 3: End corner XYZ
+	|	COORD x 3: End corner XYZ
 */
 int MsgHLCAM_OnCreateTrigger = 0;
 
@@ -216,7 +220,7 @@ int MsgHLCAM_OnCreateTrigger = 0;
 	BYTE: Has trigger
 	
 	->	Has trigger:
-		SHORT: Trigger ID
+	|	SHORT: Trigger ID
 
 	If a trigger is linked to this camera
 	it will be removed too.
@@ -233,7 +237,7 @@ void LinkUserMessages( void )
 
 	gmsgSelAmmo = REG_USER_MSG("SelAmmo", sizeof(SelAmmo));
 
-	MsgHLCAM_OnCameraCreated = REG_USER_MSG("CamCreate", 9);
+	MsgHLCAM_OnCameraCreated = REG_USER_MSG("CamCreate", -1);
 	MsgHLCAM_OnCreateTrigger = REG_USER_MSG("TrgCreate", 11);
 	MsgHLCAM_OnCameraRemoved = REG_USER_MSG("CamRem", 5);
 

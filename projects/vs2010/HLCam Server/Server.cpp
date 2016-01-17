@@ -681,6 +681,15 @@ namespace
 		WRITE_COORD(0);
 		WRITE_COORD(0);
 
+		WRITE_COORD(0);
+		WRITE_COORD(0);
+		WRITE_COORD(0);
+
+		if (isnamed)
+		{
+			WRITE_STRING("");
+		}
+
 		MESSAGE_END();
 
 		TheCamMap.NextCameraID++;
