@@ -360,6 +360,22 @@ namespace
 						curtrig.Corner2[1] = cornerval[1].GetDouble();
 						curtrig.Corner2[2] = cornerval[2].GetDouble();
 					}
+
+					Vector corner1 = curtrig.Corner1;
+					Vector corner2 = curtrig.Corner2;
+
+					Vector minpos;
+					minpos.x = fmin(corner1.x, corner2.x);
+					minpos.y = fmin(corner1.y, corner2.y);
+					minpos.z = fmin(corner1.z, corner2.z);
+
+					Vector maxpos;
+					maxpos.x = fmax(corner1.x, corner2.x);
+					maxpos.y = fmax(corner1.y, corner2.y);
+					maxpos.z = fmax(corner1.z, corner2.z);
+
+					minpos.CopyToArray(curtrig.MinPos);
+					maxpos.CopyToArray(curtrig.MaxPos);
 				}
 			}
 
