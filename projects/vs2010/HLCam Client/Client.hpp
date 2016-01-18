@@ -5,6 +5,9 @@ namespace Cam
 {
 	void Init();
 	void VidInit();
+	
+	void OnRedraw();
+
 	bool InEditMode();
 
 	/*

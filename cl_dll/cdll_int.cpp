@@ -199,6 +199,13 @@ void CL_DLLEXPORT HUD_Init( void )
 	Scheme_Init();
 }
 
+/*
+	CRASH FORT:
+*/
+namespace Cam
+{
+	void OnRedraw();
+}
 
 /*
 ==========================
@@ -214,6 +221,8 @@ int CL_DLLEXPORT HUD_Redraw( float time, int intermission )
 //	RecClHudRedraw(time, intermission);
 
 	gHUD.Redraw( time, intermission );
+
+	Cam::OnRedraw();
 
 	return 1;
 }

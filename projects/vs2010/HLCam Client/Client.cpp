@@ -455,6 +455,20 @@ namespace Cam
 		Tri::VidInit();
 	}
 
+	void OnRedraw()
+	{
+		if (TheCamClient.CurrentState == Cam::Shared::StateType::NeedsToCreateTriggerCorner2)
+		{
+			auto trigger = TheCamClient.FindTriggerByID(TheCamClient.CurrentTriggerID);
+
+			if (trigger)
+			{
+				const auto& clientpos = gEngfuncs.GetLocalPlayer()->origin;
+				clientpos.CopyToArray(trigger->Corner2);
+			}
+		}
+	}
+
 	bool InEditMode()
 	{
 		return TheCamClient.InEditMode;
