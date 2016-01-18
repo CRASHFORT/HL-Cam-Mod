@@ -318,9 +318,8 @@ namespace
 			{
 				if (camera == ActiveCamera)
 				{
-					/*
-						Return back to first person mode or something
-					*/
+					ActiveCamera->TargetCamera->Use(nullptr, nullptr, USE_OFF, 0);
+					ActiveCamera = nullptr;
 				}
 
 				UTIL_Remove(camera->TargetCamera);
@@ -774,7 +773,7 @@ namespace
 			TheCamMap.Triggers.push_back(newtrig);
 		}
 
-		g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Created camera with ID \"%u\"", TheCamMap.NextCameraID);
+		g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Created camera with ID \"%u\"\n", TheCamMap.NextCameraID);
 
 		TheCamMap.NextCameraID++;
 		TheCamMap.Cameras.push_back(newcam);
@@ -941,11 +940,6 @@ namespace
 			TheCamMap.ActiveCamera->TargetCamera->Use(nullptr, nullptr, USE_OFF, 0.0f);
 			TheCamMap.ActiveCamera = nullptr;
 		}
-
-		/*
-			Setting 0 restores fov to player preference
-		*/
-		TheCamMap.LocalPlayer->pev->fov = TheCamMap.LocalPlayer->m_iFOV = 0;
 	}
 }
 

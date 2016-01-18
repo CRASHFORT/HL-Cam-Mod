@@ -2222,6 +2222,13 @@ void CTriggerCamera::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 			SetThink(nullptr);
 
 			g_engfuncs.pfnSetView(m_hPlayer->edict(), m_hPlayer->edict());
+			
+			/*
+				Setting 0 restores fov to player preference
+			*/
+			auto playerptr = static_cast<CBasePlayer*>(Instance(m_hPlayer.Get()));
+			playerptr->pev->fov = playerptr->m_iFOV = 0;
+
 			return;
 		}
 	}
