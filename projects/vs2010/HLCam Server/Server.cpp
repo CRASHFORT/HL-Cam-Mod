@@ -699,15 +699,6 @@ namespace
 		g_engfuncs.pfnAlertMessage(at_console, &endstr[0]);
 	}
 
-	void HLCAM_CreateTrigger()
-	{
-		if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
-		{
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
-			return;
-		}
-	}
-
 	void HLCAM_CreateCamera()
 	{
 		if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
@@ -783,6 +774,8 @@ namespace
 			TheCamMap.Triggers.push_back(newtrig);
 		}
 
+		g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Created camera with ID \"%u\"", TheCamMap.NextCameraID);
+
 		TheCamMap.NextCameraID++;
 		TheCamMap.Cameras.push_back(newcam);
 	}
@@ -830,17 +823,11 @@ namespace
 			return;
 		}
 
-		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCameraRemoved, nullptr, TheCamMap.LocalPlayer->pev);
-		
+		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCameraRemoved, nullptr, TheCamMap.LocalPlayer->pev);		
 		WRITE_SHORT(targetcamera->ID);
-		WRITE_BYTE(hastrigger);
-		
-		if (hastrigger)
-		{
-			WRITE_SHORT(targetcamera->LinkedTriggerID);
-		}
-
 		MESSAGE_END();
+
+		g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Removed camera with ID \"%u\"\n", targetcamera->ID);
 
 		TheCamMap.RemoveCamera(targetcamera);
 	}
@@ -882,11 +869,10 @@ namespace
 		}
 
 		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCameraRemoved, nullptr, TheCamMap.LocalPlayer->pev);
-
-		WRITE_SHORT(targetcam->ID);
-		WRITE_BYTE(false);
-		
+		WRITE_SHORT(targetcam->ID);		
 		MESSAGE_END();
+
+		g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Removed camera with ID \"%u\"\n", targetcam->ID);
 
 		TheCamMap.RemoveCamera(targetcam);
 	}
@@ -970,7 +956,6 @@ void Cam::OnInit()
 	/*
 		These commands are used to edit camera maps in game.
 	*/
-	//g_engfuncs.pfnAddServerCommand("hlcam_createtrigger", &HLCAM_CreateTrigger);
 	g_engfuncs.pfnAddServerCommand("hlcam_createcamera", &HLCAM_CreateCamera);
 	g_engfuncs.pfnAddServerCommand("hlcam_createcamera_named", &HLCAM_CreateCamera);
 	

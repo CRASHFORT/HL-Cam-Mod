@@ -83,7 +83,7 @@ namespace
 
 			if (!camera->IsNamed)
 			{
-				RemoveTrigger(FindTriggerByID(camera->LinkedTriggerID));
+				RemoveTrigger(GetLinkedTrigger(*camera));
 			}
 
 			Cameras.erase
@@ -386,6 +386,10 @@ int HLCamClient_OnTriggerCreatedMessage(const char* name, int size, void* buffer
 			Cam::ClientTrigger newtrig;
 			newtrig.ID = READ_SHORT();
 			newtrig.LinkedCameraID = READ_SHORT();
+
+			auto linkedcam = TheCamClient.FindCameraByID(newtrig.LinkedCameraID);
+
+			linkedcam->LinkedTriggerID = newtrig.ID;
 
 			TheCamClient.CurrentTriggerID = newtrig.ID;
 			TheCamClient.CurrentState = Cam::Shared::StateType::NeedsToCreateTriggerCorner1;
