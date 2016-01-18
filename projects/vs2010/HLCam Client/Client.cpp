@@ -113,7 +113,7 @@ namespace
 
 			std::string Text;
 
-			size_t Color[3] = {255, 140, 0};
+			unsigned char Color[3] = {255, 140, 0};
 		};
 
 		class MenuBuilder
@@ -227,7 +227,7 @@ namespace
 
 			std::vector<MenuQueueItem> Items;
 
-			size_t BackgroundColor[4] = {0, 0, 0, 100};
+			unsigned char BackgroundColor[4] = {0, 0, 0, 100};
 		};
 	}
 }
