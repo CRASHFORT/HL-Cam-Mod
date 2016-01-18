@@ -108,8 +108,8 @@ namespace Cam
 		size_t ID = 0;
 		size_t LinkedCameraID;
 
-		float Position[3] = {0};
-		float Size[3] = {0};
+		float Corner1[3] = {0};
+		float Corner2[3] = {0};
 		
 		/*
 			This trigger has already been activated and

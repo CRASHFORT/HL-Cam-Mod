@@ -330,35 +330,35 @@ namespace
 					const auto& trigval = triggerit->value;
 
 					{
-						const auto& positr = trigval.FindMember("Position");
+						const auto& corneritr = trigval.FindMember("Corner1");
 
-						if (positr == trigval.MemberEnd())
+						if (corneritr == trigval.MemberEnd())
 						{
-							conmessage(at_console, "HLCAM: Missing \"Position\" entry in \"Trigger\" for \"%s\"\n", mapname.c_str());
+							conmessage(at_console, "HLCAM: Missing \"Corner1\" entry in \"Trigger\" for \"%s\"\n", mapname.c_str());
 							return;
 						}
 
-						const auto& posval = positr->value;
+						const auto& cornerval = corneritr->value;
 
-						curtrig.Position[0] = posval[0].GetDouble();
-						curtrig.Position[1] = posval[1].GetDouble();
-						curtrig.Position[2] = posval[2].GetDouble();
+						curtrig.Corner1[0] = cornerval[0].GetDouble();
+						curtrig.Corner1[1] = cornerval[1].GetDouble();
+						curtrig.Corner1[2] = cornerval[2].GetDouble();
 					}
 
 					{
-						const auto& angitr = trigval.FindMember("Size");
+						const auto& corneritr = trigval.FindMember("Corner2");
 
-						if (angitr == trigval.MemberEnd())
+						if (corneritr == trigval.MemberEnd())
 						{
-							conmessage(at_console, "HLCAM: Missing \"Size\" entry in \"Trigger\" for \"%s\"\n", mapname.c_str());
+							conmessage(at_console, "HLCAM: Missing \"Corner2\" entry in \"Trigger\" for \"%s\"\n", mapname.c_str());
 							return;
 						}
 
-						const auto& angval = angitr->value;
+						const auto& cornerval = corneritr->value;
 
-						curtrig.Size[0] = angval[0].GetDouble();
-						curtrig.Size[1] = angval[1].GetDouble();
-						curtrig.Size[2] = angval[2].GetDouble();
+						curtrig.Corner2[0] = cornerval[0].GetDouble();
+						curtrig.Corner2[1] = cornerval[1].GetDouble();
+						curtrig.Corner2[2] = cornerval[2].GetDouble();
 					}
 				}
 			}
@@ -626,55 +626,70 @@ namespace
 
 		if (isnamed)
 		{
-			if (g_engfuncs.pfnCmd_Argc() != 2)
-			{
-				g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Missing name argument\n");
-				return;
-			}
-
 			name = g_engfuncs.pfnCmd_Argv(1);
 		}
 
-		else
-		{
-			
-		}
+		const auto& playerpos = TheCamMap.LocalPlayer->pev->origin;
+		const auto& playerang = TheCamMap.LocalPlayer->pev->v_angle;
+
+		Cam::MapCamera newcam;
+		newcam.ID = TheCamMap.NextCameraID;
+		newcam.Position[0] = playerpos.x;
+		newcam.Position[1] = playerpos.y;
+		newcam.Position[2] = playerpos.z;
+
+		newcam.Angle[0] = playerang.x;
+		newcam.Angle[1] = playerang.y;
+		newcam.Angle[2] = playerang.z;
 
 		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCameraCreated, nullptr, TheCamMap.LocalPlayer->pev);
 
-		WRITE_SHORT(TheCamMap.NextCameraID);
+		WRITE_SHORT(newcam.ID);
 		WRITE_BYTE(isnamed);
 		
-		WRITE_COORD(0);
-		WRITE_COORD(0);
-		WRITE_COORD(0);
+		WRITE_COORD(playerpos.x);
+		WRITE_COORD(playerpos.y);
+		WRITE_COORD(playerpos.z);
 
-		WRITE_COORD(0);
-		WRITE_COORD(0);
-		WRITE_COORD(0);
+		WRITE_COORD(playerang.x);
+		WRITE_COORD(playerang.y);
+		WRITE_COORD(playerang.z);
 
 		if (isnamed)
 		{
-			WRITE_STRING("");
+			WRITE_STRING(name);
 		}
 
 		MESSAGE_END();
 
 		if (!isnamed)
 		{
+			Cam::MapTrigger newtrig;
+			newtrig.ID = TheCamMap.NextTriggerID;
+			newtrig.LinkedCameraID = newcam.ID;
+
+			newcam.LinkedTriggerID = newtrig.ID;
+
 			TheCamMap.CurrentState = Cam::Shared::StateType::NeedsToCreateTriggerCorner1;
 
 			MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCreateTrigger, nullptr, TheCamMap.LocalPlayer->pev);
 
 			WRITE_BYTE(0);
 			
-			WRITE_SHORT(TheCamMap.NextTriggerID);
-			WRITE_SHORT(TheCamMap.NextCameraID);
+			WRITE_SHORT(newtrig.ID);
+			WRITE_SHORT(newcam.ID);
 
 			MESSAGE_END();
+
+			TheCamMap.CreationTriggerID = newtrig.ID;
+
+			TheCamMap.NextTriggerID++;
+
+			TheCamMap.Triggers.push_back(newtrig);
 		}
 
 		TheCamMap.NextCameraID++;
+		TheCamMap.Cameras.push_back(newcam);
 	}
 
 	void HLCAM_RemoveCamera()
@@ -775,6 +790,7 @@ namespace
 
 		WRITE_SHORT(targetcam->ID);
 		WRITE_BYTE(false);
+		
 		MESSAGE_END();
 
 		TheCamMap.RemoveCamera(targetcam);
@@ -866,6 +882,70 @@ void Cam::OnPlayerPreUpdate(const CBasePlayer* player)
 
 		TheCamMap.NeedsToSendResetMessage = false;
 	}
+
+	using StateType = Cam::Shared::StateType;
+
+	if (IsInEditMode() && TheCamMap.CurrentState != StateType::Inactive)
+	{
+		auto creationtrig = TheCamMap.FindTriggerByID(TheCamMap.CreationTriggerID);
+
+		const auto& playerpos = TheCamMap.LocalPlayer->pev->origin;
+		const auto& playerang = TheCamMap.LocalPlayer->pev->v_angle;
+
+		if (!creationtrig)
+		{
+			return;
+		}
+
+		if (TheCamMap.LocalPlayer->pev->button & IN_ATTACK)
+		{
+			if (TheCamMap.CurrentState == StateType::NeedsToCreateTriggerCorner1)
+			{
+				playerpos.CopyToArray(creationtrig->Corner1);
+
+				MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCreateTrigger, nullptr, TheCamMap.LocalPlayer->pev);
+
+				WRITE_BYTE(1);
+
+				WRITE_COORD(creationtrig->Corner1[0]);
+				WRITE_COORD(creationtrig->Corner1[1]);
+				WRITE_COORD(creationtrig->Corner1[2]);
+
+				MESSAGE_END();
+
+				TheCamMap.CurrentState = StateType::NeedsToCreateTriggerCorner2;
+			}
+		}
+
+		else
+		{
+			if (TheCamMap.CurrentState == StateType::NeedsToCreateTriggerCorner2)
+			{
+				playerpos.CopyToArray(creationtrig->Corner2);
+
+				MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCreateTrigger, nullptr, TheCamMap.LocalPlayer->pev);
+
+				WRITE_BYTE(2);
+
+				WRITE_COORD(creationtrig->Corner2[0]);
+				WRITE_COORD(creationtrig->Corner2[1]);
+				WRITE_COORD(creationtrig->Corner2[2]);
+
+				MESSAGE_END();
+
+				TheCamMap.CurrentState = StateType::Inactive;
+
+				auto linkedcam = TheCamMap.GetLinkedCamera(*creationtrig);
+
+				if (linkedcam)
+				{
+					auto newent = CBaseEntity::Create("trigger_camera", linkedcam->Position, linkedcam->Angle);
+					linkedcam->TargetCamera = static_cast<CTriggerCamera*>(newent);
+					linkedcam->TargetCamera->IsHLCam = true;
+				}
+			}
+		}
+	}
 }
 
 void Cam::OnPlayerPostUpdate(const CBasePlayer* player)
@@ -875,16 +955,9 @@ void Cam::OnPlayerPostUpdate(const CBasePlayer* player)
 
 	for (auto& trig : TheCamMap.Triggers)
 	{
-		Vector trigposmin = trig.Position;
-		Vector trigposmax = trig.Position;
-
-		trigposmax.x += trig.Size[0];
-		trigposmax.y += trig.Size[1];
-		trigposmax.z += trig.Size[2];
-
-		if (Utility::IsBoxIntersectingBox(playerposmin, playerposmax, trigposmin, trigposmax))
+		if (Utility::IsBoxIntersectingBox(playerposmin, playerposmax, trig.Corner1, trig.Corner2))
 		{
-			PlayerEnterTrigger(trig);			
+			PlayerEnterTrigger(trig);
 		}
 	}
 }

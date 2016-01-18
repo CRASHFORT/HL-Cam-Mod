@@ -245,7 +245,7 @@ void LinkUserMessages( void )
 	gmsgSelAmmo = REG_USER_MSG("SelAmmo", sizeof(SelAmmo));
 
 	MsgHLCAM_OnCameraCreated = REG_USER_MSG("CamCreate", -1);
-	MsgHLCAM_OnCreateTrigger = REG_USER_MSG("TrgCreate", 7);
+	MsgHLCAM_OnCreateTrigger = REG_USER_MSG("TrgCreate", -1);
 	MsgHLCAM_OnCameraRemoved = REG_USER_MSG("CamRem", 2);
 	MsgHLCAM_MapEditStateChanged = REG_USER_MSG("CamEdit", 1);
 	MsgHLCAM_MapReset = REG_USER_MSG("CamReset", 0);
@@ -1883,8 +1883,13 @@ void CBasePlayer::UpdateStatusBar()
 	}
 }
 
-
-
+/*
+	CRASH FORT:
+*/
+namespace Cam
+{
+	bool IsInEditMode();
+}
 
 
 
@@ -1907,6 +1912,11 @@ void CBasePlayer::PreThink(void)
 	m_afButtonReleased = buttonsChanged & (~pev->button);	// The ones not down are "released"
 
 	g_pGameRules->PlayerThink( this );
+
+	if (Cam::IsInEditMode())
+	{
+		return;
+	}
 
 	if ( g_fGameOver )
 		return;         // intermission or finale
