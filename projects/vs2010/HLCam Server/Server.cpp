@@ -21,6 +21,7 @@ extern int MsgHLCAM_OnCreateTrigger;
 extern int MsgHLCAM_OnCameraRemoved;
 extern int MsgHLCAM_MapEditStateChanged;
 extern int MsgHLCAM_MapReset;
+extern int MsgHLCAM_ShowEditMenu;
 
 /*
 	General one file content because Half-Life's project structure is awful.
@@ -161,6 +162,7 @@ namespace
 		Cam::MapCamera* ActiveCamera = nullptr;
 
 		bool IsEditing = false;
+		bool IsEditMenuVisible = false;
 
 		bool NeedsToSendResetMessage = false;
 
@@ -880,6 +882,44 @@ namespace
 
 	void HLCAM_FirstPerson();
 
+	void HLCAM_OpenEditMenu()
+	{
+		if (!TheCamMap.IsEditing)
+		{
+			return;
+		}
+
+		if (TheCamMap.IsEditMenuVisible)
+		{
+			return;
+		}
+
+		TheCamMap.IsEditMenuVisible = true;
+
+		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_ShowEditMenu, nullptr, TheCamMap.LocalPlayer->pev);
+		WRITE_BYTE(TheCamMap.IsEditMenuVisible);
+		MESSAGE_END();
+	}
+
+	void HLCAM_CloseEditMenu()
+	{
+		if (!TheCamMap.IsEditing)
+		{
+			return;
+		}
+
+		if (!TheCamMap.IsEditMenuVisible)
+		{
+			return;
+		}
+
+		TheCamMap.IsEditMenuVisible = false;
+
+		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_ShowEditMenu, nullptr, TheCamMap.LocalPlayer->pev);
+		WRITE_BYTE(TheCamMap.IsEditMenuVisible);
+		MESSAGE_END();
+	}
+
 	void HLCAM_StartEdit()
 	{
 		if (TheCamMap.IsEditing)
@@ -891,7 +931,7 @@ namespace
 		TheCamMap.IsEditing = true;
 
 		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_MapEditStateChanged, nullptr, TheCamMap.LocalPlayer->pev);
-		WRITE_BYTE(TheCamMap.IsEditing);		
+		WRITE_BYTE(TheCamMap.IsEditing);
 		MESSAGE_END();
 
 		if (TheCamMap.NeedsToSendMapUpdate)
@@ -1006,6 +1046,8 @@ namespace
 
 		std::ofstream outfile(relativepath);
 		outfile.write(buffer.GetString(), buffer.GetSize());
+
+		g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Saved camera map for \"%s\"\n", TheCamMap.CurrentMapName.c_str());
 	}
 
 	void HLCAM_FirstPerson()
@@ -1041,6 +1083,9 @@ void Cam::OnInit()
 	
 	g_engfuncs.pfnAddServerCommand("hlcam_removecamera", &HLCAM_RemoveCamera);
 	g_engfuncs.pfnAddServerCommand("hlcam_removecamera_named", &HLCAM_RemoveCamera_Named);
+
+	g_engfuncs.pfnAddServerCommand("hlcam_openeditmenu", &HLCAM_OpenEditMenu);
+	g_engfuncs.pfnAddServerCommand("hlcam_closeeditmenu", &HLCAM_CloseEditMenu);
 
 	g_engfuncs.pfnAddServerCommand("hlcam_startedit", &HLCAM_StartEdit);
 	g_engfuncs.pfnAddServerCommand("hlcam_stopedit", &HLCAM_StopEdit);

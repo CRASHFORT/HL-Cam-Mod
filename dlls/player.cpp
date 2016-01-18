@@ -234,6 +234,11 @@ int MsgHLCAM_MapEditStateChanged = 0;
 */
 int MsgHLCAM_MapReset = 0;
 
+/*
+	BYTE: On or off
+*/
+int MsgHLCAM_ShowEditMenu = 0;
+
 void LinkUserMessages( void )
 {
 	// Already taken care of?
@@ -249,6 +254,7 @@ void LinkUserMessages( void )
 	MsgHLCAM_OnCameraRemoved = REG_USER_MSG("CamRem", 2);
 	MsgHLCAM_MapEditStateChanged = REG_USER_MSG("CamEdit", 1);
 	MsgHLCAM_MapReset = REG_USER_MSG("CamReset", 0);
+	MsgHLCAM_ShowEditMenu = REG_USER_MSG("CamMenu", 1);
 
 	gmsgCurWeapon = REG_USER_MSG("CurWeapon", 3);
 	gmsgGeigerRange = REG_USER_MSG("Geiger", 1);

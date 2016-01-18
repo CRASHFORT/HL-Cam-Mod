@@ -17,6 +17,7 @@ namespace
 		std::vector<Cam::ClientTrigger> Triggers;
 
 		bool InEditMode = false;
+		bool ShowsEditMenu = false;
 
 		Cam::ClientTrigger* FindTriggerByID(size_t id)
 		{
@@ -346,6 +347,17 @@ int HLCamClient_OnMapResetMessage(const char* name, int size, void* buffer)
 	return 1;
 }
 
+int HLCamClient_OnCamMenuMessage(const char* name, int size, void* buffer)
+{
+	BEGIN_READ(buffer, size);
+
+	bool shouldshow = READ_BYTE() == true;
+
+	TheCamClient.ShowsEditMenu = shouldshow;
+
+	return 1;
+}
+
 int HLCamClient_OnCameraCreatedMessage(const char* name, int size, void* buffer)
 {
 	BEGIN_READ(buffer, size);
@@ -457,6 +469,7 @@ namespace Cam
 		gEngfuncs.pfnHookUserMsg("CamRem", &HLCamClient_OnCameraRemovedMessage);
 		gEngfuncs.pfnHookUserMsg("CamEdit", &HLCamClient_OnMapEditMessage);
 		gEngfuncs.pfnHookUserMsg("CamReset", &HLCamClient_OnMapResetMessage);
+		gEngfuncs.pfnHookUserMsg("CamMenu", &HLCamClient_OnCamMenuMessage);
 	}
 
 	void VidInit()
