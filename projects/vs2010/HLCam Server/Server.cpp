@@ -714,7 +714,7 @@ namespace
 			name = g_engfuncs.pfnCmd_Argv(1);
 		}
 
-		const auto& playerpos = TheCamMap.LocalPlayer->pev->origin;
+		const auto& playerpos = TheCamMap.LocalPlayer->GetGunPosition();
 		const auto& playerang = TheCamMap.LocalPlayer->pev->v_angle;
 
 		Cam::MapCamera newcam;
