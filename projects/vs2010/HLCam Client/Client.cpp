@@ -400,6 +400,9 @@ int HLCamClient_OnTriggerCreatedMessage(const char* name, int size, void* buffer
 			trigger->Corner1[1] = READ_COORD();
 			trigger->Corner1[2] = READ_COORD();
 
+			const auto& clientpos = gEngfuncs.GetLocalPlayer()->origin;
+			clientpos.CopyToArray(trigger->Corner2);
+
 			TheCamClient.CurrentState = Cam::Shared::StateType::NeedsToCreateTriggerCorner2;
 			break;
 		}
