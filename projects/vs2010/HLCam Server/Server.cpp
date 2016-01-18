@@ -901,6 +901,21 @@ namespace
 		HLCAM_FirstPerson();
 	}
 
+	void HLCAM_StopEdit()
+	{
+		if (!TheCamMap.IsEditing)
+		{
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Not editing\n");
+			return;
+		}
+
+		TheCamMap.IsEditing = false;
+
+		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_MapEditStateChanged, nullptr, TheCamMap.LocalPlayer->pev);
+		WRITE_BYTE(TheCamMap.IsEditing);
+		MESSAGE_END();
+	}
+
 	void HLCAM_SaveMap()
 	{
 		if (!TheCamMap.IsEditing)
@@ -914,12 +929,6 @@ namespace
 			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
 			return;
 		}
-
-		TheCamMap.IsEditing = false;
-
-		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_MapEditStateChanged, nullptr, TheCamMap.LocalPlayer->pev);
-		WRITE_BYTE(TheCamMap.IsEditing);
-		MESSAGE_END();
 	}
 
 	void HLCAM_FirstPerson()
@@ -957,6 +966,7 @@ void Cam::OnInit()
 	g_engfuncs.pfnAddServerCommand("hlcam_removecamera_named", &HLCAM_RemoveCamera_Named);
 
 	g_engfuncs.pfnAddServerCommand("hlcam_startedit", &HLCAM_StartEdit);
+	g_engfuncs.pfnAddServerCommand("hlcam_stopedit", &HLCAM_StopEdit);
 
 	g_engfuncs.pfnAddServerCommand("hlcam_firstperson", &HLCAM_FirstPerson);
 	g_engfuncs.pfnAddServerCommand("hlcam_savemap", &HLCAM_SaveMap);
