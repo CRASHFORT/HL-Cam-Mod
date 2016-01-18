@@ -948,6 +948,22 @@ void Cam::OnPlayerPreUpdate(CBasePlayer* player)
 					linkedcam->TargetCamera = static_cast<CTriggerCamera*>(newent);
 					linkedcam->TargetCamera->IsHLCam = true;
 				}
+
+				Vector corner1 = creationtrig->Corner1;
+				Vector corner2 = creationtrig->Corner2;
+
+				Vector minpos;
+				minpos.x = fmin(corner1.x, corner2.x);
+				minpos.y = fmin(corner1.y, corner2.y);
+				minpos.z = fmin(corner1.z, corner2.z);
+
+				Vector maxpos;
+				maxpos.x = fmax(corner1.x, corner2.x);
+				maxpos.y = fmax(corner1.y, corner2.y);
+				maxpos.z = fmax(corner1.z, corner2.z);
+
+				minpos.CopyToArray(creationtrig->MinPos);
+				maxpos.CopyToArray(creationtrig->MaxPos);
 			}
 		}
 	}
@@ -965,7 +981,7 @@ void Cam::OnPlayerPostUpdate(CBasePlayer* player)
 
 	for (auto& trig : TheCamMap.Triggers)
 	{
-		if (Utility::IsBoxIntersectingBox(playerposmin, playerposmax, trig.Corner1, trig.Corner2))
+		if (Utility::IsBoxIntersectingBox(playerposmin, playerposmax, trig.MinPos, trig.MaxPos))
 		{
 			PlayerEnterTrigger(trig);
 		}

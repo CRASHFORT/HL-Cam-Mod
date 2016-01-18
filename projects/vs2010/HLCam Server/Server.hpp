@@ -110,6 +110,9 @@ namespace Cam
 
 		float Corner1[3] = {0};
 		float Corner2[3] = {0};
+
+		float MaxPos[3];
+		float MinPos[3];
 		
 		/*
 			This trigger has already been activated and
