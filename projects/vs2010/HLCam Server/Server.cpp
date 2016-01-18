@@ -174,6 +174,83 @@ namespace
 		size_t NextTriggerID = 0;
 		size_t NextCameraID = 0;
 
+		bool NeedsToSendMapUpdate = false;
+
+		void SendMapUpdate()
+		{
+			if (!Cameras.empty())
+			{
+				for (const auto& cam : Cameras)
+				{
+					MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCameraCreated, nullptr, LocalPlayer->pev);
+
+					bool isnamed = cam.TriggerType == Cam::CameraTriggerType::ByName;
+
+					WRITE_SHORT(cam.ID);
+					WRITE_BYTE(isnamed);
+
+					WRITE_COORD(cam.Position[0]);
+					WRITE_COORD(cam.Position[1]);
+					WRITE_COORD(cam.Position[2]);
+
+					WRITE_COORD(cam.Angle[0]);
+					WRITE_COORD(cam.Angle[1]);
+					WRITE_COORD(cam.Angle[2]);
+
+					if (isnamed)
+					{
+						WRITE_STRING(cam.Name);
+					}
+
+					MESSAGE_END();
+				}
+			}
+
+			if (!Triggers.empty())
+			{
+				for (const auto& trig : Triggers)
+				{
+					/*
+						Part 0
+					*/
+					MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCreateTrigger, nullptr, LocalPlayer->pev);
+
+					WRITE_BYTE(0);
+
+					WRITE_SHORT(trig.ID);
+					WRITE_SHORT(trig.LinkedCameraID);
+
+					MESSAGE_END();
+
+					/*
+						Part 1
+					*/
+					MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCreateTrigger, nullptr, LocalPlayer->pev);
+
+					WRITE_BYTE(1);
+
+					WRITE_COORD(trig.Corner1[0]);
+					WRITE_COORD(trig.Corner1[1]);
+					WRITE_COORD(trig.Corner1[2]);
+
+					MESSAGE_END();
+
+					/*
+						Part 2
+					*/
+					MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCreateTrigger, nullptr, LocalPlayer->pev);
+
+					WRITE_BYTE(2);
+
+					WRITE_COORD(trig.Corner2[0]);
+					WRITE_COORD(trig.Corner2[1]);
+					WRITE_COORD(trig.Corner2[2]);
+
+					MESSAGE_END();
+				}
+			}
+		}
+
 		Cam::MapTrigger* FindTriggerByID(size_t id)
 		{
 			for (auto& trig : Triggers)
@@ -544,6 +621,7 @@ namespace
 		
 		TheCamMap.CurrentMapName = name;
 		LoadMapDataFromFile(TheCamMap.CurrentMapName);
+		TheCamMap.NeedsToSendMapUpdate = true;
 	}
 
 	void ActivateNewCamera(Cam::MapTrigger& trig)
@@ -828,6 +906,12 @@ namespace
 		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_MapEditStateChanged, nullptr, TheCamMap.LocalPlayer->pev);
 		WRITE_BYTE(TheCamMap.IsEditing);		
 		MESSAGE_END();
+
+		if (TheCamMap.NeedsToSendMapUpdate)
+		{
+			TheCamMap.SendMapUpdate();
+			TheCamMap.NeedsToSendMapUpdate = false;
+		}
 
 		HLCAM_FirstPerson();
 	}
