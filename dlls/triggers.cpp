@@ -2220,6 +2220,8 @@ void CTriggerCamera::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 		{
 			m_state = 0;
 			SetThink(nullptr);
+
+			g_engfuncs.pfnSetView(m_hPlayer->edict(), m_hPlayer->edict());
 			return;
 		}
 	}

@@ -876,8 +876,6 @@ namespace
 			Setting 0 restores fov to player preference
 		*/
 		TheCamMap.LocalPlayer->pev->fov = TheCamMap.LocalPlayer->m_iFOV = 0;
-
-		g_engfuncs.pfnSetView(TheCamMap.LocalPlayer->edict(), TheCamMap.LocalPlayer->edict());
 	}
 }
 
