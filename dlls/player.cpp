@@ -1913,11 +1913,6 @@ void CBasePlayer::PreThink(void)
 
 	g_pGameRules->PlayerThink( this );
 
-	if (Cam::IsInEditMode())
-	{
-		return;
-	}
-
 	if ( g_fGameOver )
 		return;         // intermission or finale
 
@@ -3900,19 +3895,29 @@ void CBasePlayer::ItemPreFrame()
 	/*
 		CRASH FORT:
 	*/
-	if (!AimGuide)
+	if (!Cam::IsInEditMode())
 	{
-		AimGuide = Cam::Entity::CamAimGuide::CreateSpot();
+		if (!AimGuide)
+		{
+			AimGuide = Cam::Entity::CamAimGuide::CreateSpot();
+		}
+
+		AimGuide->pev->effects &= ~EF_NODRAW;
+
+		UTIL_MakeVectors(pev->v_angle);
+		Vector startpos = GetGunPosition();;
+		Vector aimvec = gpGlobals->v_forward;
+
+		TraceResult trace;
+		UTIL_TraceLine(startpos, startpos + aimvec * 8192, dont_ignore_monsters, ENT(pev), &trace);
+
+		UTIL_SetOrigin(AimGuide->pev, trace.vecEndPos);
 	}
 
-	UTIL_MakeVectors(pev->v_angle);
-	Vector startpos = GetGunPosition();;
-	Vector aimvec = gpGlobals->v_forward;
-
-	TraceResult trace;
-	UTIL_TraceLine(startpos, startpos + aimvec * 8192, dont_ignore_monsters, ENT(pev), &trace);
-
-	UTIL_SetOrigin(AimGuide->pev, trace.vecEndPos);
+	else
+	{
+		AimGuide->pev->effects |= EF_NODRAW;
+	}
 
 #if defined( CLIENT_WEAPONS )
     if ( m_flNextAttack > 0 )
