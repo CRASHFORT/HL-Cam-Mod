@@ -458,7 +458,7 @@ namespace Cam
 		Tri::VidInit();
 	}
 
-	void OnRedraw()
+	void OnUpdate()
 	{
 		if (TheCamClient.CurrentState == Cam::Shared::StateType::NeedsToCreateTriggerCorner2)
 		{
