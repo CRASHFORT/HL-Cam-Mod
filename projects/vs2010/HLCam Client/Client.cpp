@@ -340,6 +340,8 @@ int HLCamClient_OnMapResetMessage(const char* name, int size, void* buffer)
 		Probably something more exciting later.
 	*/
 	TheCamClient = HLCamClient();
+
+	gHUD.HLCamHUD.m_iFlags &= ~HUD_ACTIVE;
 	
 	return 1;
 }
