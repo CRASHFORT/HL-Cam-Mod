@@ -574,6 +574,7 @@ namespace
 
 			trig.Active = true;
 			TheCamMap.ActiveTrigger = &trig;
+			TheCamMap.ActiveCamera = TheCamMap.GetLinkedCamera(trig);
 
 			ActivateNewCamera(trig);
 		}
@@ -796,6 +797,8 @@ namespace
 		TheCamMap.RemoveCamera(targetcam);
 	}
 
+	void HLCAM_FirstPerson();
+
 	void HLCAM_StartEdit()
 	{
 		if (TheCamMap.IsEditing)
@@ -809,6 +812,8 @@ namespace
 		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_MapEditStateChanged, nullptr, TheCamMap.LocalPlayer->pev);
 		WRITE_BYTE(TheCamMap.IsEditing);		
 		MESSAGE_END();
+
+		HLCAM_FirstPerson();
 	}
 
 	void HLCAM_SaveMap()
@@ -834,7 +839,29 @@ namespace
 
 	void HLCAM_FirstPerson()
 	{
+		if (!TheCamMap.LocalPlayer)
+		{
+			return;
+		}
 
+		if (TheCamMap.ActiveTrigger)
+		{
+			TheCamMap.ActiveTrigger->Active = false;
+			TheCamMap.ActiveTrigger = nullptr;
+		}
+
+		if (TheCamMap.ActiveCamera)
+		{
+			TheCamMap.ActiveCamera->TargetCamera->Use(nullptr, nullptr, USE_OFF, 0.0f);
+			TheCamMap.ActiveCamera = nullptr;
+		}
+
+		/*
+			Setting 0 restores fov to player preference
+		*/
+		TheCamMap.LocalPlayer->pev->fov = TheCamMap.LocalPlayer->m_iFOV = 0;
+
+		g_engfuncs.pfnSetView(TheCamMap.LocalPlayer->edict(), TheCamMap.LocalPlayer->edict());
 	}
 }
 
