@@ -162,7 +162,6 @@ namespace
 		Cam::MapCamera* ActiveCamera = nullptr;
 
 		bool IsEditing = false;
-		bool IsEditMenuVisible = false;
 
 		bool NeedsToSendResetMessage = false;
 
@@ -882,44 +881,6 @@ namespace
 
 	void HLCAM_FirstPerson();
 
-	void HLCAM_OpenEditMenu()
-	{
-		if (!TheCamMap.IsEditing)
-		{
-			return;
-		}
-
-		if (TheCamMap.IsEditMenuVisible)
-		{
-			return;
-		}
-
-		TheCamMap.IsEditMenuVisible = true;
-
-		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_ShowEditMenu, nullptr, TheCamMap.LocalPlayer->pev);
-		WRITE_BYTE(TheCamMap.IsEditMenuVisible);
-		MESSAGE_END();
-	}
-
-	void HLCAM_CloseEditMenu()
-	{
-		if (!TheCamMap.IsEditing)
-		{
-			return;
-		}
-
-		if (!TheCamMap.IsEditMenuVisible)
-		{
-			return;
-		}
-
-		TheCamMap.IsEditMenuVisible = false;
-
-		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_ShowEditMenu, nullptr, TheCamMap.LocalPlayer->pev);
-		WRITE_BYTE(TheCamMap.IsEditMenuVisible);
-		MESSAGE_END();
-	}
-
 	void HLCAM_StartEdit()
 	{
 		if (TheCamMap.IsEditing)
@@ -1083,9 +1044,6 @@ void Cam::OnInit()
 	
 	g_engfuncs.pfnAddServerCommand("hlcam_removecamera", &HLCAM_RemoveCamera);
 	g_engfuncs.pfnAddServerCommand("hlcam_removecamera_named", &HLCAM_RemoveCamera_Named);
-
-	g_engfuncs.pfnAddServerCommand("hlcam_openeditmenu", &HLCAM_OpenEditMenu);
-	g_engfuncs.pfnAddServerCommand("hlcam_closeeditmenu", &HLCAM_CloseEditMenu);
 
 	g_engfuncs.pfnAddServerCommand("hlcam_startedit", &HLCAM_StartEdit);
 	g_engfuncs.pfnAddServerCommand("hlcam_stopedit", &HLCAM_StopEdit);
