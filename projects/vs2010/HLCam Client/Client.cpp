@@ -432,6 +432,11 @@ int HLCamClient_OnCameraRemovedMessage(const char* name, int size, void* buffer)
 	return 1;
 }
 
+namespace Tri
+{
+	void VidInit();
+}
+
 namespace Cam
 {
 	void Init()
@@ -447,7 +452,7 @@ namespace Cam
 
 	void VidInit()
 	{
-		
+		Tri::VidInit();
 	}
 
 	bool InEditMode()

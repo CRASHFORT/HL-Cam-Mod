@@ -29,6 +29,21 @@ extern IParticleMan *g_pParticleMan;
 
 namespace
 {
+	HSPRITE WhiteSprite = 0;
+	model_s* WhiteSpriteModel;
+}
+
+namespace Tri
+{
+	void VidInit()
+	{
+		WhiteSprite = gEngfuncs.pfnSPR_Load("sprites\\white.spr");
+		WhiteSpriteModel = const_cast<model_s*>(gEngfuncs.GetSpritePointer(WhiteSprite));
+	}
+}
+
+namespace
+{
 	/*
 		    3---7
 		   /|  /|
@@ -118,17 +133,17 @@ namespace
 		/*
 			Bars between
 		*/
-		vertexfunc(&points[0].x);
-		vertexfunc(&points[2].x);
+		vertexfunc(points[0]);
+		vertexfunc(points[2]);
 
-		vertexfunc(&points[1].x);
-		vertexfunc(&points[3].x);
+		vertexfunc(points[1]);
+		vertexfunc(points[3]);
 
-		vertexfunc(&points[5].x);
-		vertexfunc(&points[7].x);
+		vertexfunc(points[5]);
+		vertexfunc(points[7]);
 
-		vertexfunc(&points[4].x);
-		vertexfunc(&points[6].x);
+		vertexfunc(points[4]);
+		vertexfunc(points[6]);
 
 		gEngfuncs.pTriAPI->End();
 	}
@@ -214,11 +229,36 @@ void CL_DLLEXPORT HUD_DrawNormalTriangles( void )
 //	RecClDrawNormalTriangles();
 
 	gHUD.m_Spectator.DrawOverview();
+}
+
+#if defined( _TFC )
+void RunEventList( void );
+#endif
+
+/*
+=================
+HUD_DrawTransparentTriangles
+
+Render any triangles with transparent rendermode needs here
+=================
+*/
+void CL_DLLEXPORT HUD_DrawTransparentTriangles( void )
+{
+//	RecClDrawTransparentTriangles();
+
+#if defined( _TFC )
+	RunEventList();
+#endif
+
+	if ( g_pParticleMan )
+		 g_pParticleMan->Update();
 
 	if (Cam::InEditMode())
 	{
 		const auto& triggers = Cam::GetAllTriggers();
 		const auto& cameras = Cam::GetAllCameras();
+
+		gEngfuncs.pTriAPI->SpriteTexture(WhiteSpriteModel, 0);
 
 		for (const auto& trig : triggers)
 		{
@@ -236,12 +276,17 @@ void CL_DLLEXPORT HUD_DrawNormalTriangles( void )
 
 			gEngfuncs.pTriAPI->RenderMode(kRenderTransAlpha);
 			gEngfuncs.pTriAPI->Color4f(0, 1, 0, 0.2);
+			
 			DrawBox(corner1, corner2);
 
 			gEngfuncs.pTriAPI->RenderMode(kRenderNormal);
 			gEngfuncs.pTriAPI->Color4f(0, 1, 0, 1);
+			
 			DrawWireframeBox(corner1, corner2);
 		}
+
+		gEngfuncs.pTriAPI->RenderMode(kRenderNormal);
+		gEngfuncs.pTriAPI->Color4f(1, 0, 0, 1);
 
 		for (const auto& cam : cameras)
 		{
@@ -267,9 +312,6 @@ void CL_DLLEXPORT HUD_DrawNormalTriangles( void )
 			maxpos.x += camboxsize;
 			maxpos.y += camboxsize;
 			maxpos.z += camboxsize;
-
-			gEngfuncs.pTriAPI->RenderMode(kRenderNormal);
-			gEngfuncs.pTriAPI->Color4f(1, 0, 0, 1);
 
 			/*
 				Starting box
@@ -297,36 +339,10 @@ void CL_DLLEXPORT HUD_DrawNormalTriangles( void )
 			maxpos.y += camboxsize;
 			maxpos.z += camboxsize;
 
-			gEngfuncs.pTriAPI->RenderMode(kRenderNormal);
-			gEngfuncs.pTriAPI->Color4f(1, 0, 0, 1);
-
 			/*
 				End point wire box
 			*/
 			DrawWireframeBox(maxpos, minpos);
 		}
 	}
-}
-
-#if defined( _TFC )
-void RunEventList( void );
-#endif
-
-/*
-=================
-HUD_DrawTransparentTriangles
-
-Render any triangles with transparent rendermode needs here
-=================
-*/
-void CL_DLLEXPORT HUD_DrawTransparentTriangles( void )
-{
-//	RecClDrawTransparentTriangles();
-
-#if defined( _TFC )
-	RunEventList();
-#endif
-
-	if ( g_pParticleMan )
-		 g_pParticleMan->Update();
 }
