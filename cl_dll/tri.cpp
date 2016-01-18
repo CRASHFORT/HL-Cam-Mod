@@ -23,6 +23,186 @@
 extern IParticleMan *g_pParticleMan;
 
 /*
+	CRASH FORT:
+*/
+#include "HLCam Client\Client.hpp"
+
+namespace
+{
+	/*
+		    3---7
+		   /|  /|
+		  / | / |
+		 2---6  |
+		 |  1|--5
+		 | / | /
+		 |/  |/
+		 0---4
+
+		 From Source Engine 2007
+	*/
+	void PointsFromBox(const Vector& mins, const Vector& maxs, Vector* points)
+	{
+		points[0][0] = mins[0];
+		points[0][1] = mins[1];
+		points[0][2] = mins[2];
+
+		points[1][0] = mins[0];
+		points[1][1] = mins[1];
+		points[1][2] = maxs[2];
+
+		points[2][0] = mins[0];
+		points[2][1] = maxs[1];
+		points[2][2] = mins[2];
+
+		points[3][0] = mins[0];
+		points[3][1] = maxs[1];
+		points[3][2] = maxs[2];
+
+		points[4][0] = maxs[0];
+		points[4][1] = mins[1];
+		points[4][2] = mins[2];
+
+		points[5][0] = maxs[0];
+		points[5][1] = mins[1];
+		points[5][2] = maxs[2];
+
+		points[6][0] = maxs[0];
+		points[6][1] = maxs[1];
+		points[6][2] = mins[2];
+
+		points[7][0] = maxs[0];
+		points[7][1] = maxs[1];
+		points[7][2] = maxs[2];
+	}
+
+	void DrawWireframeBox(const Vector& posmax, const Vector& posmin)
+	{
+		Vector points[8];
+		PointsFromBox(posmin, posmax, points);
+
+		auto vertexfunc = gEngfuncs.pTriAPI->Vertex3fv;
+
+		gEngfuncs.pTriAPI->Begin(TRI_LINES);
+
+		/*
+			Bottom
+		*/
+		vertexfunc(points[0]);
+		vertexfunc(points[1]);
+
+		vertexfunc(points[1]);
+		vertexfunc(points[5]);
+
+		vertexfunc(points[5]);
+		vertexfunc(points[4]);
+
+		vertexfunc(points[4]);
+		vertexfunc(points[0]);
+
+		/*
+			Top
+		*/
+		vertexfunc(points[2]);
+		vertexfunc(points[3]);
+
+		vertexfunc(points[3]);
+		vertexfunc(points[7]);
+
+		vertexfunc(points[7]);
+		vertexfunc(points[6]);
+
+		vertexfunc(points[6]);
+		vertexfunc(points[2]);
+
+		/*
+			Bars between
+		*/
+		vertexfunc(&points[0].x);
+		vertexfunc(&points[2].x);
+
+		vertexfunc(&points[1].x);
+		vertexfunc(&points[3].x);
+
+		vertexfunc(&points[5].x);
+		vertexfunc(&points[7].x);
+
+		vertexfunc(&points[4].x);
+		vertexfunc(&points[6].x);
+
+		gEngfuncs.pTriAPI->End();
+	}
+	
+	void DrawBox(const Vector& posmax, const Vector& posmin)
+	{
+		Vector points[8];
+		PointsFromBox(posmin, posmax, points);
+
+		auto vertexfunc = gEngfuncs.pTriAPI->Vertex3fv;
+
+		gEngfuncs.pTriAPI->Begin(TRI_QUADS);
+
+		/*
+			Bottom
+		*/
+		vertexfunc(points[0]);
+		vertexfunc(points[4]);
+		vertexfunc(points[5]);
+		vertexfunc(points[1]);
+
+		/*
+			Top
+		*/
+		vertexfunc(points[2]);
+		vertexfunc(points[6]);
+		vertexfunc(points[7]);
+		vertexfunc(points[3]);
+
+		/*
+			Left
+		*/
+		vertexfunc(points[0]);
+		vertexfunc(points[1]);
+		vertexfunc(points[3]);
+		vertexfunc(points[2]);
+
+		/*
+			Right
+		*/
+		vertexfunc(points[4]);
+		vertexfunc(points[5]);
+		vertexfunc(points[7]);
+		vertexfunc(points[6]);
+
+		/*
+			Front
+		*/
+		vertexfunc(points[0]);
+		vertexfunc(points[4]);
+		vertexfunc(points[6]);
+		vertexfunc(points[2]);
+
+		/*
+			Back
+		*/
+		vertexfunc(points[1]);
+		vertexfunc(points[5]);
+		vertexfunc(points[7]);
+		vertexfunc(points[3]);
+
+		gEngfuncs.pTriAPI->End();
+	}
+
+	void DrawLine(const Vector& pos1, const Vector& pos2)
+	{
+		gEngfuncs.pTriAPI->Begin(TRI_LINES);
+		gEngfuncs.pTriAPI->Vertex3f(pos1.x, pos1.y, pos1.z);
+		gEngfuncs.pTriAPI->Vertex3f(pos2.x, pos2.y, pos2.z);
+		gEngfuncs.pTriAPI->End();
+	}
+}
+
+/*
 =================
 HUD_DrawNormalTriangles
 
@@ -34,6 +214,98 @@ void CL_DLLEXPORT HUD_DrawNormalTriangles( void )
 //	RecClDrawNormalTriangles();
 
 	gHUD.m_Spectator.DrawOverview();
+
+	if (Cam::InEditMode())
+	{
+		const auto& triggers = Cam::GetAllTriggers();
+		const auto& cameras = Cam::GetAllCameras();
+
+		for (const auto& trig : triggers)
+		{
+			Vector corner1;
+			corner1.x = trig.Corner1[0];
+			corner1.y = trig.Corner1[1];
+			corner1.z = trig.Corner1[2];
+
+			Vector corner2;
+			corner2.x = trig.Corner2[0];
+			corner2.y = trig.Corner2[1];
+			corner2.z = trig.Corner2[2];
+
+			gEngfuncs.pTriAPI->CullFace(TRICULLSTYLE::TRI_NONE);
+
+			gEngfuncs.pTriAPI->RenderMode(kRenderTransAlpha);
+			gEngfuncs.pTriAPI->Color4f(0, 1, 0, 0.2);
+			DrawBox(corner1, corner2);
+
+			gEngfuncs.pTriAPI->RenderMode(kRenderNormal);
+			gEngfuncs.pTriAPI->Color4f(0, 1, 0, 1);
+			DrawWireframeBox(corner1, corner2);
+		}
+
+		for (const auto& cam : cameras)
+		{
+			Vector pos;
+			pos.x = cam.Position[0];
+			pos.y = cam.Position[1];
+			pos.z = cam.Position[2];
+		
+			Vector angles;
+			angles.x = cam.Angle[0];
+			angles.y = cam.Angle[1];
+			angles.z = cam.Angle[2];
+
+			Vector minpos = pos;
+			Vector maxpos = pos;
+
+			const auto camboxsize = 4;
+
+			minpos.x -= camboxsize;
+			minpos.y -= camboxsize;
+			minpos.z -= camboxsize;
+
+			maxpos.x += camboxsize;
+			maxpos.y += camboxsize;
+			maxpos.z += camboxsize;
+
+			gEngfuncs.pTriAPI->RenderMode(kRenderNormal);
+			gEngfuncs.pTriAPI->Color4f(1, 0, 0, 1);
+
+			/*
+				Starting box
+			*/
+			DrawBox(maxpos, minpos);
+			
+			Vector forward;
+			gEngfuncs.pfnAngleVectors(angles, forward, nullptr, nullptr);
+			VectorScale(forward, 128, forward);
+			VectorAdd(forward, pos, forward);
+			
+			/*
+				Guide angle line
+			*/
+			DrawLine(pos, forward);
+
+			minpos = forward;
+			maxpos = forward;
+
+			minpos.x -= camboxsize;
+			minpos.y -= camboxsize;
+			minpos.z -= camboxsize;
+
+			maxpos.x += camboxsize;
+			maxpos.y += camboxsize;
+			maxpos.z += camboxsize;
+
+			gEngfuncs.pTriAPI->RenderMode(kRenderNormal);
+			gEngfuncs.pTriAPI->Color4f(1, 0, 0, 1);
+
+			/*
+				End point wire box
+			*/
+			DrawWireframeBox(maxpos, minpos);
+		}
+	}
 }
 
 #if defined( _TFC )

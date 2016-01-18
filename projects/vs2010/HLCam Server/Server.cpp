@@ -873,8 +873,13 @@ bool Cam::IsInEditMode()
 	return TheCamMap.IsEditing;
 }
 
-void Cam::OnPlayerPreUpdate(const CBasePlayer* player)
+void Cam::OnPlayerPreUpdate(CBasePlayer* player)
 {
+	if (!TheCamMap.LocalPlayer)
+	{
+		TheCamMap.LocalPlayer = player;
+	}
+
 	if (TheCamMap.NeedsToSendResetMessage)
 	{
 		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_MapReset, nullptr, TheCamMap.LocalPlayer->pev);
@@ -948,10 +953,15 @@ void Cam::OnPlayerPreUpdate(const CBasePlayer* player)
 	}
 }
 
-void Cam::OnPlayerPostUpdate(const CBasePlayer* player)
+void Cam::OnPlayerPostUpdate(CBasePlayer* player)
 {
-	const auto& playerposmax = player->pev->absmax;
-	const auto& playerposmin = player->pev->absmin;
+	if (IsInEditMode())
+	{
+		return;
+	}
+
+	const auto& playerposmax = TheCamMap.LocalPlayer->pev->absmax;
+	const auto& playerposmin = TheCamMap.LocalPlayer->pev->absmin;
 
 	for (auto& trig : TheCamMap.Triggers)
 	{

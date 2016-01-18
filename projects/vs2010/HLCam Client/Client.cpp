@@ -444,4 +444,24 @@ namespace Cam
 		gEngfuncs.pfnHookUserMsg("CamEdit", &HLCamClient_OnMapEditMessage);
 		gEngfuncs.pfnHookUserMsg("CamReset", &HLCamClient_OnMapResetMessage);
 	}
+
+	void VidInit()
+	{
+		
+	}
+
+	bool InEditMode()
+	{
+		return TheCamClient.InEditMode;
+	}
+
+	const std::vector<ClientTrigger>& GetAllTriggers()
+	{
+		return TheCamClient.Triggers;
+	}
+
+	const std::vector<ClientCamera>& GetAllCameras()
+	{
+		return TheCamClient.Cameras;
+	}
 }

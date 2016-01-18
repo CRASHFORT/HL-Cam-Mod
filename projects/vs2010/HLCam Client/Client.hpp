@@ -1,8 +1,11 @@
 #pragma once
+#include <vector>
 
 namespace Cam
 {
 	void Init();
+	void VidInit();
+	bool InEditMode();
 
 	/*
 		Required data to render a client
@@ -33,4 +36,7 @@ namespace Cam
 		float Corner1[3] = {0};
 		float Corner2[3] = {0};
 	};
+
+	const std::vector<ClientTrigger>& GetAllTriggers();
+	const std::vector<ClientCamera>& GetAllCameras();
 }

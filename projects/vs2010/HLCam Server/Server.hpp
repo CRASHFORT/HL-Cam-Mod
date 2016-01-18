@@ -22,8 +22,8 @@ namespace Cam
 	const char* GetLastMap();
 	bool IsInEditMode();
 
-	void OnPlayerPreUpdate(const CBasePlayer* player);
-	void OnPlayerPostUpdate(const CBasePlayer* player);
+	void OnPlayerPreUpdate(CBasePlayer* player);
+	void OnPlayerPostUpdate(CBasePlayer* player);
 
 	/*
 		Different ways how camera angles are transformed.

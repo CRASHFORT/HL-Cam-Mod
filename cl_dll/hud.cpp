@@ -286,6 +286,7 @@ int __MsgFunc_AllowSpec(const char *pszName, int iSize, void *pbuf)
 namespace Cam
 {
 	void Init();
+	void VidInit();
 }
 
 // This is called every time the DLL is loaded
@@ -531,7 +532,7 @@ void CHud :: VidInit( void )
 	/*
 		CRASH FORT:
 	*/
-	HLCamHUD.VidInit();
+	Cam::VidInit();
 
 	GetClientVoiceMgr()->VidInit();
 }
