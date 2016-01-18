@@ -13,6 +13,8 @@
 #include "triggers.h"
 
 #include "rapidjson\document.h"
+#include "rapidjson\stringbuffer.h"
+#include "rapidjson\prettywriter.h"
 
 extern int MsgHLCAM_OnCameraCreated;
 extern int MsgHLCAM_OnCreateTrigger;
@@ -277,12 +279,12 @@ namespace
 			return nullptr;
 		}
 
-		Cam::MapCamera* GetLinkedCamera(Cam::MapTrigger& trigger)
+		Cam::MapCamera* GetLinkedCamera(const Cam::MapTrigger& trigger)
 		{
 			return FindCameraByID(trigger.LinkedCameraID);
 		}
 
-		Cam::MapTrigger* GetLinkedTrigger(Cam::MapCamera& camera)
+		Cam::MapTrigger* GetLinkedTrigger(const Cam::MapCamera& camera)
 		{
 			return FindTriggerByID(camera.LinkedTriggerID);
 		}
@@ -929,6 +931,81 @@ namespace
 			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
 			return;
 		}
+
+		rapidjson::Document document;
+		document.SetObject();
+
+		auto& alloc = document.GetAllocator();
+
+		rapidjson::Value root(rapidjson::kArrayType);
+
+		for (const auto& cam : TheCamMap.Cameras)
+		{
+			rapidjson::Value thisvalue(rapidjson::kObjectType);
+
+			Cam::MapTrigger* linkedtrig = nullptr;
+
+			if (cam.TriggerType == Cam::CameraTriggerType::ByUserTrigger)
+			{
+				linkedtrig = TheCamMap.GetLinkedTrigger(cam);
+
+				rapidjson::Value trigval(rapidjson::kObjectType);
+
+				rapidjson::Value corn1val(rapidjson::kArrayType);
+				rapidjson::Value corn2val(rapidjson::kArrayType);
+
+				corn1val.PushBack(linkedtrig->Corner1[0], alloc);
+				corn1val.PushBack(linkedtrig->Corner1[1], alloc);
+				corn1val.PushBack(linkedtrig->Corner1[2], alloc);
+
+				corn2val.PushBack(linkedtrig->Corner2[0], alloc);
+				corn2val.PushBack(linkedtrig->Corner2[1], alloc);
+				corn2val.PushBack(linkedtrig->Corner2[2], alloc);
+
+				trigval.AddMember("Corner1", std::move(corn1val), alloc);
+				trigval.AddMember("Corner2", std::move(corn2val), alloc);
+
+				thisvalue.AddMember("Trigger", std::move(trigval), alloc);
+			}
+
+			rapidjson::Value cameraval(rapidjson::kObjectType);
+
+			rapidjson::Value camposval(rapidjson::kArrayType);
+			rapidjson::Value camangval(rapidjson::kArrayType);
+
+			camposval.PushBack(cam.Position[0], alloc);
+			camposval.PushBack(cam.Position[1], alloc);
+			camposval.PushBack(cam.Position[2], alloc);
+
+			camangval.PushBack(cam.Angle[0], alloc);
+			camangval.PushBack(cam.Angle[1], alloc);
+			camangval.PushBack(cam.Angle[2], alloc);
+
+			/*
+				For now these are all settings that can be saved.
+				Eventually you can hopefully set FOV and camera follow type etc
+				in game through vgui or something.
+			*/
+
+			cameraval.AddMember("Position", std::move(camposval), alloc);
+			cameraval.AddMember("Angle", std::move(camangval), alloc);
+
+			thisvalue.AddMember("Camera", std::move(cameraval), alloc);
+
+			root.PushBack(std::move(thisvalue), alloc);
+		}
+
+		document.AddMember("Entities", std::move(root), alloc);
+
+		rapidjson::StringBuffer buffer;
+		rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+		
+		document.Accept(writer);
+
+		std::string relativepath = "cammod\\MapCams\\" + TheCamMap.CurrentMapName + ".json";
+
+		std::ofstream outfile(relativepath);
+		outfile.write(buffer.GetString(), buffer.GetSize());
 	}
 
 	void HLCAM_FirstPerson()
