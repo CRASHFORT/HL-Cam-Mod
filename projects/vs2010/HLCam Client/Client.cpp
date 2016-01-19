@@ -20,6 +20,9 @@ namespace
 		Cam::ClientTrigger* CurrentHighlightTrigger = nullptr;
 		Cam::ClientCamera* CurrentHighlightCamera = nullptr;
 
+		Cam::ClientTrigger* CurrentSelectionTrigger = nullptr;
+		Cam::ClientCamera* CurrentSelectionCamera = nullptr;
+
 		Cam::ClientTrigger* FindTriggerByID(size_t id)
 		{
 			for (auto& trig : Triggers)
@@ -468,14 +471,37 @@ int HLCamClient_OnItemHighlightedEndMessage(const char* name, int size, void* bu
 {
 	BEGIN_READ(buffer, size);
 
-	if (TheCamClient.CurrentHighlightCamera)
-	{
-		
-	}
-
-	else if (TheCamClient.CurrentHighlightTrigger)
+	if (TheCamClient.CurrentHighlightTrigger)
 	{
 		TheCamClient.CurrentHighlightTrigger->Highlighted = false;
+	}
+
+	return 1;
+}
+
+int HLCamClient_ItemSelectedStart(const char* name, int size, void* buffer)
+{
+	BEGIN_READ(buffer, size);
+
+	auto type = READ_BYTE();
+	size_t itemid = READ_SHORT();
+
+	if (type == 0)
+	{
+		TheCamClient.CurrentSelectionTrigger = TheCamClient.FindTriggerByID(itemid);
+		TheCamClient.CurrentSelectionTrigger->Selected = true;
+	}
+
+	return 1;
+}
+
+int HLCamClient_ItemSelectedEnd(const char* name, int size, void* buffer)
+{
+	BEGIN_READ(buffer, size);
+
+	if (TheCamClient.CurrentSelectionTrigger)
+	{
+		TheCamClient.CurrentSelectionTrigger->Selected = false;
 	}
 
 	return 1;
@@ -497,8 +523,12 @@ namespace Cam
 		gEngfuncs.pfnHookUserMsg("CamRem", &HLCamClient_OnCameraRemovedMessage);
 		gEngfuncs.pfnHookUserMsg("CamEdit", &HLCamClient_OnMapEditMessage);
 		gEngfuncs.pfnHookUserMsg("CamReset", &HLCamClient_OnMapResetMessage);
+		
 		gEngfuncs.pfnHookUserMsg("CamHT1", &HLCamClient_OnItemHighlightedStartMessage);
 		gEngfuncs.pfnHookUserMsg("CamHT2", &HLCamClient_OnItemHighlightedEndMessage);
+
+		gEngfuncs.pfnHookUserMsg("CamSE1", &HLCamClient_ItemSelectedStart);
+		gEngfuncs.pfnHookUserMsg("CamSE2", &HLCamClient_ItemSelectedEnd);
 	}
 
 	void VidInit()

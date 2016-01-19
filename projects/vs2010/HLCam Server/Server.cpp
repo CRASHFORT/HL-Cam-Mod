@@ -237,6 +237,12 @@ namespace
 		int CurrentHighlightTriggerID = -1;
 		int CurrentHighlightCameraID = -1;
 
+		/*
+			Selections for item editing
+		*/
+		int CurrentSelectionTriggerID = -1;
+		int CurrentSelectionCameraID = -1;
+
 		void UnHighlightAll()
 		{
 			if (CurrentHighlightCameraID != -1 || CurrentHighlightTriggerID != -1)

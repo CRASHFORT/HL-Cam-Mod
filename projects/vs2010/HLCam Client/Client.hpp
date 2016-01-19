@@ -30,10 +30,8 @@ namespace Cam
 		float Position[3] = {0};
 		float Angle[3] = {0};
 
-		/*
-			If this is currently hovered over
-		*/
 		bool Highlighted = false;
+		bool Selected = false;
 	};
 
 	struct ClientTrigger
@@ -44,10 +42,8 @@ namespace Cam
 		float Corner1[3] = {0};
 		float Corner2[3] = {0};
 
-		/*
-			If this is currently hovered over
-		*/
 		bool Highlighted = false;
+		bool Selected = false;
 	};
 
 	const std::vector<ClientTrigger>& GetAllTriggers();
