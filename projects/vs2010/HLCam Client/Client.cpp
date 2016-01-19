@@ -280,6 +280,14 @@ namespace Cam
 
 				builder.AddHeader(std::move(header));
 			}
+			
+			{
+				Menu::MenuQueueItem item;
+				item.Text = "Map: ";
+				item.Text += gEngfuncs.pfnGetLevelName();
+
+				builder.AddItem(std::move(item));
+			}
 
 			{
 				Menu::MenuQueueItem item;
