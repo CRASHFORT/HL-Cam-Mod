@@ -190,27 +190,19 @@ namespace Cam
 
 	void MapTrigger::SetupPositions()
 	{
-		Vector corner1 = Corner1;
-		Vector corner2 = Corner2;
+		MinPos.x = fmin(Corner1.x, Corner2.x);
+		MinPos.y = fmin(Corner1.y, Corner2.y);
+		MinPos.z = fmin(Corner1.z, Corner2.z);
 
-		Vector minpos;
-		minpos.x = fmin(corner1.x, corner2.x);
-		minpos.y = fmin(corner1.y, corner2.y);
-		minpos.z = fmin(corner1.z, corner2.z);
-
-		Vector maxpos;
-		maxpos.x = fmax(corner1.x, corner2.x);
-		maxpos.y = fmax(corner1.y, corner2.y);
-		maxpos.z = fmax(corner1.z, corner2.z);
-
-		minpos.CopyToArray(MinPos);
-		maxpos.CopyToArray(MaxPos);
+		MaxPos.x = fmax(Corner1.x, Corner2.x);
+		MaxPos.y = fmax(Corner1.y, Corner2.y);
+		MaxPos.z = fmax(Corner1.z, Corner2.z);
 
 		CenterPos =
 		{
-			minpos.x + (maxpos.x - minpos.x) / 2.0f,
-			minpos.y + (maxpos.y - minpos.y) / 2.0f,
-			minpos.z + (maxpos.z - minpos.z) / 2.0f
+			MinPos.x + (MaxPos.x - MinPos.x) / 2.0f,
+			MinPos.y + (MaxPos.y - MinPos.y) / 2.0f,
+			MinPos.z + (MaxPos.z - MinPos.z) / 2.0f
 		};
 	}
 }
@@ -286,13 +278,13 @@ namespace
 					WRITE_SHORT(cam.ID);
 					WRITE_BYTE(isnamed);
 
-					WRITE_COORD(cam.Position[0]);
-					WRITE_COORD(cam.Position[1]);
-					WRITE_COORD(cam.Position[2]);
+					WRITE_COORD(cam.Position.x);
+					WRITE_COORD(cam.Position.y);
+					WRITE_COORD(cam.Position.z);
 
-					WRITE_COORD(cam.Angle[0]);
-					WRITE_COORD(cam.Angle[1]);
-					WRITE_COORD(cam.Angle[2]);
+					WRITE_COORD(cam.Angle.x);
+					WRITE_COORD(cam.Angle.y);
+					WRITE_COORD(cam.Angle.z);
 
 					if (isnamed)
 					{
@@ -326,9 +318,9 @@ namespace
 
 					WRITE_BYTE(1);
 
-					WRITE_COORD(trig.Corner1[0]);
-					WRITE_COORD(trig.Corner1[1]);
-					WRITE_COORD(trig.Corner1[2]);
+					WRITE_COORD(trig.Corner1.x);
+					WRITE_COORD(trig.Corner1.y);
+					WRITE_COORD(trig.Corner1.z);
 
 					MESSAGE_END();
 
@@ -339,9 +331,9 @@ namespace
 
 					WRITE_BYTE(2);
 
-					WRITE_COORD(trig.Corner2[0]);
-					WRITE_COORD(trig.Corner2[1]);
-					WRITE_COORD(trig.Corner2[2]);
+					WRITE_COORD(trig.Corner2.x);
+					WRITE_COORD(trig.Corner2.y);
+					WRITE_COORD(trig.Corner2.z);
 
 					MESSAGE_END();
 				}
@@ -523,9 +515,9 @@ namespace
 
 						const auto& cornerval = corneritr->value;
 
-						curtrig.Corner1[0] = cornerval[0].GetDouble();
-						curtrig.Corner1[1] = cornerval[1].GetDouble();
-						curtrig.Corner1[2] = cornerval[2].GetDouble();
+						curtrig.Corner1.x = cornerval[0].GetDouble();
+						curtrig.Corner1.y = cornerval[1].GetDouble();
+						curtrig.Corner1.z = cornerval[2].GetDouble();
 					}
 
 					{
@@ -539,9 +531,9 @@ namespace
 
 						const auto& cornerval = corneritr->value;
 
-						curtrig.Corner2[0] = cornerval[0].GetDouble();
-						curtrig.Corner2[1] = cornerval[1].GetDouble();
-						curtrig.Corner2[2] = cornerval[2].GetDouble();
+						curtrig.Corner2.x = cornerval[0].GetDouble();
+						curtrig.Corner2.y = cornerval[1].GetDouble();
+						curtrig.Corner2.z = cornerval[2].GetDouble();
 					}
 
 					curtrig.SetupPositions();
@@ -570,9 +562,9 @@ namespace
 
 					const auto& posval = positr->value;
 					
-					curcam.Position[0] = posval[0].GetDouble();
-					curcam.Position[1] = posval[1].GetDouble();
-					curcam.Position[2] = posval[2].GetDouble();
+					curcam.Position.x = posval[0].GetDouble();
+					curcam.Position.y = posval[1].GetDouble();
+					curcam.Position.z = posval[2].GetDouble();
 				}
 
 				{
@@ -586,9 +578,9 @@ namespace
 
 					const auto& angval = angitr->value;
 
-					curcam.Angle[0] = angval[0].GetDouble();
-					curcam.Angle[1] = angval[1].GetDouble();
-					curcam.Angle[2] = angval[2].GetDouble();
+					curcam.Angle.x = angval[0].GetDouble();
+					curcam.Angle.y = angval[1].GetDouble();
+					curcam.Angle.z = angval[2].GetDouble();
 				}
 
 				{
@@ -812,13 +804,13 @@ namespace
 
 		Cam::MapCamera newcam;
 		newcam.ID = TheCamMap.NextCameraID;
-		newcam.Position[0] = playerpos.x;
-		newcam.Position[1] = playerpos.y;
-		newcam.Position[2] = playerpos.z;
+		newcam.Position.x = playerpos.x;
+		newcam.Position.y = playerpos.y;
+		newcam.Position.z = playerpos.z;
 
-		newcam.Angle[0] = playerang.x;
-		newcam.Angle[1] = playerang.y;
-		newcam.Angle[2] = playerang.z;
+		newcam.Angle.x = playerang.x;
+		newcam.Angle.y = playerang.y;
+		newcam.Angle.z = playerang.z;
 
 		TheCamMap.UnHighlightAll();
 
@@ -1047,13 +1039,13 @@ namespace
 				rapidjson::Value corn1val(rapidjson::kArrayType);
 				rapidjson::Value corn2val(rapidjson::kArrayType);
 
-				corn1val.PushBack(linkedtrig->Corner1[0], alloc);
-				corn1val.PushBack(linkedtrig->Corner1[1], alloc);
-				corn1val.PushBack(linkedtrig->Corner1[2], alloc);
+				corn1val.PushBack(linkedtrig->Corner1.x, alloc);
+				corn1val.PushBack(linkedtrig->Corner1.y, alloc);
+				corn1val.PushBack(linkedtrig->Corner1.z, alloc);
 
-				corn2val.PushBack(linkedtrig->Corner2[0], alloc);
-				corn2val.PushBack(linkedtrig->Corner2[1], alloc);
-				corn2val.PushBack(linkedtrig->Corner2[2], alloc);
+				corn2val.PushBack(linkedtrig->Corner2.x, alloc);
+				corn2val.PushBack(linkedtrig->Corner2.y, alloc);
+				corn2val.PushBack(linkedtrig->Corner2.z, alloc);
 
 				trigval.AddMember("Corner1", std::move(corn1val), alloc);
 				trigval.AddMember("Corner2", std::move(corn2val), alloc);
@@ -1066,13 +1058,13 @@ namespace
 			rapidjson::Value camposval(rapidjson::kArrayType);
 			rapidjson::Value camangval(rapidjson::kArrayType);
 
-			camposval.PushBack(cam.Position[0], alloc);
-			camposval.PushBack(cam.Position[1], alloc);
-			camposval.PushBack(cam.Position[2], alloc);
+			camposval.PushBack(cam.Position.x, alloc);
+			camposval.PushBack(cam.Position.y, alloc);
+			camposval.PushBack(cam.Position.z, alloc);
 
-			camangval.PushBack(cam.Angle[0], alloc);
-			camangval.PushBack(cam.Angle[1], alloc);
-			camangval.PushBack(cam.Angle[2], alloc);
+			camangval.PushBack(cam.Angle.x, alloc);
+			camangval.PushBack(cam.Angle.y, alloc);
+			camangval.PushBack(cam.Angle.z, alloc);
 
 			/*
 				For now these are all settings that can be saved.
@@ -1198,9 +1190,9 @@ void Cam::OnPlayerPreUpdate(CBasePlayer* player)
 
 				WRITE_BYTE(1);
 
-				WRITE_COORD(creationtrig->Corner1[0]);
-				WRITE_COORD(creationtrig->Corner1[1]);
-				WRITE_COORD(creationtrig->Corner1[2]);
+				WRITE_COORD(creationtrig->Corner1.x);
+				WRITE_COORD(creationtrig->Corner1.y);
+				WRITE_COORD(creationtrig->Corner1.z);
 
 				MESSAGE_END();
 
@@ -1218,9 +1210,9 @@ void Cam::OnPlayerPreUpdate(CBasePlayer* player)
 
 				WRITE_BYTE(2);
 
-				WRITE_COORD(creationtrig->Corner2[0]);
-				WRITE_COORD(creationtrig->Corner2[1]);
-				WRITE_COORD(creationtrig->Corner2[2]);
+				WRITE_COORD(creationtrig->Corner2.x);
+				WRITE_COORD(creationtrig->Corner2.y);
+				WRITE_COORD(creationtrig->Corner2.z);
 
 				MESSAGE_END();
 

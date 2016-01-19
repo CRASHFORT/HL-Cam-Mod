@@ -77,8 +77,8 @@ namespace Cam
 		size_t ID = 0;
 		size_t LinkedTriggerID;
 
-		float Position[3] = {0};
-		float Angle[3] = {0};
+		Vector Position;
+		Vector Angle;
 
 		/*
 			Cameras with names are not associated with any triggers.
@@ -109,11 +109,11 @@ namespace Cam
 		size_t ID = 0;
 		size_t LinkedCameraID;
 
-		float Corner1[3] = {0};
-		float Corner2[3] = {0};
+		Vector Corner1;
+		Vector Corner2;
 
-		float MaxPos[3];
-		float MinPos[3];
+		Vector MaxPos;
+		Vector MinPos;
 
 		Vector CenterPos;
 
