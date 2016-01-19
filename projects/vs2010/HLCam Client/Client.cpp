@@ -114,6 +114,7 @@ namespace
 	{
 		struct MenuQueueItem
 		{
+			bool EmptySpace = false;
 			bool Header = false;
 
 			std::string Text;
@@ -156,6 +157,13 @@ namespace
 				Items.emplace_back(item);
 			}
 
+			void AddEmptySpace()
+			{
+				MenuQueueItem item;
+				item.EmptySpace = true;
+				Items.emplace_back(item);
+			}
+
 			size_t TextWidth(const std::string& str)
 			{
 				size_t ret = 0;
@@ -178,6 +186,12 @@ namespace
 			{
 				for (const auto& item : Items)
 				{
+					if (item.EmptySpace)
+					{
+						MenuHeight += NormalRowHeight;
+						continue;
+					}
+
 					MenuWidth = fmax(MenuWidth, TextWidth(item.Text));
 
 					auto height = NormalRowHeight;
@@ -301,10 +315,33 @@ namespace Cam
 				builder.AddItem(std::move(item));
 			}
 
-			Menu::MenuQueueItem item;
-			item.Text = "Triggers: " + std::to_string(TheCamClient.Triggers.size());
+			{
+				Menu::MenuQueueItem item;
+				item.Text = "Triggers: " + std::to_string(TheCamClient.Triggers.size());
 
-			builder.AddItem(std::move(item));
+				builder.AddItem(std::move(item));
+			}
+
+			builder.AddEmptySpace();
+
+			if (TheCamClient.CurrentHighlightTrigger)
+			{
+				const auto& curtrig = TheCamClient.CurrentHighlightTrigger;
+
+				{
+					Menu::MenuQueueItem item;
+					item.Text = "Highlight Trigger ID: " + std::to_string(curtrig->ID);
+
+					builder.AddItem(std::move(item));
+				}
+
+				{
+					Menu::MenuQueueItem item;
+					item.Text = "Linked Camera ID: " + std::to_string(curtrig->LinkedCameraID);
+
+					builder.AddItem(std::move(item));
+				}
+			}
 			
 			builder.Perform();
 
@@ -474,6 +511,7 @@ int HLCamClient_OnItemHighlightedEndMessage(const char* name, int size, void* bu
 	if (TheCamClient.CurrentHighlightTrigger)
 	{
 		TheCamClient.CurrentHighlightTrigger->Highlighted = false;
+		TheCamClient.CurrentHighlightTrigger = nullptr;
 	}
 
 	return 1;
