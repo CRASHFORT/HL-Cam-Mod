@@ -1251,6 +1251,8 @@ void Cam::OnPlayerPostUpdate(CBasePlayer* player)
 			auto startpos = TheCamMap.LocalPlayer->GetGunPosition();
 			auto aimvec = gpGlobals->v_forward;
 
+			const auto maxsearchdist = 512;
+
 			struct DepthInfo
 			{
 				float Distance;
@@ -1263,6 +1265,11 @@ void Cam::OnPlayerPostUpdate(CBasePlayer* player)
 			for (auto& trig : TheCamMap.Triggers)
 			{
 				float distance = (trig.CenterPos - startpos).Length2D();
+
+				if (distance > maxsearchdist)
+				{
+					continue;
+				}
 
 				DepthInfo info;
 				info.Distance = distance;
@@ -1277,7 +1284,12 @@ void Cam::OnPlayerPostUpdate(CBasePlayer* player)
 			});
 
 			TraceResult trace;
-			UTIL_TraceLine(startpos, startpos + aimvec * 512, ignore_monsters, ignore_glass, ENT(TheCamMap.LocalPlayer->pev), &trace);
+			UTIL_TraceLine(startpos,
+						   startpos + aimvec * maxsearchdist,
+						   ignore_monsters,
+						   ignore_glass,
+						   TheCamMap.LocalPlayer->edict(),
+						   &trace);
 
 			for (const auto& depthtrig : depthlist)
 			{
