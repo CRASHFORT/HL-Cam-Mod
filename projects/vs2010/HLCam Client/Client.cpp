@@ -322,10 +322,31 @@ namespace Cam
 				builder.AddItem(std::move(item));
 			}
 
-			builder.AddEmptySpace();
+			if (TheCamClient.CurrentSelectionTrigger)
+			{
+				builder.AddEmptySpace();
+
+				const auto& curtrig = TheCamClient.CurrentSelectionTrigger;
+
+				{
+					Menu::MenuQueueItem item;
+					item.Text = "Selection Trigger ID: " + std::to_string(curtrig->ID);
+
+					builder.AddItem(std::move(item));
+				}
+
+				{
+					Menu::MenuQueueItem item;
+					item.Text = "Linked Camera ID: " + std::to_string(curtrig->LinkedCameraID);
+
+					builder.AddItem(std::move(item));
+				}
+			}
 
 			if (TheCamClient.CurrentHighlightTrigger)
 			{
+				builder.AddEmptySpace();
+
 				const auto& curtrig = TheCamClient.CurrentHighlightTrigger;
 
 				{
@@ -540,6 +561,7 @@ int HLCamClient_ItemSelectedEnd(const char* name, int size, void* buffer)
 	if (TheCamClient.CurrentSelectionTrigger)
 	{
 		TheCamClient.CurrentSelectionTrigger->Selected = false;
+		TheCamClient.CurrentSelectionTrigger = nullptr;
 	}
 
 	return 1;

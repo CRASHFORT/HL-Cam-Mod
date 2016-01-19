@@ -22,8 +22,13 @@ extern int MsgHLCAM_OnCameraRemoved;
 extern int MsgHLCAM_MapEditStateChanged;
 extern int MsgHLCAM_MapReset;
 extern int MsgHLCAM_ShowEditMenu;
+
 extern int MsgHLCAM_ItemHighlightedStart;
 extern int MsgHLCAM_ItemHighlightedEnd;
+
+extern int MsgHLCAM_ItemSelectedStart;
+extern int MsgHLCAM_ItemSelectedEnd;
+
 
 /*
 	General one file content because Half-Life's project structure is awful.
@@ -253,6 +258,18 @@ namespace
 
 			CurrentHighlightCameraID = -1;
 			CurrentHighlightTriggerID = -1;
+		}
+
+		void UnSelectAll()
+		{
+			if (CurrentSelectionCameraID != -1 || CurrentSelectionTriggerID != -1)
+			{
+				MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_ItemSelectedEnd, nullptr, LocalPlayer->pev);
+				MESSAGE_END();
+			}
+
+			CurrentSelectionCameraID = -1;
+			CurrentSelectionTriggerID = -1;
 		}
 
 		bool NeedsToSendResetMessage = false;
@@ -819,6 +836,7 @@ namespace
 		newcam.Angle.z = playerang.z;
 
 		TheCamMap.UnHighlightAll();
+		TheCamMap.UnSelectAll();
 
 		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCameraCreated, nullptr, TheCamMap.LocalPlayer->pev);
 
@@ -1234,6 +1252,29 @@ void Cam::OnPlayerPreUpdate(CBasePlayer* player)
 				}
 
 				creationtrig->SetupPositions();
+			}
+		}
+	}
+
+	else if (IsInEditMode() && TheCamMap.CurrentState == Cam::Shared::StateType::Inactive)
+	{
+		if (TheCamMap.LocalPlayer->pev->button & IN_ATTACK)
+		{
+			if (TheCamMap.CurrentHighlightTriggerID != -1)
+			{
+				if (TheCamMap.CurrentHighlightTriggerID != TheCamMap.CurrentSelectionTriggerID)
+				{
+					TheCamMap.UnSelectAll();
+
+					TheCamMap.CurrentSelectionTriggerID = TheCamMap.CurrentHighlightTriggerID;
+
+					MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_ItemSelectedStart, nullptr, TheCamMap.LocalPlayer->pev);
+
+					WRITE_BYTE(0);
+					WRITE_SHORT(TheCamMap.CurrentSelectionTriggerID);
+
+					MESSAGE_END();
+				}
 			}
 		}
 	}

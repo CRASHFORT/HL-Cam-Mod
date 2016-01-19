@@ -276,12 +276,21 @@ void CL_DLLEXPORT HUD_DrawTransparentTriangles( void )
 
 			gEngfuncs.pTriAPI->RenderMode(kRenderTransAlpha);
 
+			bool defaultcolor = true;
+
 			if (trig.Highlighted)
 			{
 				gEngfuncs.pTriAPI->Color4f(1, 1, 0, 0.6);
+				defaultcolor = false;
 			}
 
-			else
+			if (trig.Selected)
+			{
+				gEngfuncs.pTriAPI->Color4f(1, 0, 0, 0.6);
+				defaultcolor = false;
+			}
+
+			if (defaultcolor)
 			{
 				gEngfuncs.pTriAPI->Color4f(0, 1, 0, 0.2);
 			}
@@ -289,7 +298,21 @@ void CL_DLLEXPORT HUD_DrawTransparentTriangles( void )
 			DrawBox(corner1, corner2);
 
 			gEngfuncs.pTriAPI->RenderMode(kRenderNormal);
-			gEngfuncs.pTriAPI->Color4f(0, 1, 0, 1);
+
+			if (trig.Selected && trig.Highlighted)
+			{
+				gEngfuncs.pTriAPI->Color4f(1, 1, 0, 1);
+			}
+
+			else if (trig.Selected)
+			{
+				gEngfuncs.pTriAPI->Color4f(1, 0, 0, 1);
+			}
+
+			else
+			{
+				gEngfuncs.pTriAPI->Color4f(0, 1, 0, 1);
+			}
 			
 			DrawWireframeBox(corner1, corner2);
 		}
