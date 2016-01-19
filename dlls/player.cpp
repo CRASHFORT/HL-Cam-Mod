@@ -234,6 +234,17 @@ int MsgHLCAM_MapEditStateChanged = 0;
 */
 int MsgHLCAM_MapReset = 0;
 
+/*
+	BYTE: 0 for trigger, 1 for camera
+	SHORT: Item ID
+*/
+int MsgHLCAM_ItemHighlightedStart = 0;
+
+/*
+	Previous item is not highlighted anymore
+*/
+int MsgHLCAM_ItemHighlightedEnd = 0;
+
 void LinkUserMessages( void )
 {
 	// Already taken care of?
@@ -249,6 +260,8 @@ void LinkUserMessages( void )
 	MsgHLCAM_OnCameraRemoved = REG_USER_MSG("CamRem", 2);
 	MsgHLCAM_MapEditStateChanged = REG_USER_MSG("CamEdit", 1);
 	MsgHLCAM_MapReset = REG_USER_MSG("CamReset", 0);
+	MsgHLCAM_ItemHighlightedStart = REG_USER_MSG("CamHT1", 3);
+	MsgHLCAM_ItemHighlightedEnd = REG_USER_MSG("CamHT2", 0);
 
 	gmsgCurWeapon = REG_USER_MSG("CurWeapon", 3);
 	gmsgGeigerRange = REG_USER_MSG("Geiger", 1);
@@ -3905,7 +3918,7 @@ void CBasePlayer::ItemPreFrame()
 		AimGuide->pev->effects &= ~EF_NODRAW;
 
 		UTIL_MakeVectors(pev->v_angle);
-		Vector startpos = GetGunPosition();;
+		Vector startpos = GetGunPosition();
 		Vector aimvec = gpGlobals->v_forward;
 
 		TraceResult trace;

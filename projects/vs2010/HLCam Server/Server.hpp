@@ -1,4 +1,5 @@
 #pragma once
+#include "extdll.h"
 
 class CTriggerCamera;
 class CBasePlayer;
@@ -113,6 +114,10 @@ namespace Cam
 
 		float MaxPos[3];
 		float MinPos[3];
+
+		Vector CenterPos;
+
+		void SetupPositions();
 		
 		/*
 			This trigger has already been activated and

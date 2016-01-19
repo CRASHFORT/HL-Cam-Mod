@@ -275,7 +275,16 @@ void CL_DLLEXPORT HUD_DrawTransparentTriangles( void )
 			gEngfuncs.pTriAPI->CullFace(TRICULLSTYLE::TRI_NONE);
 
 			gEngfuncs.pTriAPI->RenderMode(kRenderTransAlpha);
-			gEngfuncs.pTriAPI->Color4f(0, 1, 0, 0.2);
+
+			if (trig.Highlighted)
+			{
+				gEngfuncs.pTriAPI->Color4f(1, 1, 0, 0.6);
+			}
+
+			else
+			{
+				gEngfuncs.pTriAPI->Color4f(0, 1, 0, 0.2);
+			}
 			
 			DrawBox(corner1, corner2);
 

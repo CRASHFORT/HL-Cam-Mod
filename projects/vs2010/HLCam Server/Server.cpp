@@ -22,6 +22,8 @@ extern int MsgHLCAM_OnCameraRemoved;
 extern int MsgHLCAM_MapEditStateChanged;
 extern int MsgHLCAM_MapReset;
 extern int MsgHLCAM_ShowEditMenu;
+extern int MsgHLCAM_ItemHighlightedStart;
+extern int MsgHLCAM_ItemHighlightedEnd;
 
 /*
 	General one file content because Half-Life's project structure is awful.
@@ -30,6 +32,9 @@ namespace
 {
 	namespace Utility
 	{
+		/*
+			From Source Engine 2007
+		*/
 		bool IsBoxIntersectingBox(const Vector& pos1min,
 								  const Vector& pos1max,
 								  const Vector& pos2min,
@@ -50,6 +55,51 @@ namespace
 				return false;
 			}
 
+			return true;
+		}
+
+		/*
+			From http://gamedev.stackexchange.com/a/18459
+		*/
+		bool IsRayIntersectingBox(const Vector& raystart,
+								  const Vector& forward,
+								  const Vector& rayend,
+								  const Vector& boxmin,
+								  const Vector& boxmax)
+		{
+			Vector dirfrac;
+			float t;
+			// r.dir is unit direction vector of ray
+			dirfrac.x = 1.0f / forward.x;
+			dirfrac.y = 1.0f / forward.y;
+			dirfrac.z = 1.0f / forward.z;
+			// lb is the corner of AABB with minimal coordinates - left bottom, rt is maximal corner
+			// r.org is origin of ray
+			float t1 = (boxmin.x - raystart.x)*dirfrac.x;
+			float t2 = (boxmax.x - raystart.x)*dirfrac.x;
+			float t3 = (boxmin.y - raystart.y)*dirfrac.y;
+			float t4 = (boxmax.y - raystart.y)*dirfrac.y;
+			float t5 = (boxmin.z - raystart.z)*dirfrac.z;
+			float t6 = (boxmax.z - raystart.z)*dirfrac.z;
+
+			float tmin = max(max(min(t1, t2), min(t3, t4)), min(t5, t6));
+			float tmax = min(min(max(t1, t2), max(t3, t4)), max(t5, t6));
+
+			// if tmax < 0, ray (line) is intersecting AABB, but whole AABB is behing us
+			if (tmax < 0)
+			{
+				t = tmax;
+				return false;
+			}
+
+			// if tmin > tmax, ray doesn't intersect AABB
+			if (tmin > tmax)
+			{
+				t = tmax;
+				return false;
+			}
+
+			t = tmin;
 			return true;
 		}
 
@@ -137,6 +187,32 @@ namespace Cam
 			return spot;
 		}
 	}
+
+	void MapTrigger::SetupPositions()
+	{
+		Vector corner1 = Corner1;
+		Vector corner2 = Corner2;
+
+		Vector minpos;
+		minpos.x = fmin(corner1.x, corner2.x);
+		minpos.y = fmin(corner1.y, corner2.y);
+		minpos.z = fmin(corner1.z, corner2.z);
+
+		Vector maxpos;
+		maxpos.x = fmax(corner1.x, corner2.x);
+		maxpos.y = fmax(corner1.y, corner2.y);
+		maxpos.z = fmax(corner1.z, corner2.z);
+
+		minpos.CopyToArray(MinPos);
+		maxpos.CopyToArray(MaxPos);
+
+		CenterPos =
+		{
+			minpos.x + (maxpos.x - minpos.x) / 2.0f,
+			minpos.y + (maxpos.y - minpos.y) / 2.0f,
+			minpos.z + (maxpos.z - minpos.z) / 2.0f
+		};
+	}
 }
 
 namespace
@@ -162,6 +238,24 @@ namespace
 		Cam::MapCamera* ActiveCamera = nullptr;
 
 		bool IsEditing = false;
+
+		/*
+			Highlights for item information
+		*/
+		int CurrentHighlightTriggerID = -1;
+		int CurrentHighlightCameraID = -1;
+
+		void UnHighlightAll()
+		{
+			if (CurrentHighlightCameraID != -1 || CurrentHighlightTriggerID != -1)
+			{
+				MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_ItemHighlightedEnd, nullptr, LocalPlayer->pev);
+				MESSAGE_END();
+			}
+
+			CurrentHighlightCameraID = -1;
+			CurrentHighlightTriggerID = -1;
+		}
 
 		bool NeedsToSendResetMessage = false;
 
@@ -297,6 +391,11 @@ namespace
 				return;
 			}
 
+			if (trigger->ID == CurrentHighlightTriggerID)
+			{
+				UnHighlightAll();
+			}
+
 			Triggers.erase
 			(
 				std::remove_if(Triggers.begin(), Triggers.end(), [trigger](const Cam::MapTrigger& other)
@@ -326,6 +425,11 @@ namespace
 				}
 
 				UTIL_Remove(camera->TargetCamera);
+			}
+
+			if (camera->ID == CurrentHighlightCameraID)
+			{
+				UnHighlightAll();
 			}
 
 			if (camera->TriggerType == Cam::CameraTriggerType::ByUserTrigger)
@@ -440,21 +544,7 @@ namespace
 						curtrig.Corner2[2] = cornerval[2].GetDouble();
 					}
 
-					Vector corner1 = curtrig.Corner1;
-					Vector corner2 = curtrig.Corner2;
-
-					Vector minpos;
-					minpos.x = fmin(corner1.x, corner2.x);
-					minpos.y = fmin(corner1.y, corner2.y);
-					minpos.z = fmin(corner1.z, corner2.z);
-
-					Vector maxpos;
-					maxpos.x = fmax(corner1.x, corner2.x);
-					maxpos.y = fmax(corner1.y, corner2.y);
-					maxpos.z = fmax(corner1.z, corner2.z);
-
-					minpos.CopyToArray(curtrig.MinPos);
-					maxpos.CopyToArray(curtrig.MaxPos);
+					curtrig.SetupPositions();
 				}
 			}
 
@@ -729,6 +819,8 @@ namespace
 		newcam.Angle[0] = playerang.x;
 		newcam.Angle[1] = playerang.y;
 		newcam.Angle[2] = playerang.z;
+
+		TheCamMap.UnHighlightAll();
 
 		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCameraCreated, nullptr, TheCamMap.LocalPlayer->pev);
 
@@ -1143,21 +1235,7 @@ void Cam::OnPlayerPreUpdate(CBasePlayer* player)
 					linkedcam->TargetCamera->IsHLCam = true;
 				}
 
-				Vector corner1 = creationtrig->Corner1;
-				Vector corner2 = creationtrig->Corner2;
-
-				Vector minpos;
-				minpos.x = fmin(corner1.x, corner2.x);
-				minpos.y = fmin(corner1.y, corner2.y);
-				minpos.z = fmin(corner1.z, corner2.z);
-
-				Vector maxpos;
-				maxpos.x = fmax(corner1.x, corner2.x);
-				maxpos.y = fmax(corner1.y, corner2.y);
-				maxpos.z = fmax(corner1.z, corner2.z);
-
-				minpos.CopyToArray(creationtrig->MinPos);
-				maxpos.CopyToArray(creationtrig->MaxPos);
+				creationtrig->SetupPositions();
 			}
 		}
 	}
@@ -1167,6 +1245,76 @@ void Cam::OnPlayerPostUpdate(CBasePlayer* player)
 {
 	if (IsInEditMode())
 	{
+		if (TheCamMap.CurrentState == Cam::Shared::StateType::Inactive)
+		{
+			bool lookatsomething = false;
+
+			UTIL_MakeVectors(TheCamMap.LocalPlayer->pev->v_angle);
+			auto startpos = TheCamMap.LocalPlayer->GetGunPosition();
+			auto aimvec = gpGlobals->v_forward;
+
+			struct DepthInfo
+			{
+				float Distance;
+				Cam::MapTrigger* Trigger;
+			};
+
+			std::vector<DepthInfo> depthlist;
+			depthlist.reserve(TheCamMap.Triggers.size());
+
+			for (auto& trig : TheCamMap.Triggers)
+			{
+				float distance = (trig.CenterPos - startpos).Length2D();
+
+				DepthInfo info;
+				info.Distance = distance;
+				info.Trigger = &trig;
+
+				depthlist.push_back(info);
+			}
+
+			std::sort(depthlist.begin(), depthlist.end(), [](const DepthInfo& first, const DepthInfo& other)
+			{
+				return first.Distance < other.Distance;
+			});
+
+			TraceResult trace;
+			UTIL_TraceLine(startpos, startpos + aimvec * 512, ignore_monsters, ignore_glass, ENT(TheCamMap.LocalPlayer->pev), &trace);
+
+			for (const auto& depthtrig : depthlist)
+			{
+				const auto& trig = depthtrig.Trigger;
+
+				if (Utility::IsRayIntersectingBox(startpos, aimvec, trace.vecEndPos, trig->MinPos, trig->MaxPos))
+				{
+					if (TheCamMap.CurrentHighlightTriggerID != trig->ID)
+					{
+						if (TheCamMap.CurrentHighlightTriggerID != -1)
+						{
+							TheCamMap.UnHighlightAll();
+						}
+
+						MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_ItemHighlightedStart, nullptr, TheCamMap.LocalPlayer->pev);
+
+						WRITE_BYTE(0);
+						WRITE_SHORT(trig->ID);
+
+						MESSAGE_END();
+
+						TheCamMap.CurrentHighlightTriggerID = trig->ID;
+					}
+
+					lookatsomething = true;
+					break;
+				}
+			}
+
+			if (!lookatsomething)
+			{
+				TheCamMap.UnHighlightAll();
+			}
+		}
+
 		return;
 	}
 

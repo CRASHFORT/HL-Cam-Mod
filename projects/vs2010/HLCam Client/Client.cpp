@@ -7,7 +7,6 @@
 #include "hud.h"
 #include "cl_util.h"
 #include "parsemsg.h"
-#include "vgui_TeamFortressViewport.h"
 
 namespace
 {
@@ -17,6 +16,9 @@ namespace
 		std::vector<Cam::ClientTrigger> Triggers;
 
 		bool InEditMode = false;
+
+		Cam::ClientTrigger* CurrentHighlightTrigger = nullptr;
+		Cam::ClientCamera* CurrentHighlightCamera = nullptr;
 
 		Cam::ClientTrigger* FindTriggerByID(size_t id)
 		{
@@ -441,6 +443,44 @@ int HLCamClient_OnCameraRemovedMessage(const char* name, int size, void* buffer)
 	return 1;
 }
 
+int HLCamClient_OnItemHighlightedStartMessage(const char* name, int size, void* buffer)
+{
+	BEGIN_READ(buffer, size);
+
+	auto type = READ_BYTE();
+	size_t itemid = READ_SHORT();
+
+	if (type == 0)
+	{
+		TheCamClient.CurrentHighlightTrigger = TheCamClient.FindTriggerByID(itemid);
+		TheCamClient.CurrentHighlightTrigger->Highlighted = true;
+	}
+
+	else if (type == 1)
+	{
+		TheCamClient.CurrentHighlightCamera = TheCamClient.FindCameraByID(itemid);
+	}
+
+	return 1;
+}
+
+int HLCamClient_OnItemHighlightedEndMessage(const char* name, int size, void* buffer)
+{
+	BEGIN_READ(buffer, size);
+
+	if (TheCamClient.CurrentHighlightCamera)
+	{
+		
+	}
+
+	else if (TheCamClient.CurrentHighlightTrigger)
+	{
+		TheCamClient.CurrentHighlightTrigger->Highlighted = false;
+	}
+
+	return 1;
+}
+
 namespace Tri
 {
 	void VidInit();
@@ -457,6 +497,8 @@ namespace Cam
 		gEngfuncs.pfnHookUserMsg("CamRem", &HLCamClient_OnCameraRemovedMessage);
 		gEngfuncs.pfnHookUserMsg("CamEdit", &HLCamClient_OnMapEditMessage);
 		gEngfuncs.pfnHookUserMsg("CamReset", &HLCamClient_OnMapResetMessage);
+		gEngfuncs.pfnHookUserMsg("CamHT1", &HLCamClient_OnItemHighlightedStartMessage);
+		gEngfuncs.pfnHookUserMsg("CamHT2", &HLCamClient_OnItemHighlightedEndMessage);
 	}
 
 	void VidInit()
