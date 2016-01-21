@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros">
+    <HL_PCHDir>$(ProjectDir)Precompiled Header\</HL_PCHDir>
+    <HL_ResourceDir>$(ProjectDir)MFC Default\Resource\</HL_ResourceDir>
+    <HL_SourceDir>$(ProjectDir)Source\</HL_SourceDir>
+    <HL_Intermediate>$(ProjectDir)Intermediate\</HL_Intermediate>
+  </PropertyGroup>
+  <PropertyGroup />
+  <ItemDefinitionGroup />
+  <ItemGroup>
+    <BuildMacro Include="HL_PCHDir">
+      <Value>$(HL_PCHDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="HL_ResourceDir">
+      <Value>$(HL_ResourceDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="HL_SourceDir">
+      <Value>$(HL_SourceDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="HL_Intermediate">
+      <Value>$(HL_Intermediate)</Value>
+    </BuildMacro>
+  </ItemGroup>
+</Project>
