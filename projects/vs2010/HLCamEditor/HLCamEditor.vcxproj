@@ -29,7 +29,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <UseOfMfc>Static</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -37,7 +37,7 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
     <UseOfMfc>Static</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -190,6 +190,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Source\Program\Utility\Message Queue\MessageQueue.hpp" />
     <ClInclude Include="Source\Program\App\HLCamEditorApp.hpp" />
     <ClInclude Include="Source\Program\Dialogs\Main\HLCamEditorDialog.hpp" />
     <ClInclude Include="MFC Default\Resource\Resource.h" />
@@ -197,6 +198,7 @@
     <ClInclude Include="MFC Default\Resource\targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\Program\Utility\Message Queue\MessageQueue.cpp" />
     <ClCompile Include="Source\Program\App\HLCamEditorApp.cpp" />
     <ClCompile Include="Source\Program\Dialogs\Main\HLCamEditorDialog.cpp" />
     <ClCompile Include="Precompiled Header\PrecompiledHeader.cpp">

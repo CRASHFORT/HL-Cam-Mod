@@ -49,7 +49,7 @@ namespace
 HLCamEditorDialog::HLCamEditorDialog(CWnd* parent)
 	: CDialogEx(IDD_HLCAMEDITOR_DIALOG, parent)
 {
-	Icon = AfxGetApp()->LoadIconW(IDR_MAINFRAME);
+	Icon = AfxGetApp()->LoadIconA(IDR_MAINFRAME);
 }
 
 HLCamEditorDialog::~HLCamEditorDialog()
@@ -74,14 +74,14 @@ BOOL HLCamEditorDialog::OnInitDialog()
 	SetIcon(Icon, false);
 
 	{
-		auto testprop = new CMFCPropertyGridProperty(L"ID", COleVariant(0l));
+		auto testprop = new CMFCPropertyGridProperty("ID", COleVariant(0l));
 		testprop->Enable(false);
 
 		PropertyGrid.AddProperty(testprop);
 	}
 
 	{
-		auto testprop = new CMFCPropertyGridProperty(L"Name", L"");
+		auto testprop = new CMFCPropertyGridProperty("Name", "");
 		testprop->AllowEdit(true);
 
 		testprop->SetData(ValueType::Name);
@@ -90,9 +90,9 @@ BOOL HLCamEditorDialog::OnInitDialog()
 	}
 
 	{
-		auto testprop = new CMFCPropertyGridProperty(L"Activate type", L"");
-		testprop->AddOption(L"By trigger");
-		testprop->AddOption(L"By name");
+		auto testprop = new CMFCPropertyGridProperty("Activate type", "");
+		testprop->AddOption("By trigger");
+		testprop->AddOption("By name");
 
 		testprop->AllowEdit(false);
 
@@ -102,10 +102,10 @@ BOOL HLCamEditorDialog::OnInitDialog()
 	}
 
 	{
-		auto testprop = new CMFCPropertyGridProperty(L"Lock axis", L"");
-		testprop->AddOption(L"None");
-		testprop->AddOption(L"Horizontal");
-		testprop->AddOption(L"Vertical");
+		auto testprop = new CMFCPropertyGridProperty("Lock axis", "");
+		testprop->AddOption("None");
+		testprop->AddOption("Horizontal");
+		testprop->AddOption("Vertical");
 
 		testprop->AllowEdit(false);
 
@@ -115,9 +115,9 @@ BOOL HLCamEditorDialog::OnInitDialog()
 	}
 
 	{
-		auto testprop = new CMFCPropertyGridProperty(L"Look at player", L"");
-		testprop->AddOption(L"Yes");
-		testprop->AddOption(L"No");
+		auto testprop = new CMFCPropertyGridProperty("Look at player", "");
+		testprop->AddOption("Yes");
+		testprop->AddOption("No");
 
 		testprop->AllowEdit(false);
 
@@ -127,53 +127,53 @@ BOOL HLCamEditorDialog::OnInitDialog()
 	}
 
 	{
-		auto group = new CMFCPropertyGridProperty(L"Position", 0, true);
+		auto group = new CMFCPropertyGridProperty("Position", 0, true);
 		PropertyGrid.AddProperty(group);
 
 		{
-			auto pos = new CMFCPropertyGridProperty(L"X", COleVariant(0.0f));
+			auto pos = new CMFCPropertyGridProperty("X", COleVariant(0.0f));
 			pos->SetData(ValueType::PositionX);
 			group->AddSubItem(pos);
 		}
 
 		{
-			auto pos = new CMFCPropertyGridProperty(L"Y", COleVariant(0.0f));
+			auto pos = new CMFCPropertyGridProperty("Y", COleVariant(0.0f));
 			pos->SetData(ValueType::PositionY);
 			group->AddSubItem(pos);
 		}
 
 		{
-			auto pos = new CMFCPropertyGridProperty(L"Z", COleVariant(0.0f));
+			auto pos = new CMFCPropertyGridProperty("Z", COleVariant(0.0f));
 			pos->SetData(ValueType::PositionZ);
 			group->AddSubItem(pos);
 		}
 	}
 
 	{
-		auto group = new CMFCPropertyGridProperty(L"Angle", 0, true);
+		auto group = new CMFCPropertyGridProperty("Angle", 0, true);
 		PropertyGrid.AddProperty(group);
 
 		{
-			auto pos = new CMFCPropertyGridProperty(L"X", COleVariant(0.0f));
+			auto pos = new CMFCPropertyGridProperty("X", COleVariant(0.0f));
 			pos->SetData(ValueType::AngleX);
 			group->AddSubItem(pos);
 		}
 
 		{
-			auto pos = new CMFCPropertyGridProperty(L"Y", COleVariant(0.0f));
+			auto pos = new CMFCPropertyGridProperty("Y", COleVariant(0.0f));
 			pos->SetData(ValueType::AngleY);
 			group->AddSubItem(pos);
 		}
 
 		{
-			auto pos = new CMFCPropertyGridProperty(L"Z", COleVariant(0.0f));
+			auto pos = new CMFCPropertyGridProperty("Z", COleVariant(0.0f));
 			pos->SetData(ValueType::AngleZ);
 			group->AddSubItem(pos);
 		}
 	}
 
 	{
-		auto testprop = new CMFCPropertyGridProperty(L"FOV", COleVariant(90l));
+		auto testprop = new CMFCPropertyGridProperty("FOV", COleVariant(90l));
 		testprop->EnableSpinControl(true, 20, 140);
 		testprop->SetData(ValueType::FOV);
 
@@ -181,7 +181,7 @@ BOOL HLCamEditorDialog::OnInitDialog()
 	}
 
 	{
-		auto testprop = new CMFCPropertyGridProperty(L"Speed", COleVariant(200l));
+		auto testprop = new CMFCPropertyGridProperty("Speed", COleVariant(200l));
 		testprop->EnableSpinControl(true, 1, 1000);
 		testprop->SetData(ValueType::Speed);
 
@@ -194,7 +194,7 @@ BOOL HLCamEditorDialog::OnInitDialog()
 	*/
 	CRect rect;
 	PropertyGrid.GetWindowRect(&rect);
-	PropertyGrid.PostMessageW(WM_SIZE, 0, MAKELONG(rect.Width(), rect.Height()));
+	PropertyGrid.PostMessageA(WM_SIZE, 0, MAKELONG(rect.Width(), rect.Height()));
 
 	return true;
 }
