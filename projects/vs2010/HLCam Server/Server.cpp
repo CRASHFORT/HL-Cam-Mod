@@ -1,5 +1,5 @@
 #include "Server.hpp"
-#include "HLCam Shared\Shared.hpp"
+#include "HLCam Shared\Shared\Shared.hpp"
 #include <vector>
 #include <unordered_map>
 #include <fstream>

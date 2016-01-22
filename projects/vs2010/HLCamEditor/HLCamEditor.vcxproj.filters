@@ -30,9 +30,6 @@
     <ClInclude Include="Precompiled Header\PrecompiledHeader.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Program\Utility\Message Queue\MessageQueue.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Program\App\HLCamEditorApp.cpp">
@@ -42,9 +39,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Precompiled Header\PrecompiledHeader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Program\Utility\Message Queue\MessageQueue.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

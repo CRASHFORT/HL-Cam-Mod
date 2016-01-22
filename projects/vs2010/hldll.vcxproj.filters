@@ -348,6 +348,12 @@
     <ClCompile Include="HLCam Server\Server.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="HLCam Shared\Message Queue\MessageQueue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="HLCam Shared\Shared\Message Queue\MessageQueue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\dlls\doors.h">
@@ -491,7 +497,13 @@
     <ClInclude Include="HLCam Server\Server.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="HLCam Shared\Shared.hpp">
+    <ClInclude Include="HLCam Shared\Message Queue\MessageQueue.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HLCam Shared\Shared\Message Queue\MessageQueue.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HLCam Shared\Shared\Shared.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

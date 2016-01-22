@@ -95,7 +95,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_WINDOWS;BOOST_DATE_TIME_NO_LIB;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(HL_PCHDir);$(HL_ResourceDir);$(HL_SourceDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(HL_PCHDir);$(HL_ResourceDir);$(HL_SourceDir);$(SolutionDir)HLCam Shared\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>PrecompiledHeader.hpp</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
@@ -143,7 +143,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;_WINDOWS;BOOST_DATE_TIME_NO_LIB;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(HL_PCHDir);$(HL_ResourceDir);$(HL_SourceDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(HL_PCHDir);$(HL_ResourceDir);$(HL_SourceDir);$(SolutionDir)HLCam Shared\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>PrecompiledHeader.hpp</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
@@ -190,7 +190,6 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Source\Program\Utility\Message Queue\MessageQueue.hpp" />
     <ClInclude Include="Source\Program\App\HLCamEditorApp.hpp" />
     <ClInclude Include="Source\Program\Dialogs\Main\HLCamEditorDialog.hpp" />
     <ClInclude Include="MFC Default\Resource\Resource.h" />
@@ -198,7 +197,6 @@
     <ClInclude Include="MFC Default\Resource\targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Source\Program\Utility\Message Queue\MessageQueue.cpp" />
     <ClCompile Include="Source\Program\App\HLCamEditorApp.cpp" />
     <ClCompile Include="Source\Program\Dialogs\Main\HLCamEditorDialog.cpp" />
     <ClCompile Include="Precompiled Header\PrecompiledHeader.cpp">

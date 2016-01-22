@@ -1,4 +1,7 @@
-#include "PrecompiledHeader.hpp"
+#include <Windows.h>
+#include <vector>
+#include <string>
+#include <chrono>
 #include "MessageQueue.hpp"
 
 namespace Utility
