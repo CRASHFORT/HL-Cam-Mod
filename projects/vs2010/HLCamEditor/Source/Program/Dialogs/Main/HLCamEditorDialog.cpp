@@ -73,6 +73,26 @@ namespace App
 
 		return nullptr;
 	}
+
+	void HLMap::AddUserData(HLUserData& userdata)
+	{
+		userdata.ID = NextUserDataID;
+		AllUserData.push_back(std::move(userdata));
+		NextUserDataID++;
+	}
+
+	HLUserData* HLMap::FindUserDataByID(size_t id)
+	{
+		for (auto& data : AllUserData)
+		{
+			if (data.ID == id)
+			{
+				return &data;
+			}
+		}
+
+		return nullptr;
+	}
 }
 
 HLCamEditorDialog::HLCamEditorDialog(CWnd* parent)
@@ -341,13 +361,23 @@ void HLCamEditorDialog::MessageHandler()
 						CurrentMap.Triggers.emplace_back(curtrig);
 					}
 
+					std::vector<size_t> placedcams(CurrentMap.Cameras.size());
+
+					CStringA format;
+
 					for (const auto& trig : CurrentMap.Triggers)
 					{
-						CStringA format;
 						format.Format("Trigger_%d", trig.ID);
 
 						auto trighandle = TreeControl.InsertItem(format);
-						TreeControl.SetItemData(trighandle, trig.ID);
+
+						App::HLUserData triguserdata;
+						triguserdata.IsCamera = false;
+						triguserdata.TriggerID = trig.ID;
+
+						TreeControl.SetItemData(trighandle, CurrentMap.NextUserDataID);
+						
+						CurrentMap.AddUserData(triguserdata);
 
 						auto linkedcam = CurrentMap.FindCameraByID(trig.LinkedCameraID);
 
@@ -356,7 +386,15 @@ void HLCamEditorDialog::MessageHandler()
 							format.Format("Camera_%d", linkedcam->ID);
 							
 							auto camhandle = TreeControl.InsertItem(format, trighandle);
-							TreeControl.SetItemData(camhandle, linkedcam->ID);
+
+							App::HLUserData camuserdata;
+							camuserdata.IsCamera = true;
+							camuserdata.CameraID = linkedcam->ID;
+
+							TreeControl.SetItemData(camhandle, CurrentMap.NextUserDataID);
+							CurrentMap.AddUserData(camuserdata);
+
+							placedcams.push_back(linkedcam->ID);
 						}
 					}
 				}
@@ -375,7 +413,7 @@ void HLCamEditorDialog::MessageHandler()
 			{
 				auto triggerid = data.GetValue<size_t>();
 
-				auto curitem = FindTreeItemFromEntityID(triggerid);
+				auto curitem = FindTriggerFromEntityID(triggerid);
 
 				if (curitem)
 				{
@@ -389,14 +427,39 @@ void HLCamEditorDialog::MessageHandler()
 	}
 }
 
-HTREEITEM HLCamEditorDialog::FindTreeItemFromEntityID(size_t entid)
+HTREEITEM HLCamEditorDialog::FindTriggerFromEntityID(size_t entid)
 {
 	auto root = TreeControl.GetRootItem();
 	HTREEITEM curitem = root;
 
 	do
 	{
-		if (TreeControl.GetItemData(curitem) == entid)
+		auto userdataindex = TreeControl.GetItemData(curitem);
+		auto userdata = CurrentMap.FindUserDataByID(userdataindex);
+
+		if (!userdata->IsCamera && userdata->TriggerID == entid)
+		{
+			return curitem;
+		}
+
+		curitem = TreeControl.GetNextItem(curitem, TVGN_NEXTVISIBLE);
+	}
+	while (true);
+
+	return nullptr;
+}
+
+HTREEITEM HLCamEditorDialog::FindCameraFromEntityID(size_t entid)
+{
+	auto root = TreeControl.GetRootItem();
+	HTREEITEM curitem = root;
+
+	do
+	{
+		auto userdataindex = TreeControl.GetItemData(curitem);
+		auto userdata = CurrentMap.FindUserDataByID(userdataindex);
+
+		if (userdata->IsCamera && userdata->CameraID == entid)
 		{
 			return curitem;
 		}
@@ -450,7 +513,9 @@ void HLCamEditorDialog::OnContextMenu(CWnd* window, CPoint point)
 
 void HLCamEditorDialog::OnTvnSelchangedTree1(NMHDR *pNMHDR, LRESULT *pResult)
 {
-	LPNMTREEVIEWW treeviewitem = reinterpret_cast<LPNMTREEVIEWW>(pNMHDR);
+	auto treeviewitem = reinterpret_cast<LPNMTREEVIEWW>(pNMHDR);
+
+	
 
 	*pResult = 0;
 }

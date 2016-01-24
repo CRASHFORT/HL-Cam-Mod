@@ -29,14 +29,31 @@ namespace App
 		size_t LinkedCameraID;
 	};
 
+	struct HLUserData
+	{
+		size_t ID;
+
+		bool IsCamera;
+		size_t TriggerID;
+		size_t CameraID;
+	};
+
 	struct HLMap
 	{
 		HLCamera* FindCameraByID(size_t id);
 		HLTrigger* FindTriggerByID(size_t id);
+
+		void AddUserData(HLUserData& userdata);
+		HLUserData* FindUserDataByID(size_t id);
 		
 		std::string Name;
+		
 		std::vector<HLCamera> Cameras;
 		std::vector<HLTrigger> Triggers;
+
+		std::vector<HLUserData> AllUserData;
+
+		size_t NextUserDataID = 0;
 	};
 }
 
@@ -72,7 +89,8 @@ private:
 
 	App::HLMap CurrentMap;
 
-	HTREEITEM FindTreeItemFromEntityID(size_t entid);
+	HTREEITEM FindTriggerFromEntityID(size_t entid);
+	HTREEITEM FindCameraFromEntityID(size_t entid);
 
 public:
 	afx_msg void OnGetMinMaxInfo(MINMAXINFO* minmaxinfo);
