@@ -468,6 +468,7 @@ void HLCamEditorDialog::MessageHandler()
 
 				CurrentMap.AddUserData(triguserdata);
 
+				format.Format("Camera_%d", newcam.ID);
 				auto camhandle = TreeControl.InsertItem(format, trighandle);
 
 				App::HLUserData camuserdata;
