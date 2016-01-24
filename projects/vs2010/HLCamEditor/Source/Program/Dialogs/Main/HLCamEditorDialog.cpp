@@ -397,6 +397,38 @@ void HLCamEditorDialog::MessageHandler()
 							placedcams.push_back(linkedcam->ID);
 						}
 					}
+
+					auto hasbeenplaced = [&placedcams](size_t id) -> bool
+					{
+						for (auto placedcamid : placedcams)
+						{
+							if (id == placedcamid)
+							{
+								return true;
+							}
+						}
+
+						return false;
+					};
+
+					for (const auto& cam : CurrentMap.Cameras)
+					{
+						if (hasbeenplaced(cam.ID))
+						{
+							continue;
+						}
+
+						format.Format("Camera_%d", cam.ID);
+
+						auto camhandle = TreeControl.InsertItem(format);
+
+						App::HLUserData camuserdata;
+						camuserdata.IsCamera = true;
+						camuserdata.CameraID = cam.ID;
+
+						TreeControl.SetItemData(camhandle, CurrentMap.NextUserDataID);
+						CurrentMap.AddUserData(camuserdata);
+					}
 				}
 
 				break;
