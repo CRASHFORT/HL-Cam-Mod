@@ -5,6 +5,10 @@
 #include <fstream>
 #include <string>
 #include <algorithm>
+#include <thread>
+#include <atomic>
+
+using namespace std::literals::chrono_literals;
 
 #include "extdll.h"
 #include "util.h"
@@ -467,9 +471,44 @@ namespace
 
 		Shared::Interprocess::Client AppClient;
 		Shared::Interprocess::Server GameServer;
+
+		std::thread MessageHandlerThread;
 	};
 
+	static std::atomic_bool ShouldCloseMessageThread{false};
 	static MapCam TheCamMap;
+
+	void MessageHandler()
+	{
+		while (!ShouldCloseMessageThread)
+		{
+			namespace Config = Shared::Interprocess::Config;
+
+			Config::MessageType message;
+			Utility::BinaryBuffer data;
+
+			auto res = TheCamMap.AppClient.TryRead(message, data);
+
+			if (!res)
+			{
+				std::this_thread::sleep_for(1ms);
+				continue;
+			}
+
+			namespace Message = Cam::Shared::Messages::App;
+
+			switch (message)
+			{
+				case Message::SetViewToCamera:
+				{
+					int a = 5;
+					a = a;
+
+					break;
+				}
+			}
+		}
+	}
 
 	void ResetCurrentMap()
 	{
@@ -1048,6 +1087,9 @@ namespace
 			TheCamMap.AppClient.Disconnect();
 		}
 
+		ShouldCloseMessageThread = false;
+		TheCamMap.MessageHandlerThread = std::thread(&MessageHandler);
+
 		namespace Message = Cam::Shared::Messages::Game;
 
 		if (needsmapupdate)
@@ -1114,6 +1156,9 @@ namespace
 		MESSAGE_END();
 
 		TheCamMap.GameServer.Write(Cam::Shared::Messages::Game::OnEditModeStopped);
+
+		ShouldCloseMessageThread = true;
+		TheCamMap.MessageHandlerThread.join();
 
 		TheCamMap.GameServer.Stop();
 		TheCamMap.AppClient.Disconnect();

@@ -31,6 +31,9 @@ namespace App
 
 	struct HLMap
 	{
+		HLCamera* FindCameraByID(size_t id);
+		HLTrigger* FindTriggerByID(size_t id);
+		
 		std::string Name;
 		std::vector<HLCamera> Cameras;
 		std::vector<HLTrigger> Triggers;
@@ -68,6 +71,8 @@ private:
 	std::atomic_bool ShouldCloseMessageThread{false};
 
 	App::HLMap CurrentMap;
+
+	HTREEITEM FindTreeItemFromEntityID(size_t entid);
 
 public:
 	afx_msg void OnGetMinMaxInfo(MINMAXINFO* minmaxinfo);

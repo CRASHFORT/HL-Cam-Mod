@@ -39,6 +39,9 @@ namespace Cam
 					Camera_ChangeAxisType,
 					Camera_ChangeActivateType,
 					Camera_ChangeLookType,
+					Camera_SelectLinkedTrigger,
+					
+					Trigger_SelectLinkedCamera,
 
 					SetViewToCamera,
 					SetViewToPlayer,
