@@ -251,8 +251,6 @@ BOOL HLCamEditorDialog::OnInitDialog()
 		}
 	}
 
-	MessageHandlerThread = std::thread(&HLCamEditorDialog::MessageHandler, this);
-
 	return 1;
 }
 
@@ -472,4 +470,6 @@ void HLCamEditorDialog::OnBnClickedButton1()
 
 		return;
 	}
+
+	MessageHandlerThread = std::thread(&HLCamEditorDialog::MessageHandler, this);
 }
