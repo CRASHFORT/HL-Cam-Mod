@@ -2,17 +2,49 @@
 #include "afxpropertygridctrl.h"
 #include "afxcmn.h"
 
+namespace App
+{
+	struct Vector
+	{
+		float X;
+		float Y;
+		float Z;
+	};
+
+	struct HLCamera
+	{
+		size_t ID;
+		size_t LinkedTriggerID;
+
+		Vector Position;
+		Vector Angles;
+
+		float MaxSpeed;
+		size_t FOV;
+	};
+
+	struct HLTrigger
+	{
+		size_t ID;
+		size_t LinkedCameraID;
+	};
+
+	struct HLMap
+	{
+		std::string Name;
+		std::vector<HLCamera> Cameras;
+		std::vector<HLTrigger> Triggers;
+	};
+}
+
 class HLCamEditorDialog : public CDialogEx
 {
 public:
 	HLCamEditorDialog(CWnd* parent = nullptr);
-	~HLCamEditorDialog();
 
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_HLCAMEDITOR_DIALOG };
 #endif
-
-
 
 protected:
 	virtual BOOL OnInitDialog() override;
@@ -27,6 +59,16 @@ protected:
 private:
 	void RebuildPropertyGrid();
 
+	Shared::Interprocess::Server AppServer;
+	Shared::Interprocess::Client GameClient;
+
+	void MessageHandler();
+
+	std::thread MessageHandlerThread;
+	std::atomic_bool ShouldCloseMessageThread{false};
+
+	App::HLMap CurrentMap;
+
 public:
 	afx_msg void OnGetMinMaxInfo(MINMAXINFO* minmaxinfo);
 	
@@ -37,4 +79,5 @@ public:
 	afx_msg void OnClose();
 	afx_msg void OnContextMenu(CWnd* window, CPoint point);
 	afx_msg void OnTvnSelchangedTree1(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnBnClickedButton1();
 };

@@ -1,5 +1,5 @@
 #include "Client.hpp"
-#include "HLCam Shared\Shared\Shared.hpp"
+#include "Shared\Shared.hpp"
 #include <string>
 #include <vector>
 #include <algorithm>

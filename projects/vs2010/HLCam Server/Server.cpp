@@ -1,5 +1,5 @@
 #include "Server.hpp"
-#include "HLCam Shared\Shared\Shared.hpp"
+#include "Shared\Shared.hpp"
 #include <vector>
 #include <unordered_map>
 #include <fstream>
@@ -16,6 +16,9 @@
 #include "rapidjson\stringbuffer.h"
 #include "rapidjson\prettywriter.h"
 
+#include "boost\interprocess\ipc\message_queue.hpp"
+#include "Shared\Interprocess\Interprocess.hpp"
+
 extern int MsgHLCAM_OnCameraCreated;
 extern int MsgHLCAM_OnCreateTrigger;
 extern int MsgHLCAM_OnCameraRemoved;
@@ -29,13 +32,12 @@ extern int MsgHLCAM_ItemHighlightedEnd;
 extern int MsgHLCAM_ItemSelectedStart;
 extern int MsgHLCAM_ItemSelectedEnd;
 
-
 /*
 	General one file content because Half-Life's project structure is awful.
 */
 namespace
 {
-	namespace Utility
+	namespace LocalUtility
 	{
 		/*
 			From Source Engine 2007
@@ -116,7 +118,7 @@ namespace
 				Modified version, changed wstring to string as HL
 				only uses ANSI, removed exceptions.
 			*/
-			std::vector<Utility::FileSystem::ByteType> ReadAllBytes(const std::string& filename)
+			std::vector<LocalUtility::FileSystem::ByteType> ReadAllBytes(const std::string& filename)
 			{
 				std::ifstream file(filename, std::ios::binary | std::ios::ate);
 
@@ -462,6 +464,9 @@ namespace
 		}
 
 		Cam::Shared::StateType CurrentState = Cam::Shared::StateType::Inactive;
+
+		Shared::Interprocess::Client AppClient;
+		Shared::Interprocess::Server GameServer;
 	};
 
 	static MapCam TheCamMap;
@@ -472,9 +477,6 @@ namespace
 		TheCamMap.NeedsToSendResetMessage = true;
 	}
 
-	/*
-		
-	*/
 	void LoadMapDataFromFile(const std::string& mapname)
 	{
 		TheCamMap.Cameras.reserve(512);
@@ -482,7 +484,7 @@ namespace
 
 		std::string relativepath = "cammod\\MapCams\\" + mapname + ".json";
 
-		auto mapdata = Utility::FileSystem::ReadAllBytes(relativepath);
+		auto mapdata = LocalUtility::FileSystem::ReadAllBytes(relativepath);
 
 		auto conmessage = g_engfuncs.pfnAlertMessage;
 
@@ -1003,10 +1005,95 @@ namespace
 		WRITE_BYTE(TheCamMap.IsEditing);
 		MESSAGE_END();
 
+		bool needsmapupdate = TheCamMap.NeedsToSendMapUpdate;
+
 		if (TheCamMap.NeedsToSendMapUpdate)
 		{
 			TheCamMap.SendMapUpdate();
 			TheCamMap.NeedsToSendMapUpdate = false;
+		}
+
+		try
+		{
+			TheCamMap.GameServer.Start("HLCAM_GAME");
+		}
+
+		catch (const boost::interprocess::interprocess_exception& error)
+		{
+			TheCamMap.GameServer.Stop();
+
+			auto code = error.get_error_code();
+
+			if (code == boost::interprocess::error_code_t::already_exists_error)
+			{
+				TheCamMap.GameServer.Start("HLCAM_GAME");
+			}
+
+			else
+			{
+				g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Could not start HLCAM Game Server: \"%s\" (%d)\n", error.what(), code);
+			}
+		}
+
+		try
+		{
+			TheCamMap.AppClient.Connect("HLCAM_APP");
+		}
+
+		catch (const boost::interprocess::interprocess_exception& error)
+		{
+			auto code = error.get_error_code();
+
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Could not connect to HLCAM App Server: \"%s\" (%d)\n", error.what(), code);
+			TheCamMap.AppClient.Disconnect();
+		}
+
+		namespace Message = Cam::Shared::Messages::Game;
+
+		if (needsmapupdate)
+		{
+			auto pack = Utility::BinaryBufferHelp::CreatePacket(true);
+			pack << TheCamMap.CurrentMapName;
+
+			pack << static_cast<uint16>(TheCamMap.Cameras.size());
+			for (const auto& cam : TheCamMap.Cameras)
+			{
+				pack << cam.ID;
+				pack << cam.LinkedTriggerID;
+				pack << cam.MaxSpeed;
+				pack << cam.FOV;
+
+				pack << cam.Position.x;
+				pack << cam.Position.y;
+				pack << cam.Position.z;
+				pack << cam.Angle.x;
+				pack << cam.Angle.y;
+				pack << cam.Angle.z;
+			}
+
+			pack << static_cast<uint16>(TheCamMap.Triggers.size());
+			for (const auto& trig : TheCamMap.Triggers)
+			{
+				pack << trig.ID;
+				pack << trig.LinkedCameraID;
+			}
+
+			TheCamMap.GameServer.Write
+			(
+				Message::OnEditModeStarted,
+				std::move(pack)
+			);
+		}
+
+		else
+		{
+			auto pack = Utility::BinaryBufferHelp::CreatePacket(false);
+
+			TheCamMap.GameServer.Write
+			(
+				Message::OnEditModeStarted,
+				std::move(pack)
+			);
 		}
 
 		HLCAM_FirstPerson();
@@ -1025,6 +1112,11 @@ namespace
 		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_MapEditStateChanged, nullptr, TheCamMap.LocalPlayer->pev);
 		WRITE_BYTE(TheCamMap.IsEditing);
 		MESSAGE_END();
+
+		TheCamMap.GameServer.Write(Cam::Shared::Messages::Game::OnEditModeStopped);
+
+		TheCamMap.GameServer.Stop();
+		TheCamMap.AppClient.Disconnect();
 	}
 
 	void HLCAM_SaveMap()
@@ -1274,6 +1366,20 @@ void Cam::OnPlayerPreUpdate(CBasePlayer* player)
 					WRITE_SHORT(TheCamMap.CurrentSelectionTriggerID);
 
 					MESSAGE_END();
+
+					auto res = TheCamMap.GameServer.Write
+					(
+						Cam::Shared::Messages::Game::OnTriggerSelected,
+						Utility::BinaryBufferHelp::CreatePacket
+						(
+							TheCamMap.CurrentSelectionTriggerID
+						)
+					);
+
+					if (!res)
+					{
+						g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Could not write to interprocess app\n");
+					}
 				}
 			}
 		}
@@ -1336,7 +1442,7 @@ void Cam::OnPlayerPostUpdate(CBasePlayer* player)
 			{
 				const auto& trig = depthtrig.Trigger;
 
-				if (Utility::IsRayIntersectingBox(startpos, aimvec, trace.vecEndPos, trig->MinPos, trig->MaxPos))
+				if (LocalUtility::IsRayIntersectingBox(startpos, aimvec, trace.vecEndPos, trig->MinPos, trig->MaxPos))
 				{
 					if (TheCamMap.CurrentHighlightTriggerID != trig->ID)
 					{
@@ -1374,7 +1480,7 @@ void Cam::OnPlayerPostUpdate(CBasePlayer* player)
 
 	for (auto& trig : TheCamMap.Triggers)
 	{
-		if (Utility::IsBoxIntersectingBox(playerposmin, playerposmax, trig.MinPos, trig.MaxPos))
+		if (LocalUtility::IsBoxIntersectingBox(playerposmin, playerposmax, trig.MinPos, trig.MaxPos))
 		{
 			PlayerEnterTrigger(trig);
 		}

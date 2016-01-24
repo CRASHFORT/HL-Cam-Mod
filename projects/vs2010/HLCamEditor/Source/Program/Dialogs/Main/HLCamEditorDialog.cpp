@@ -52,11 +52,6 @@ HLCamEditorDialog::HLCamEditorDialog(CWnd* parent)
 	Icon = AfxGetApp()->LoadIconA(IDR_MAINFRAME);
 }
 
-HLCamEditorDialog::~HLCamEditorDialog()
-{
-	
-}
-
 BEGIN_MESSAGE_MAP(HLCamEditorDialog, CDialogEx)
 	ON_WM_GETMINMAXINFO()
 	ON_REGISTERED_MESSAGE(AFX_WM_PROPERTY_CHANGED, &OnPropertyGridItemChanged)
@@ -64,6 +59,7 @@ BEGIN_MESSAGE_MAP(HLCamEditorDialog, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_CONTEXTMENU()
 	ON_NOTIFY(TVN_SELCHANGED, IDC_TREE1, &HLCamEditorDialog::OnTvnSelchangedTree1)
+	ON_BN_CLICKED(IDC_BUTTON1, &HLCamEditorDialog::OnBnClickedButton1)
 END_MESSAGE_MAP()
 
 BOOL HLCamEditorDialog::OnInitDialog()
@@ -196,7 +192,39 @@ BOOL HLCamEditorDialog::OnInitDialog()
 	PropertyGrid.GetWindowRect(&rect);
 	PropertyGrid.PostMessageA(WM_SIZE, 0, MAKELONG(rect.Width(), rect.Height()));
 
-	return true;
+	try
+	{
+		AppServer.Start("HLCAM_APP");
+	}
+
+	catch (const boost::interprocess::interprocess_exception& error)
+	{
+		AppServer.Stop();
+
+		auto code = error.get_error_code();
+
+		if (code == boost::interprocess::error_code_t::already_exists_error)
+		{
+			AppServer.Start("HLCAM_APP");
+		}
+
+		else
+		{
+			std::string endstr = "HLCamApp: Could not start HLCAM App Server: \"";
+			endstr += error.what();
+			endstr += "\" (";
+			endstr += std::to_string(code);
+			endstr += ")";
+
+			MessageBoxA(endstr.c_str());
+
+			return 1;
+		}
+	}
+
+	MessageHandlerThread = std::thread(&HLCamEditorDialog::MessageHandler, this);
+
+	return 1;
 }
 
 void HLCamEditorDialog::OnOK()
@@ -222,6 +250,94 @@ void HLCamEditorDialog::RebuildPropertyGrid()
 
 }
 
+void HLCamEditorDialog::MessageHandler()
+{
+	while (!ShouldCloseMessageThread)
+	{
+		namespace Config = Shared::Interprocess::Config;
+
+		Config::MessageType message;
+		Utility::BinaryBuffer data;
+
+		auto res = GameClient.TryRead(message, data);
+
+		if (!res)
+		{
+			std::this_thread::sleep_for(1ms);
+			continue;
+		}
+
+		namespace Message = Cam::Shared::Messages::Game;
+
+		switch (message)
+		{
+			case Message::OnEditModeStarted:
+			{
+				auto ismapreset = data.GetValue<bool>();
+
+				if (ismapreset)
+				{
+					CurrentMap = App::HLMap();
+
+					CurrentMap.Name = data.GetNormalString();
+
+					auto camcount = data.GetValue<unsigned short>();
+
+					for (size_t i = 0; i < camcount; i++)
+					{
+						App::HLCamera curcam;
+						data >> curcam.ID;
+						data >> curcam.LinkedTriggerID;
+						data >> curcam.MaxSpeed;
+						data >> curcam.FOV;
+
+						data >> curcam.Position.X;
+						data >> curcam.Position.Y;
+						data >> curcam.Position.Z;
+
+						data >> curcam.Angles.X;
+						data >> curcam.Angles.Y;
+						data >> curcam.Angles.Z;
+
+						CurrentMap.Cameras.emplace_back(curcam);
+					}
+
+					auto trigcount = data.GetValue<unsigned short>();
+
+					for (size_t i = 0; i < trigcount; i++)
+					{
+						App::HLTrigger curtrig;
+
+						data >> curtrig.ID;
+						data >> curtrig.LinkedCameraID;
+
+						CurrentMap.Triggers.emplace_back(curtrig);
+					}
+				}
+
+				break;
+			}
+
+			case Message::OnEditModeStopped:
+			{
+				int a = 5;
+				a = a;
+				break;
+			}
+
+			case Message::OnTriggerSelected:
+			{
+				auto triggerid = data.GetValue<size_t>();
+
+				int a = 5;
+				a = a;
+
+				break;
+			}
+		}
+	}
+}
+
 void HLCamEditorDialog::OnGetMinMaxInfo(MINMAXINFO* minmaxinfo)
 {
 	minmaxinfo->ptMinTrackSize.x = 480;
@@ -232,18 +348,16 @@ LRESULT HLCamEditorDialog::OnPropertyGridItemChanged(WPARAM controlid, LPARAM pr
 {
 	auto prop = reinterpret_cast<CMFCPropertyGridProperty*>(propptr);
 
-	auto valuetype = static_cast<ValueType::Type>(prop->GetData());
-
-	int a = 5;
-	a = a;
-
-	
+	auto valuetype = static_cast<ValueType::Type>(prop->GetData());	
 
 	return 0;
 }
 
 void HLCamEditorDialog::OnClose()
 {
+	ShouldCloseMessageThread = true;
+	MessageHandlerThread.join();
+
 	EndDialog(0);
 }
 
@@ -267,8 +381,23 @@ void HLCamEditorDialog::OnContextMenu(CWnd* window, CPoint point)
 void HLCamEditorDialog::OnTvnSelchangedTree1(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMTREEVIEWW treeviewitem = reinterpret_cast<LPNMTREEVIEWW>(pNMHDR);
-	
-
 
 	*pResult = 0;
+}
+
+void HLCamEditorDialog::OnBnClickedButton1()
+{
+	try
+	{
+		GameClient.Connect("HLCAM_GAME");
+	}
+
+	catch (const boost::interprocess::interprocess_exception& error)
+	{
+		GameClient.Disconnect();
+
+		auto code = error.get_error_code();
+
+		return;
+	}
 }

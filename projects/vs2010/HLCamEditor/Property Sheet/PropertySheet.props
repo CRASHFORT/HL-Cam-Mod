@@ -6,6 +6,7 @@
     <HL_ResourceDir>$(ProjectDir)MFC Default\Resource\</HL_ResourceDir>
     <HL_SourceDir>$(ProjectDir)Source\</HL_SourceDir>
     <HL_Intermediate>$(ProjectDir)Intermediate\</HL_Intermediate>
+    <HL_Boost>C:\VS\3rd Party Libs\Boost\Include\</HL_Boost>
   </PropertyGroup>
   <PropertyGroup />
   <ItemDefinitionGroup />
@@ -21,6 +22,9 @@
     </BuildMacro>
     <BuildMacro Include="HL_Intermediate">
       <Value>$(HL_Intermediate)</Value>
+    </BuildMacro>
+    <BuildMacro Include="HL_Boost">
+      <Value>$(HL_Boost)</Value>
     </BuildMacro>
   </ItemGroup>
 </Project>

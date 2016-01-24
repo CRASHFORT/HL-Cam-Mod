@@ -57,4 +57,8 @@
 #include <mutex>
 #include <chrono>
 
+#include "boost\interprocess\ipc\message_queue.hpp"
+#include "Shared\Interprocess\Interprocess.hpp"
+#include "Shared\Shared.hpp"
+
 using namespace std::literals::chrono_literals;

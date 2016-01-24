@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros">
+    <HL_SharedInclude>$(SolutionDir)HLCam Shared Library\Include\</HL_SharedInclude>
+    <HL_3rdPartyLibsDir>C:\VS\3rd Party Libs\</HL_3rdPartyLibsDir>
+    <HL_BoostDir>$(HL_3rdPartyLibsDir)Boost\Include\</HL_BoostDir>
+    <HL_RapidJsonDir>$(HL_3rdPartyLibsDir)RapidJSON\include\</HL_RapidJsonDir>
+  </PropertyGroup>
+  <PropertyGroup />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(HL_BoostDir);$(HL_RapidJsonDir);$(HL_SharedInclude);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <BuildMacro Include="HL_SharedInclude">
+      <Value>$(HL_SharedInclude)</Value>
+    </BuildMacro>
+    <BuildMacro Include="HL_3rdPartyLibsDir">
+      <Value>$(HL_3rdPartyLibsDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="HL_BoostDir">
+      <Value>$(HL_BoostDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="HL_RapidJsonDir">
+      <Value>$(HL_RapidJsonDir)</Value>
+    </BuildMacro>
+  </ItemGroup>
+</Project>
