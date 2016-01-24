@@ -61,6 +61,9 @@ namespace Cam
 					OnTriggerSelected,
 					OnCameraSelected,
 
+					OnTriggerAndCameraAdded,
+					OnNamedCameraAdded,
+
 					OnTriggerRemoved,
 					OnCameraRemoved,
 				};

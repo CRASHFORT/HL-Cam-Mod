@@ -473,6 +473,33 @@ namespace
 		Shared::Interprocess::Server GameServer;
 
 		std::thread MessageHandlerThread;
+
+		Utility::BinaryBuffer GetInterprocessCameraInfo(const Cam::MapCamera& camera)
+		{
+			return Utility::BinaryBufferHelp::CreatePacket
+			(
+				camera.ID,
+				camera.LinkedTriggerID,
+				camera.MaxSpeed,
+				camera.FOV,
+
+				camera.Position.x,
+				camera.Position.y,
+				camera.Position.z,
+				camera.Angle.x,
+				camera.Angle.y,
+				camera.Angle.z
+			);
+		}
+
+		Utility::BinaryBuffer GetInterprocessTriggerInfo(const Cam::MapTrigger& trigger)
+		{
+			return Utility::BinaryBufferHelp::CreatePacket
+			(
+				trigger.ID,
+				trigger.LinkedCameraID
+			);
+		}
 	};
 
 	static std::atomic_bool ShouldCloseMessageThread{false};
@@ -1100,24 +1127,13 @@ namespace
 			pack << static_cast<uint16>(TheCamMap.Cameras.size());
 			for (const auto& cam : TheCamMap.Cameras)
 			{
-				pack << cam.ID;
-				pack << cam.LinkedTriggerID;
-				pack << cam.MaxSpeed;
-				pack << cam.FOV;
-
-				pack << cam.Position.x;
-				pack << cam.Position.y;
-				pack << cam.Position.z;
-				pack << cam.Angle.x;
-				pack << cam.Angle.y;
-				pack << cam.Angle.z;
+				pack.Append(TheCamMap.GetInterprocessCameraInfo(cam));
 			}
 
 			pack << static_cast<uint16>(TheCamMap.Triggers.size());
 			for (const auto& trig : TheCamMap.Triggers)
 			{
-				pack << trig.ID;
-				pack << trig.LinkedCameraID;
+				pack.Append(TheCamMap.GetInterprocessTriggerInfo(trig));
 			}
 
 			TheCamMap.GameServer.Write
@@ -1389,6 +1405,15 @@ void Cam::OnPlayerPreUpdate(CBasePlayer* player)
 				}
 
 				creationtrig->SetupPositions();
+
+				auto fullpack = TheCamMap.GetInterprocessTriggerInfo(*creationtrig);
+				fullpack.Append(TheCamMap.GetInterprocessCameraInfo(*linkedcam));
+
+				TheCamMap.GameServer.Write
+				(
+					Cam::Shared::Messages::Game::OnTriggerAndCameraAdded,
+					std::move(fullpack)
+				);
 			}
 		}
 	}
