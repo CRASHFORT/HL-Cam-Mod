@@ -11,22 +11,27 @@ namespace App
 		float Z;
 	};
 
+	struct HLTrigger
+	{
+		size_t ID;
+		size_t LinkedCameraID;
+
+		HTREEITEM TreeItem;
+	};
+
 	struct HLCamera
 	{
 		size_t ID;
-		size_t LinkedTriggerID;
+		bool IsSingle;
+		std::vector<HLTrigger> LinkedTriggers;
 
 		Vector Position;
 		Vector Angles;
 
 		float MaxSpeed;
 		size_t FOV;
-	};
 
-	struct HLTrigger
-	{
-		size_t ID;
-		size_t LinkedCameraID;
+		HTREEITEM TreeItem;
 	};
 
 	struct HLUserData
@@ -49,8 +54,6 @@ namespace App
 		std::string Name;
 		
 		std::vector<HLCamera> Cameras;
-		std::vector<HLTrigger> Triggers;
-
 		std::vector<HLUserData> AllUserData;
 
 		size_t NextUserDataID = 0;
@@ -89,8 +92,10 @@ private:
 
 	App::HLMap CurrentMap;
 
-	HTREEITEM FindTriggerFromEntityID(size_t entid);
-	HTREEITEM FindCameraFromEntityID(size_t entid);
+	void AddSingleCamera(App::HLCamera&& camera);
+	void AddCameraAndTrigger(App::HLCamera&& camera, App::HLTrigger&& trigger);
+	void AddTriggerToCamera(size_t cameraid, App::HLTrigger&& trigger);
+	void AddTriggerToCamera(App::HLCamera& camera, App::HLTrigger&& trigger);
 
 public:
 	afx_msg void OnGetMinMaxInfo(MINMAXINFO* minmaxinfo);

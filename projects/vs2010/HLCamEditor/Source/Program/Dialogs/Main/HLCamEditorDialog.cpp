@@ -63,11 +63,14 @@ namespace App
 
 	HLTrigger* HLMap::FindTriggerByID(size_t id)
 	{
-		for (auto& trig : Triggers)
+		for (auto& cam : Cameras)
 		{
-			if (trig.ID == id)
+			for (auto& trig : cam.LinkedTriggers)
 			{
-				return &trig;
+				if (trig.ID == id)
+				{
+					return &trig;
+				}
 			}
 		}
 
@@ -94,10 +97,26 @@ namespace App
 		return nullptr;
 	}
 
+	HLTrigger& operator>>(Utility::BinaryBuffer& buffer, HLTrigger& trigger)
+	{
+		buffer >> trigger.ID;
+		buffer >> trigger.LinkedCameraID;
+
+		return trigger;
+	}
+
 	HLCamera& operator>>(Utility::BinaryBuffer& buffer, HLCamera& camera)
 	{
 		buffer >> camera.ID;
-		buffer >> camera.LinkedTriggerID;
+
+		auto linkedtriggerscount = buffer.GetValue<unsigned char>();
+		camera.LinkedTriggers.reserve(linkedtriggerscount);
+
+		for (size_t i = 0; i < linkedtriggerscount; i++)
+		{
+			camera.LinkedTriggers.emplace_back(buffer.GetValue<HLTrigger>());
+		}
+
 		buffer >> camera.MaxSpeed;
 		buffer >> camera.FOV;
 
@@ -110,14 +129,6 @@ namespace App
 		buffer >> camera.Angles.Z;
 		
 		return camera;
-	}
-
-	HLTrigger& operator>>(Utility::BinaryBuffer& buffer, HLTrigger& trigger)
-	{
-		buffer >> trigger.ID;
-		buffer >> trigger.LinkedCameraID;
-
-		return trigger;
 	}
 }
 
@@ -362,82 +373,7 @@ void HLCamEditorDialog::MessageHandler()
 						CurrentMap.Cameras.emplace_back(curcam);
 					}
 
-					auto trigcount = data.GetValue<unsigned short>();
-
-					for (size_t i = 0; i < trigcount; i++)
-					{
-						auto curtrig = data.GetValue<App::HLTrigger>();
-						CurrentMap.Triggers.emplace_back(curtrig);
-					}
-
-					std::vector<size_t> placedcams(CurrentMap.Cameras.size());
-
-					CStringA format;
-
-					for (const auto& trig : CurrentMap.Triggers)
-					{
-						format.Format("Trigger_%d", trig.ID);
-
-						auto trighandle = TreeControl.InsertItem(format);
-
-						App::HLUserData triguserdata;
-						triguserdata.IsCamera = false;
-						triguserdata.TriggerID = trig.ID;
-
-						TreeControl.SetItemData(trighandle, CurrentMap.NextUserDataID);
-						
-						CurrentMap.AddUserData(triguserdata);
-
-						auto linkedcam = CurrentMap.FindCameraByID(trig.LinkedCameraID);
-
-						if (linkedcam)
-						{
-							format.Format("Camera_%d", linkedcam->ID);
-							
-							auto camhandle = TreeControl.InsertItem(format, trighandle);
-
-							App::HLUserData camuserdata;
-							camuserdata.IsCamera = true;
-							camuserdata.CameraID = linkedcam->ID;
-
-							TreeControl.SetItemData(camhandle, CurrentMap.NextUserDataID);
-							CurrentMap.AddUserData(camuserdata);
-
-							placedcams.push_back(linkedcam->ID);
-						}
-					}
-
-					auto hasbeenplaced = [&placedcams](size_t id) -> bool
-					{
-						for (auto placedcamid : placedcams)
-						{
-							if (id == placedcamid)
-							{
-								return true;
-							}
-						}
-
-						return false;
-					};
-
-					for (const auto& cam : CurrentMap.Cameras)
-					{
-						if (hasbeenplaced(cam.ID))
-						{
-							continue;
-						}
-
-						format.Format("Camera_%d", cam.ID);
-
-						auto camhandle = TreeControl.InsertItem(format);
-
-						App::HLUserData camuserdata;
-						camuserdata.IsCamera = true;
-						camuserdata.CameraID = cam.ID;
-
-						TreeControl.SetItemData(camhandle, CurrentMap.NextUserDataID);
-						CurrentMap.AddUserData(camuserdata);
-					}
+					
 				}
 
 				break;
@@ -452,49 +388,22 @@ void HLCamEditorDialog::MessageHandler()
 
 			case Message::OnTriggerAndCameraAdded:
 			{
-				auto newtrig = data.GetValue<App::HLTrigger>();
-				auto newcam = data.GetValue<App::HLCamera>();
-
-				CStringA format;
-
-				format.Format("Trigger_%d", newtrig.ID);
-				auto trighandle = TreeControl.InsertItem(format);
-
-				App::HLUserData triguserdata;
-				triguserdata.IsCamera = false;
-				triguserdata.TriggerID = newtrig.ID;
-
-				TreeControl.SetItemData(trighandle, CurrentMap.NextUserDataID);
-
-				CurrentMap.AddUserData(triguserdata);
-
-				format.Format("Camera_%d", newcam.ID);
-				auto camhandle = TreeControl.InsertItem(format, trighandle);
-
-				App::HLUserData camuserdata;
-				camuserdata.IsCamera = true;
-				camuserdata.CameraID = newcam.ID;
-
-				TreeControl.SetItemData(camhandle, CurrentMap.NextUserDataID);
-				CurrentMap.AddUserData(camuserdata);
-
-				CurrentMap.Triggers.emplace_back(newtrig);
-				CurrentMap.Cameras.emplace_back(newcam);
-
+				AddCameraAndTrigger(data.GetValue<App::HLCamera>(), data.GetValue<App::HLTrigger>());
 				break;
 			}
 
 			case Message::OnTriggerSelected:
 			{
-				auto triggerid = data.GetValue<size_t>();
+				auto triggerid = data.GetValue<size_t>();				
+				auto trigger = CurrentMap.FindTriggerByID(triggerid);
 
-				auto curitem = FindTriggerFromEntityID(triggerid);
-
-				if (curitem)
+				if (!trigger)
 				{
-					TreeControl.SelectItem(curitem);
-					TreeControl.Expand(curitem, TVE_EXPAND);
+					break;
 				}
+
+				TreeControl.SelectItem(trigger->TreeItem);
+				TreeControl.Expand(trigger->TreeItem, TVE_EXPAND);
 
 				break;
 			}
@@ -502,48 +411,87 @@ void HLCamEditorDialog::MessageHandler()
 	}
 }
 
-HTREEITEM HLCamEditorDialog::FindTriggerFromEntityID(size_t entid)
+void HLCamEditorDialog::AddSingleCamera(App::HLCamera&& camera)
 {
-	auto root = TreeControl.GetRootItem();
-	HTREEITEM curitem = root;
+	CStringA format;
 
-	do
+	format.Format("Camera_%d", camera.ID);
+	auto camhandle = TreeControl.InsertItem(format);
+
 	{
-		auto userdataindex = TreeControl.GetItemData(curitem);
-		auto userdata = CurrentMap.FindUserDataByID(userdataindex);
+		App::HLUserData camuserdata;
+		camuserdata.IsCamera = true;
+		camuserdata.CameraID = camera.ID;
 
-		if (!userdata->IsCamera && userdata->TriggerID == entid)
-		{
-			return curitem;
-		}
-
-		curitem = TreeControl.GetNextItem(curitem, TVGN_NEXTVISIBLE);
+		TreeControl.SetItemData(camhandle, CurrentMap.NextUserDataID);
+		CurrentMap.AddUserData(camuserdata);
 	}
-	while (true);
 
-	return nullptr;
+	camera.IsSingle = true;
+	CurrentMap.Cameras.emplace_back(std::move(camera));
 }
 
-HTREEITEM HLCamEditorDialog::FindCameraFromEntityID(size_t entid)
+void HLCamEditorDialog::AddCameraAndTrigger(App::HLCamera&& camera, App::HLTrigger&& trigger)
 {
-	auto root = TreeControl.GetRootItem();
-	HTREEITEM curitem = root;
+	CStringA format;
 
-	do
+	format.Format("Camera_%d", camera.ID);
+	auto camhandle = TreeControl.InsertItem(format);
+
 	{
-		auto userdataindex = TreeControl.GetItemData(curitem);
-		auto userdata = CurrentMap.FindUserDataByID(userdataindex);
+		App::HLUserData camuserdata;
+		camuserdata.IsCamera = true;
+		camuserdata.CameraID = camera.ID;
 
-		if (userdata->IsCamera && userdata->CameraID == entid)
-		{
-			return curitem;
-		}
-
-		curitem = TreeControl.GetNextItem(curitem, TVGN_NEXTVISIBLE);
+		TreeControl.SetItemData(camhandle, CurrentMap.NextUserDataID);
+		CurrentMap.AddUserData(camuserdata);
 	}
-	while (true);
 
-	return nullptr;
+	format.Format("Trigger_%d", trigger);
+	auto trighandle = TreeControl.InsertItem(format, camhandle);
+
+	{
+		App::HLUserData triguserdata;
+		triguserdata.IsCamera = false;
+		triguserdata.TriggerID = trigger.ID;
+
+		TreeControl.SetItemData(trighandle, CurrentMap.NextUserDataID);
+		CurrentMap.AddUserData(triguserdata);
+	}
+
+	camera.LinkedTriggers.emplace_back(std::move(trigger));
+	CurrentMap.Cameras.emplace_back(std::move(camera));
+}
+
+void HLCamEditorDialog::AddTriggerToCamera(size_t cameraid, App::HLTrigger&& trigger)
+{
+	auto targetcam = CurrentMap.FindCameraByID(cameraid);
+
+	if (!targetcam)
+	{
+		return;
+	}
+
+	AddTriggerToCamera(*targetcam, std::move(trigger));
+}
+
+void HLCamEditorDialog::AddTriggerToCamera(App::HLCamera& camera, App::HLTrigger&& trigger)
+{
+	CStringA format;
+
+	format.Format("Trigger_%d", trigger);
+	auto trighandle = TreeControl.InsertItem(format, camera.TreeItem);
+
+	{
+		App::HLUserData triguserdata;
+		triguserdata.IsCamera = false;
+		triguserdata.TriggerID = trigger.ID;
+
+		TreeControl.SetItemData(trighandle, CurrentMap.NextUserDataID);
+		CurrentMap.AddUserData(triguserdata);
+	}
+
+	camera.LinkedTriggers.emplace_back(std::move(trigger));
 }
 
 void HLCamEditorDialog::OnGetMinMaxInfo(MINMAXINFO* minmaxinfo)

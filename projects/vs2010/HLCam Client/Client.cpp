@@ -54,11 +54,6 @@ namespace
 			return FindCameraByID(trigger.LinkedCameraID);
 		}
 
-		Cam::ClientTrigger* GetLinkedTrigger(Cam::ClientCamera& camera)
-		{
-			return FindTriggerByID(camera.LinkedTriggerID);
-		}
-
 		void RemoveTrigger(Cam::ClientTrigger* trigger)
 		{
 			if (!trigger)
@@ -88,7 +83,12 @@ namespace
 
 			if (!camera->IsNamed)
 			{
-				RemoveTrigger(GetLinkedTrigger(*camera));
+				while (!camera->LinkedTriggerIDs.empty())
+				{
+					auto curtrigid = camera->LinkedTriggerIDs[0];
+
+					RemoveTrigger(FindTriggerByID(curtrigid));
+				}
 			}
 
 			Cameras.erase
@@ -460,7 +460,7 @@ int HLCamClient_OnTriggerCreatedMessage(const char* name, int size, void* buffer
 
 			auto linkedcam = TheCamClient.FindCameraByID(newtrig.LinkedCameraID);
 
-			linkedcam->LinkedTriggerID = newtrig.ID;
+			linkedcam->LinkedTriggerIDs.push_back(newtrig.ID);
 
 			TheCamClient.CurrentTriggerID = newtrig.ID;
 			TheCamClient.CurrentState = Cam::Shared::StateType::NeedsToCreateTriggerCorner1;
@@ -535,8 +535,6 @@ int HLCamClient_OnItemHighlightedStartMessage(const char* name, int size, void* 
 
 int HLCamClient_OnItemHighlightedEndMessage(const char* name, int size, void* buffer)
 {
-	BEGIN_READ(buffer, size);
-
 	if (TheCamClient.CurrentHighlightTrigger)
 	{
 		TheCamClient.CurrentHighlightTrigger->Highlighted = false;
@@ -564,8 +562,6 @@ int HLCamClient_ItemSelectedStart(const char* name, int size, void* buffer)
 
 int HLCamClient_ItemSelectedEnd(const char* name, int size, void* buffer)
 {
-	BEGIN_READ(buffer, size);
-
 	if (TheCamClient.CurrentSelectionTrigger)
 	{
 		TheCamClient.CurrentSelectionTrigger->Selected = false;

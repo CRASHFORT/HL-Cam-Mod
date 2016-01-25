@@ -63,6 +63,7 @@ namespace Cam
 
 					OnTriggerAndCameraAdded,
 					OnNamedCameraAdded,
+					OnTriggerAddedToCamera,
 
 					OnTriggerRemoved,
 					OnCameraRemoved,

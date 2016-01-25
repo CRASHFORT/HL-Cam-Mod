@@ -18,7 +18,7 @@ namespace Cam
 	struct ClientCamera
 	{
 		size_t ID;
-		size_t LinkedTriggerID;
+		std::vector<size_t> LinkedTriggerIDs;
 
 		/*
 			A named camera will have its name

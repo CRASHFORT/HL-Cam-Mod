@@ -1,5 +1,6 @@
 #pragma once
 #include "extdll.h"
+#include <vector>
 
 class CTriggerCamera;
 class CBasePlayer;
@@ -75,7 +76,7 @@ namespace Cam
 			ID that is used for referencing this camera in game.
 		*/
 		size_t ID = 0;
-		size_t LinkedTriggerID;
+		std::vector<size_t> LinkedTriggerIDs;
 
 		Vector Position;
 		Vector Angle;

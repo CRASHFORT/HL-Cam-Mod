@@ -400,9 +400,16 @@ namespace
 			return FindCameraByID(trigger.LinkedCameraID);
 		}
 
-		Cam::MapTrigger* GetLinkedTrigger(const Cam::MapCamera& camera)
+		std::vector<Cam::MapTrigger*> GetLinkedTriggers(const Cam::MapCamera& camera)
 		{
-			return FindTriggerByID(camera.LinkedTriggerID);
+			std::vector<Cam::MapTrigger*> ret;
+
+			for (auto& trigid : camera.LinkedTriggerIDs)
+			{
+				ret.push_back(FindTriggerByID(trigid));
+			}
+
+			return ret;
 		}
 
 		void RemoveTrigger(Cam::MapTrigger* trigger)
@@ -417,13 +424,31 @@ namespace
 				UnHighlightAll();
 			}
 
-			Triggers.erase
-			(
-				std::remove_if(Triggers.begin(), Triggers.end(), [trigger](const Cam::MapTrigger& other)
-				{
-					return other.ID == trigger->ID;
-				})
-			);
+			{
+				auto targetcam = GetLinkedCamera(*trigger);
+
+				auto& container = targetcam->LinkedTriggerIDs;
+
+				container.erase
+				(
+					std::remove_if(container.begin(), container.end(), [trigger](const size_t& otherid)
+					{
+						return otherid == trigger->ID;
+					})
+				);
+			}
+
+			{
+				auto& container = Triggers;
+
+				container.erase
+				(
+					std::remove_if(container.begin(), container.end(), [trigger](const Cam::MapTrigger& other)
+					{
+						return other.ID == trigger->ID;
+					})
+				);
+			}
 		}
 
 		/*
@@ -455,7 +480,12 @@ namespace
 
 			if (camera->TriggerType == Cam::CameraTriggerType::ByUserTrigger)
 			{
-				RemoveTrigger(FindTriggerByID(camera->LinkedTriggerID));
+				while (!camera->LinkedTriggerIDs.empty())
+				{
+					auto curtrigid = camera->LinkedTriggerIDs[0];
+
+					RemoveTrigger(FindTriggerByID(curtrigid));
+				}
 			}
 
 			Cameras.erase
@@ -474,24 +504,6 @@ namespace
 
 		std::thread MessageHandlerThread;
 
-		Utility::BinaryBuffer GetInterprocessCameraInfo(const Cam::MapCamera& camera)
-		{
-			return Utility::BinaryBufferHelp::CreatePacket
-			(
-				camera.ID,
-				camera.LinkedTriggerID,
-				camera.MaxSpeed,
-				camera.FOV,
-
-				camera.Position.x,
-				camera.Position.y,
-				camera.Position.z,
-				camera.Angle.x,
-				camera.Angle.y,
-				camera.Angle.z
-			);
-		}
-
 		Utility::BinaryBuffer GetInterprocessTriggerInfo(const Cam::MapTrigger& trigger)
 		{
 			return Utility::BinaryBufferHelp::CreatePacket
@@ -499,6 +511,33 @@ namespace
 				trigger.ID,
 				trigger.LinkedCameraID
 			);
+		}
+
+		Utility::BinaryBuffer GetInterprocessCameraInfo(const Cam::MapCamera& camera)
+		{
+			Utility::BinaryBuffer ret;
+
+			ret << camera.ID;
+
+			ret << static_cast<unsigned char>(camera.LinkedTriggerIDs.size());
+
+			for (const auto& trigid : camera.LinkedTriggerIDs)
+			{
+				ret.Append(GetInterprocessTriggerInfo(*FindTriggerByID(trigid)));
+			}
+
+			ret << camera.MaxSpeed;
+			ret << camera.FOV;
+
+			ret << camera.Position.x;
+			ret << camera.Position.y;
+			ret << camera.Position.z;
+			
+			ret << camera.Angle.x;
+			ret << camera.Angle.y;
+			ret << camera.Angle.z;
+
+			return ret;
 		}
 	};
 
@@ -539,6 +578,9 @@ namespace
 
 	void ResetCurrentMap()
 	{
+		ShouldCloseMessageThread = true;
+		TheCamMap.MessageHandlerThread.join();
+
 		TheCamMap = MapCam();
 		TheCamMap.NeedsToSendResetMessage = true;
 	}
@@ -578,58 +620,12 @@ namespace
 
 		for (auto entryit = entitr->value.Begin(); entryit != entitr->value.End(); ++entryit)
 		{
-			Cam::MapTrigger curtrig;
 			Cam::MapCamera curcam;
 
+			curcam.ID = TheCamMap.NextCameraID;
+			TheCamMap.NextCameraID++;
+
 			const auto& entryval = *entryit;
-
-			{
-				const auto& triggerit = entryval.FindMember("Trigger");
-
-				if (triggerit == entryval.MemberEnd())
-				{
-					curcam.TriggerType = Cam::CameraTriggerType::ByName;
-				}
-
-				else
-				{
-					const auto& trigval = triggerit->value;
-
-					{
-						const auto& corneritr = trigval.FindMember("Corner1");
-
-						if (corneritr == trigval.MemberEnd())
-						{
-							conmessage(at_console, "HLCAM: Missing \"Corner1\" entry in \"Trigger\" for \"%s\"\n", mapname.c_str());
-							return;
-						}
-
-						const auto& cornerval = corneritr->value;
-
-						curtrig.Corner1.x = cornerval[0].GetDouble();
-						curtrig.Corner1.y = cornerval[1].GetDouble();
-						curtrig.Corner1.z = cornerval[2].GetDouble();
-					}
-
-					{
-						const auto& corneritr = trigval.FindMember("Corner2");
-
-						if (corneritr == trigval.MemberEnd())
-						{
-							conmessage(at_console, "HLCAM: Missing \"Corner2\" entry in \"Trigger\" for \"%s\"\n", mapname.c_str());
-							return;
-						}
-
-						const auto& cornerval = corneritr->value;
-
-						curtrig.Corner2.x = cornerval[0].GetDouble();
-						curtrig.Corner2.y = cornerval[1].GetDouble();
-						curtrig.Corner2.z = cornerval[2].GetDouble();
-					}
-
-					curtrig.SetupPositions();
-				}
-			}
 
 			{
 				const auto& camit = entryval.FindMember("Camera");
@@ -641,6 +637,67 @@ namespace
 				}
 
 				const auto& camval = camit->value;
+
+				{
+					const auto& triggerit = camval.FindMember("Triggers");
+
+					if (triggerit == camval.MemberEnd())
+					{
+						curcam.TriggerType = Cam::CameraTriggerType::ByName;
+					}
+
+					else
+					{
+						for (auto trigit = triggerit->value.Begin(); trigit != triggerit->value.End(); ++trigit)
+						{
+							const auto& trigval = *trigit;
+
+							Cam::MapTrigger curtrig;
+
+							{
+								const auto& corneritr = trigval.FindMember("Corner1");
+
+								if (corneritr == trigval.MemberEnd())
+								{
+									conmessage(at_console, "HLCAM: Missing \"Corner1\" entry in \"Trigger\" for \"%s\"\n", mapname.c_str());
+									return;
+								}
+
+								const auto& cornerval = corneritr->value;
+
+								curtrig.Corner1.x = cornerval[0].GetDouble();
+								curtrig.Corner1.y = cornerval[1].GetDouble();
+								curtrig.Corner1.z = cornerval[2].GetDouble();
+							}
+
+							{
+								const auto& corneritr = trigval.FindMember("Corner2");
+
+								if (corneritr == trigval.MemberEnd())
+								{
+									conmessage(at_console, "HLCAM: Missing \"Corner2\" entry in \"Trigger\" for \"%s\"\n", mapname.c_str());
+									return;
+								}
+
+								const auto& cornerval = corneritr->value;
+
+								curtrig.Corner2.x = cornerval[0].GetDouble();
+								curtrig.Corner2.y = cornerval[1].GetDouble();
+								curtrig.Corner2.z = cornerval[2].GetDouble();
+							}
+
+							curtrig.SetupPositions();
+
+							curtrig.ID = TheCamMap.NextTriggerID;
+							TheCamMap.NextTriggerID++;
+
+							curtrig.LinkedCameraID = curcam.ID;
+
+							curcam.LinkedTriggerIDs.push_back(curtrig.ID);
+							TheCamMap.Triggers.emplace_back(std::move(curtrig));
+						}
+					}
+				}
 
 				{
 					const auto& positr = camval.FindMember("Position");
@@ -748,8 +805,6 @@ namespace
 					curcam.TargetCamera->pev->spawnflags |= SF_CAMERA_PLAYER_TARGET;
 				}
 
-				curcam.ID = TheCamMap.NextCameraID;
-
 				if (curcam.TriggerType == Cam::CameraTriggerType::ByName)
 				{
 					const auto& nameit = camval.FindMember("Name");
@@ -764,20 +819,6 @@ namespace
 					
 					curcam.TargetCamera->pev->targetname = g_engfuncs.pfnAllocString(curcam.Name);
 				}
-
-				else
-				{
-					curtrig.ID = TheCamMap.NextTriggerID;
-
-					TheCamMap.NextTriggerID++;
-
-					curtrig.LinkedCameraID = curcam.ID;
-					curcam.LinkedTriggerID = curtrig.ID;
-
-					TheCamMap.Triggers.push_back(curtrig);
-				}
-
-				TheCamMap.NextCameraID++;
 
 				curcam.TargetCamera->IsHLCam = true;
 				curcam.TargetCamera->HLCam = curcam;
@@ -932,7 +973,7 @@ namespace
 			newtrig.ID = TheCamMap.NextTriggerID;
 			newtrig.LinkedCameraID = newcam.ID;
 
-			newcam.LinkedTriggerID = newtrig.ID;
+			newcam.LinkedTriggerIDs.push_back(newtrig.ID);
 
 			TheCamMap.CurrentState = Cam::Shared::StateType::NeedsToCreateTriggerCorner1;
 
@@ -1205,32 +1246,39 @@ namespace
 		{
 			rapidjson::Value thisvalue(rapidjson::kObjectType);
 
-			Cam::MapTrigger* linkedtrig = nullptr;
+			rapidjson::Value cameraval(rapidjson::kObjectType);
+
+			const Cam::MapTrigger* linkedtrig = nullptr;
 
 			if (cam.TriggerType == Cam::CameraTriggerType::ByUserTrigger)
 			{
-				linkedtrig = TheCamMap.GetLinkedTrigger(cam);
+				rapidjson::Value trigarray(rapidjson::kArrayType);
 
-				rapidjson::Value trigval(rapidjson::kObjectType);
+				for (const auto& trigid : cam.LinkedTriggerIDs)
+				{
+					linkedtrig = TheCamMap.FindTriggerByID(trigid);
 
-				rapidjson::Value corn1val(rapidjson::kArrayType);
-				rapidjson::Value corn2val(rapidjson::kArrayType);
+					rapidjson::Value trigval(rapidjson::kObjectType);
 
-				corn1val.PushBack(linkedtrig->Corner1.x, alloc);
-				corn1val.PushBack(linkedtrig->Corner1.y, alloc);
-				corn1val.PushBack(linkedtrig->Corner1.z, alloc);
+					rapidjson::Value corn1val(rapidjson::kArrayType);
+					rapidjson::Value corn2val(rapidjson::kArrayType);
 
-				corn2val.PushBack(linkedtrig->Corner2.x, alloc);
-				corn2val.PushBack(linkedtrig->Corner2.y, alloc);
-				corn2val.PushBack(linkedtrig->Corner2.z, alloc);
+					corn1val.PushBack(linkedtrig->Corner1.x, alloc);
+					corn1val.PushBack(linkedtrig->Corner1.y, alloc);
+					corn1val.PushBack(linkedtrig->Corner1.z, alloc);
 
-				trigval.AddMember("Corner1", std::move(corn1val), alloc);
-				trigval.AddMember("Corner2", std::move(corn2val), alloc);
+					corn2val.PushBack(linkedtrig->Corner2.x, alloc);
+					corn2val.PushBack(linkedtrig->Corner2.y, alloc);
+					corn2val.PushBack(linkedtrig->Corner2.z, alloc);
 
-				thisvalue.AddMember("Trigger", std::move(trigval), alloc);
+					trigval.AddMember("Corner1", std::move(corn1val), alloc);
+					trigval.AddMember("Corner2", std::move(corn2val), alloc);
+
+					trigarray.PushBack(std::move(trigval), alloc);
+				}
+
+				cameraval.AddMember("Triggers", std::move(trigarray), alloc);
 			}
-
-			rapidjson::Value cameraval(rapidjson::kObjectType);
 
 			rapidjson::Value camposval(rapidjson::kArrayType);
 			rapidjson::Value camangval(rapidjson::kArrayType);
