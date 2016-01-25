@@ -555,7 +555,36 @@ void HLCamEditorDialog::OnTvnSelchangedTree1(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	auto treeviewitem = reinterpret_cast<LPNMTREEVIEWW>(pNMHDR);
 
-	
+	auto userdata = CurrentMap.FindUserDataByID(TreeControl.GetItemData(treeviewitem->itemNew.hItem));
+
+	namespace Messages = Cam::Shared::Messages::App;
+
+	if (userdata)
+	{
+		if (userdata->IsCamera)
+		{
+			AppServer.Write
+			(
+				Messages::Camera_Select,
+				Utility::BinaryBufferHelp::CreatePacket
+				(
+					userdata->CameraID
+				)
+			);
+		}
+
+		else
+		{
+			AppServer.Write
+			(
+				Messages::Trigger_Select,
+				Utility::BinaryBufferHelp::CreatePacket
+				(
+					userdata->TriggerID
+				)
+			);
+		}
+	}
 
 	*pResult = 0;
 }

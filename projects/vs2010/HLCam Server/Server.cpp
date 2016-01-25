@@ -565,10 +565,23 @@ namespace
 
 			switch (message)
 			{
-				case Message::SetViewToCamera:
+				case Message::Trigger_Select:
 				{
-					int a = 5;
-					a = a;
+					auto triggerid = data.GetValue<size_t>();
+
+					if (TheCamMap.CurrentSelectionTriggerID != triggerid)
+					{
+						TheCamMap.UnSelectAll();
+
+						TheCamMap.CurrentSelectionTriggerID = triggerid;
+
+						MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_ItemSelectedStart, nullptr, TheCamMap.LocalPlayer->pev);
+
+						WRITE_BYTE(0);
+						WRITE_SHORT(TheCamMap.CurrentSelectionTriggerID);
+
+						MESSAGE_END();
+					}
 
 					break;
 				}

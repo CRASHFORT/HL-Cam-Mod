@@ -42,6 +42,8 @@ namespace Cam
 					Camera_SelectLinkedTrigger,
 					
 					Trigger_SelectLinkedCamera,
+					Trigger_Select,
+					Camera_Select,
 
 					SetViewToCamera,
 					SetViewToPlayer,
