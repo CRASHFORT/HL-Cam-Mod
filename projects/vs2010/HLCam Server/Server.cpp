@@ -1171,12 +1171,6 @@ namespace
 				pack.Append(TheCamMap.GetInterprocessCameraInfo(cam));
 			}
 
-			pack << static_cast<uint16>(TheCamMap.Triggers.size());
-			for (const auto& trig : TheCamMap.Triggers)
-			{
-				pack.Append(TheCamMap.GetInterprocessTriggerInfo(trig));
-			}
-
 			TheCamMap.GameServer.Write
 			(
 				Message::OnEditModeStarted,

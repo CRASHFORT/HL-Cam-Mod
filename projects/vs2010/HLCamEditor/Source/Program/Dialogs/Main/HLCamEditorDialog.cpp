@@ -110,11 +110,22 @@ namespace App
 		buffer >> camera.ID;
 
 		auto linkedtriggerscount = buffer.GetValue<unsigned char>();
-		camera.LinkedTriggers.reserve(linkedtriggerscount);
 
-		for (size_t i = 0; i < linkedtriggerscount; i++)
+		if (linkedtriggerscount > 0)
 		{
-			camera.LinkedTriggers.emplace_back(buffer.GetValue<HLTrigger>());
+			camera.LinkedTriggers.reserve(linkedtriggerscount);
+
+			for (size_t i = 0; i < linkedtriggerscount; i++)
+			{
+				camera.LinkedTriggers.emplace_back(buffer.GetValue<HLTrigger>());
+			}
+
+			camera.IsSingle = false;
+		}
+
+		else
+		{
+			camera.IsSingle = true;
 		}
 
 		buffer >> camera.MaxSpeed;
@@ -373,7 +384,18 @@ void HLCamEditorDialog::MessageHandler()
 						CurrentMap.Cameras.emplace_back(curcam);
 					}
 
-					
+					for (auto& cam : CurrentMap.Cameras)
+					{
+						if (cam.IsSingle)
+						{
+							AddSingleCameraToList(cam);
+						}
+
+						else
+						{
+							AddCameraAndTriggerToList(cam);
+						}
+					}
 				}
 
 				break;
@@ -413,85 +435,80 @@ void HLCamEditorDialog::MessageHandler()
 
 void HLCamEditorDialog::AddSingleCamera(App::HLCamera&& camera)
 {
+	camera.IsSingle = true;
+	AddSingleCameraToList(camera);
+	CurrentMap.Cameras.emplace_back(std::move(camera));
+}
+
+void HLCamEditorDialog::AddSingleCameraToList(App::HLCamera& camera)
+{
 	CStringA format;
 
 	format.Format("Camera_%d", camera.ID);
-	auto camhandle = TreeControl.InsertItem(format);
+	camera.TreeItem = TreeControl.InsertItem(format);
 
 	{
 		App::HLUserData camuserdata;
 		camuserdata.IsCamera = true;
 		camuserdata.CameraID = camera.ID;
 
-		TreeControl.SetItemData(camhandle, CurrentMap.NextUserDataID);
+		TreeControl.SetItemData(camera.TreeItem, CurrentMap.NextUserDataID);
 		CurrentMap.AddUserData(camuserdata);
 	}
-
-	camera.IsSingle = true;
-	CurrentMap.Cameras.emplace_back(std::move(camera));
 }
 
 void HLCamEditorDialog::AddCameraAndTrigger(App::HLCamera&& camera, App::HLTrigger&& trigger)
 {
+	AddCameraAndTriggerToList(camera);
+	
+	camera.LinkedTriggers.emplace_back(std::move(trigger));
+	CurrentMap.Cameras.emplace_back(std::move(camera));
+}
+
+void HLCamEditorDialog::AddCameraAndTriggerToList(App::HLCamera& camera)
+{
 	CStringA format;
 
 	format.Format("Camera_%d", camera.ID);
-	auto camhandle = TreeControl.InsertItem(format);
+	camera.TreeItem = TreeControl.InsertItem(format);
 
 	{
 		App::HLUserData camuserdata;
 		camuserdata.IsCamera = true;
 		camuserdata.CameraID = camera.ID;
 
-		TreeControl.SetItemData(camhandle, CurrentMap.NextUserDataID);
+		TreeControl.SetItemData(camera.TreeItem, CurrentMap.NextUserDataID);
 		CurrentMap.AddUserData(camuserdata);
 	}
 
-	format.Format("Trigger_%d", trigger);
-	auto trighandle = TreeControl.InsertItem(format, camhandle);
-
-	{
-		App::HLUserData triguserdata;
-		triguserdata.IsCamera = false;
-		triguserdata.TriggerID = trigger.ID;
-
-		TreeControl.SetItemData(trighandle, CurrentMap.NextUserDataID);
-		CurrentMap.AddUserData(triguserdata);
-	}
-
-	camera.LinkedTriggers.emplace_back(std::move(trigger));
-	CurrentMap.Cameras.emplace_back(std::move(camera));
-}
-
-void HLCamEditorDialog::AddTriggerToCamera(size_t cameraid, App::HLTrigger&& trigger)
-{
-	auto targetcam = CurrentMap.FindCameraByID(cameraid);
-
-	if (!targetcam)
-	{
-		return;
-	}
-
-	AddTriggerToCamera(*targetcam, std::move(trigger));
+	AddCamerasTriggersToList(camera, camera.LinkedTriggers);
 }
 
 void HLCamEditorDialog::AddTriggerToCamera(App::HLCamera& camera, App::HLTrigger&& trigger)
 {
+	std::vector<App::HLTrigger> entry{trigger};
+	AddCamerasTriggersToList(camera, entry);
+	camera.LinkedTriggers.emplace_back(std::move(trigger));
+}
+
+void HLCamEditorDialog::AddCamerasTriggersToList(App::HLCamera& camera, std::vector<App::HLTrigger>& triggers)
+{
 	CStringA format;
 
-	format.Format("Trigger_%d", trigger);
-	auto trighandle = TreeControl.InsertItem(format, camera.TreeItem);
-
+	for (auto& trig : triggers)
 	{
-		App::HLUserData triguserdata;
-		triguserdata.IsCamera = false;
-		triguserdata.TriggerID = trigger.ID;
+		format.Format("Trigger_%d", trig.ID);
+		trig.TreeItem = TreeControl.InsertItem(format, camera.TreeItem);
 
-		TreeControl.SetItemData(trighandle, CurrentMap.NextUserDataID);
-		CurrentMap.AddUserData(triguserdata);
+		{
+			App::HLUserData triguserdata;
+			triguserdata.IsCamera = false;
+			triguserdata.TriggerID = trig.ID;
+
+			TreeControl.SetItemData(trig.TreeItem, CurrentMap.NextUserDataID);
+			CurrentMap.AddUserData(triguserdata);
+		}
 	}
-
-	camera.LinkedTriggers.emplace_back(std::move(trigger));
 }
 
 void HLCamEditorDialog::OnGetMinMaxInfo(MINMAXINFO* minmaxinfo)

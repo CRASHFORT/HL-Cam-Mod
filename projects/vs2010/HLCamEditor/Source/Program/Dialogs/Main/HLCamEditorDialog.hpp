@@ -93,9 +93,13 @@ private:
 	App::HLMap CurrentMap;
 
 	void AddSingleCamera(App::HLCamera&& camera);
+	void AddSingleCameraToList(App::HLCamera& camera);
+
 	void AddCameraAndTrigger(App::HLCamera&& camera, App::HLTrigger&& trigger);
-	void AddTriggerToCamera(size_t cameraid, App::HLTrigger&& trigger);
-	void AddTriggerToCamera(App::HLCamera& camera, App::HLTrigger&& trigger);
+	void AddCameraAndTriggerToList(App::HLCamera& camera);
+
+	void AddTriggerToCamera(App::HLCamera& camera, App::HLTrigger&& trigger);	
+	void AddCamerasTriggersToList(App::HLCamera& camera, std::vector<App::HLTrigger>& triggers);
 
 public:
 	afx_msg void OnGetMinMaxInfo(MINMAXINFO* minmaxinfo);
