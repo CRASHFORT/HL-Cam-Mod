@@ -30,7 +30,6 @@ namespace Cam
 		float Position[3] = {0};
 		float Angle[3] = {0};
 
-		bool Highlighted = false;
 		bool Selected = false;
 	};
 

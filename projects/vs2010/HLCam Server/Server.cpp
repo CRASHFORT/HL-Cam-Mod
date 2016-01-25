@@ -246,7 +246,6 @@ namespace
 			Highlights for item information
 		*/
 		int CurrentHighlightTriggerID = -1;
-		int CurrentHighlightCameraID = -1;
 
 		/*
 			Selections for item editing
@@ -256,13 +255,12 @@ namespace
 
 		void UnHighlightAll()
 		{
-			if (CurrentHighlightCameraID != -1 || CurrentHighlightTriggerID != -1)
+			if (CurrentHighlightTriggerID != -1)
 			{
 				MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_ItemHighlightedEnd, nullptr, LocalPlayer->pev);
 				MESSAGE_END();
 			}
 
-			CurrentHighlightCameraID = -1;
 			CurrentHighlightTriggerID = -1;
 		}
 
@@ -473,11 +471,6 @@ namespace
 				UTIL_Remove(camera->TargetCamera);
 			}
 
-			if (camera->ID == CurrentHighlightCameraID)
-			{
-				UnHighlightAll();
-			}
-
 			if (camera->TriggerType == Cam::CameraTriggerType::ByUserTrigger)
 			{
 				while (!camera->LinkedTriggerIDs.empty())
@@ -579,6 +572,27 @@ namespace
 
 						WRITE_BYTE(0);
 						WRITE_SHORT(TheCamMap.CurrentSelectionTriggerID);
+
+						MESSAGE_END();
+					}
+
+					break;
+				}
+
+				case Message::Camera_Select:
+				{
+					auto cameraid = data.GetValue<size_t>();
+
+					if (TheCamMap.CurrentSelectionCameraID != cameraid)
+					{
+						TheCamMap.UnSelectAll();
+
+						TheCamMap.CurrentSelectionCameraID = cameraid;
+
+						MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_ItemSelectedStart, nullptr, TheCamMap.LocalPlayer->pev);
+
+						WRITE_BYTE(1);
+						WRITE_SHORT(TheCamMap.CurrentSelectionCameraID);
 
 						MESSAGE_END();
 					}

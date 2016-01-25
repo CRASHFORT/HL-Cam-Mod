@@ -429,6 +429,22 @@ void HLCamEditorDialog::MessageHandler()
 
 				break;
 			}
+
+			case Message::OnCameraSelected:
+			{
+				auto cameraid = data.GetValue<size_t>();
+				auto camera = CurrentMap.FindCameraByID(cameraid);
+
+				if (!camera)
+				{
+					break;
+				}
+
+				TreeControl.SelectItem(camera->TreeItem);
+				TreeControl.Expand(camera->TreeItem, TVE_EXPAND);
+
+				break;
+			}
 		}
 	}
 }

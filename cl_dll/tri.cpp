@@ -346,6 +346,28 @@ void CL_DLLEXPORT HUD_DrawTransparentTriangles( void )
 			maxpos.z += camboxsize;
 
 			/*
+				Selection box
+			*/
+			if (cam.Selected)
+			{
+				auto minsel = minpos;
+				auto maxsel = maxpos;
+
+				for (size_t i = 0; i < 2; i++)
+				{
+					minsel.x -= camboxsize;
+					minsel.y -= camboxsize;
+					minsel.z -= camboxsize;
+
+					maxsel.x += camboxsize;
+					maxsel.y += camboxsize;
+					maxsel.z += camboxsize;
+
+					DrawWireframeBox(maxsel, minsel);
+				}
+			}
+
+			/*
 				Starting box
 			*/
 			DrawBox(maxpos, minpos);

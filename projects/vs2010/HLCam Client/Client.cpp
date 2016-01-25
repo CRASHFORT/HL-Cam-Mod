@@ -18,7 +18,6 @@ namespace
 		bool InEditMode = false;
 
 		Cam::ClientTrigger* CurrentHighlightTrigger = nullptr;
-		Cam::ClientCamera* CurrentHighlightCamera = nullptr;
 
 		Cam::ClientTrigger* CurrentSelectionTrigger = nullptr;
 		Cam::ClientCamera* CurrentSelectionCamera = nullptr;
@@ -330,6 +329,27 @@ namespace Cam
 				builder.AddItem(std::move(item));
 			}
 
+			if (TheCamClient.CurrentSelectionCamera)
+			{
+				builder.AddEmptySpace();
+
+				const auto& curcam = TheCamClient.CurrentSelectionCamera;
+
+				{
+					Menu::MenuQueueItem item;
+					item.Text = "Selection Camera ID: " + std::to_string(curcam->ID);
+
+					builder.AddItem(std::move(item));
+				}
+
+				{
+					Menu::MenuQueueItem item;
+					item.Text = "Linked Triggers: " + std::to_string(curcam->LinkedTriggerIDs.size());
+
+					builder.AddItem(std::move(item));
+				}
+			}
+
 			if (TheCamClient.CurrentSelectionTrigger)
 			{
 				builder.AddEmptySpace();
@@ -525,11 +545,6 @@ int HLCamClient_OnItemHighlightedStartMessage(const char* name, int size, void* 
 		TheCamClient.CurrentHighlightTrigger->Highlighted = true;
 	}
 
-	else if (type == 1)
-	{
-		TheCamClient.CurrentHighlightCamera = TheCamClient.FindCameraByID(itemid);
-	}
-
 	return 1;
 }
 
@@ -557,6 +572,12 @@ int HLCamClient_ItemSelectedStart(const char* name, int size, void* buffer)
 		TheCamClient.CurrentSelectionTrigger->Selected = true;
 	}
 
+	else if (type == 1)
+	{
+		TheCamClient.CurrentSelectionCamera = TheCamClient.FindCameraByID(itemid);
+		TheCamClient.CurrentSelectionCamera->Selected = true;
+	}
+
 	return 1;
 }
 
@@ -566,6 +587,12 @@ int HLCamClient_ItemSelectedEnd(const char* name, int size, void* buffer)
 	{
 		TheCamClient.CurrentSelectionTrigger->Selected = false;
 		TheCamClient.CurrentSelectionTrigger = nullptr;
+	}
+
+	else if (TheCamClient.CurrentSelectionCamera)
+	{
+		TheCamClient.CurrentSelectionCamera->Selected = false;
+		TheCamClient.CurrentSelectionCamera = nullptr;
 	}
 
 	return 1;
