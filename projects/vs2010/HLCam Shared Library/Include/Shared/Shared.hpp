@@ -39,14 +39,15 @@ namespace Cam
 					Camera_ChangeAxisType,
 					Camera_ChangeActivateType,
 					Camera_ChangeLookType,
-					Camera_SelectLinkedTrigger,
 					
-					Trigger_SelectLinkedCamera,
 					Trigger_Select,
 					Camera_Select,
 
 					SetViewToCamera,
 					SetViewToPlayer,
+
+					MoveToCamera,
+					MoveToTrigger,
 				};
 			}
 

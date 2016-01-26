@@ -101,6 +101,23 @@ private:
 	void AddTriggerToCamera(App::HLCamera& camera, App::HLTrigger&& trigger);	
 	void AddCamerasTriggersToList(App::HLCamera& camera, std::vector<App::HLTrigger>& triggers);
 
+	struct
+	{
+		CMFCPropertyGridProperty* ID;
+		CMFCPropertyGridProperty* Name;
+		CMFCPropertyGridProperty* ActivateType;
+		CMFCPropertyGridProperty* LockAxis;
+		CMFCPropertyGridProperty* LookAtPlayer;
+		CMFCPropertyGridProperty* PositionX;
+		CMFCPropertyGridProperty* PositionY;
+		CMFCPropertyGridProperty* PositionZ;
+		CMFCPropertyGridProperty* AngleX;
+		CMFCPropertyGridProperty* AngleY;
+		CMFCPropertyGridProperty* AngleZ;
+		CMFCPropertyGridProperty* FOV;
+		CMFCPropertyGridProperty* Speed;
+	} PropertyGridEntries;
+
 public:
 	afx_msg void OnGetMinMaxInfo(MINMAXINFO* minmaxinfo);
 	

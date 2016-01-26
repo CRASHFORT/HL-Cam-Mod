@@ -30,6 +30,9 @@
     <ClInclude Include="Precompiled Header\PrecompiledHeader.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Program\Help\ContextMenuHelper.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Program\App\HLCamEditorApp.cpp">
@@ -39,6 +42,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Precompiled Header\PrecompiledHeader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Program\Help\ContextMenuHelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

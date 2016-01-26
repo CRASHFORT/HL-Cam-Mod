@@ -1,6 +1,7 @@
 #include "PrecompiledHeader.hpp"
 #include "Program\App\HLCamEditorApp.hpp"
 #include "Program\Dialogs\Main\HLCamEditorDialog.hpp"
+#include "Program\Help\ContextMenuHelper.hpp"
 #include "afxdialogex.h"
 
 #include <memory>
@@ -8,43 +9,6 @@
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
-
-namespace
-{
-	namespace ItemType
-	{
-		enum Type
-		{
-			Camera,
-			Trigger,
-		};
-	}
-
-	namespace ValueType
-	{
-		enum Type
-		{
-			FOV,
-			Speed,
-			PositionX,
-			PositionY,
-			PositionZ,
-			AngleX,
-			AngleY,
-			AngleZ,
-			PlaneType,
-			
-			LookType,
-			TriggerType,
-			Name,
-
-			LookType_AtPlayer,
-			LookType_AtAngle,
-			TriggerType_ByTrigger,
-			TriggerType_ByName,
-		};
-	}
-}
 
 namespace App
 {
@@ -166,57 +130,51 @@ BOOL HLCamEditorDialog::OnInitDialog()
 	SetIcon(Icon, true);
 	SetIcon(Icon, false);
 
-	{
-		auto testprop = new CMFCPropertyGridProperty("ID", COleVariant(0l));
-		testprop->Enable(false);
+	auto& entries = PropertyGridEntries;
 
-		PropertyGrid.AddProperty(testprop);
+	{
+		entries.ID = new CMFCPropertyGridProperty("ID", COleVariant(0l));
+		entries.ID->Enable(false);
+
+		PropertyGrid.AddProperty(entries.ID);
 	}
 
 	{
-		auto testprop = new CMFCPropertyGridProperty("Name", "");
-		testprop->AllowEdit(true);
+		entries.Name = new CMFCPropertyGridProperty("Name", "");
+		entries.Name->AllowEdit(true);
 
-		testprop->SetData(ValueType::Name);
-
-		PropertyGrid.AddProperty(testprop);
+		PropertyGrid.AddProperty(entries.Name);
 	}
 
 	{
-		auto testprop = new CMFCPropertyGridProperty("Activate type", "");
-		testprop->AddOption("By trigger");
-		testprop->AddOption("By name");
+		entries.ActivateType = new CMFCPropertyGridProperty("Activate type", "");
+		entries.ActivateType->AddOption("By trigger");
+		entries.ActivateType->AddOption("By name");
 
-		testprop->AllowEdit(false);
+		entries.ActivateType->AllowEdit(false);
 
-		testprop->SetData(ValueType::TriggerType);
-
-		PropertyGrid.AddProperty(testprop);
+		PropertyGrid.AddProperty(entries.ActivateType);
 	}
 
 	{
-		auto testprop = new CMFCPropertyGridProperty("Lock axis", "");
-		testprop->AddOption("None");
-		testprop->AddOption("Horizontal");
-		testprop->AddOption("Vertical");
+		entries.LockAxis = new CMFCPropertyGridProperty("Lock axis", "");
+		entries.LockAxis->AddOption("None");
+		entries.LockAxis->AddOption("Horizontal");
+		entries.LockAxis->AddOption("Vertical");
 
-		testprop->AllowEdit(false);
+		entries.LockAxis->AllowEdit(false);
 
-		testprop->SetData(ValueType::PlaneType);
-
-		PropertyGrid.AddProperty(testprop);
+		PropertyGrid.AddProperty(entries.LockAxis);
 	}
 
 	{
-		auto testprop = new CMFCPropertyGridProperty("Look at player", "");
-		testprop->AddOption("Yes");
-		testprop->AddOption("No");
+		entries.LookAtPlayer = new CMFCPropertyGridProperty("Look at player", "");
+		entries.LookAtPlayer->AddOption("Yes");
+		entries.LookAtPlayer->AddOption("No");
 
-		testprop->AllowEdit(false);
+		entries.LookAtPlayer->AllowEdit(false);
 
-		testprop->SetData(ValueType::LookType);
-
-		PropertyGrid.AddProperty(testprop);
+		PropertyGrid.AddProperty(entries.LookAtPlayer);
 	}
 
 	{
@@ -224,21 +182,18 @@ BOOL HLCamEditorDialog::OnInitDialog()
 		PropertyGrid.AddProperty(group);
 
 		{
-			auto pos = new CMFCPropertyGridProperty("X", COleVariant(0.0f));
-			pos->SetData(ValueType::PositionX);
-			group->AddSubItem(pos);
+			entries.PositionX = new CMFCPropertyGridProperty("X", COleVariant(0.0f));
+			group->AddSubItem(entries.PositionX);
 		}
 
 		{
-			auto pos = new CMFCPropertyGridProperty("Y", COleVariant(0.0f));
-			pos->SetData(ValueType::PositionY);
-			group->AddSubItem(pos);
+			entries.PositionY = new CMFCPropertyGridProperty("Y", COleVariant(0.0f));
+			group->AddSubItem(entries.PositionY);
 		}
 
 		{
-			auto pos = new CMFCPropertyGridProperty("Z", COleVariant(0.0f));
-			pos->SetData(ValueType::PositionZ);
-			group->AddSubItem(pos);
+			entries.PositionZ = new CMFCPropertyGridProperty("Z", COleVariant(0.0f));
+			group->AddSubItem(entries.PositionZ);
 		}
 	}
 
@@ -247,38 +202,33 @@ BOOL HLCamEditorDialog::OnInitDialog()
 		PropertyGrid.AddProperty(group);
 
 		{
-			auto pos = new CMFCPropertyGridProperty("X", COleVariant(0.0f));
-			pos->SetData(ValueType::AngleX);
-			group->AddSubItem(pos);
+			entries.AngleX = new CMFCPropertyGridProperty("X", COleVariant(0.0f));
+			group->AddSubItem(entries.AngleX);
 		}
 
 		{
-			auto pos = new CMFCPropertyGridProperty("Y", COleVariant(0.0f));
-			pos->SetData(ValueType::AngleY);
-			group->AddSubItem(pos);
+			entries.AngleY = new CMFCPropertyGridProperty("Y", COleVariant(0.0f));
+			group->AddSubItem(entries.AngleY);
 		}
 
 		{
-			auto pos = new CMFCPropertyGridProperty("Z", COleVariant(0.0f));
-			pos->SetData(ValueType::AngleZ);
-			group->AddSubItem(pos);
+			entries.AngleZ = new CMFCPropertyGridProperty("Z", COleVariant(0.0f));
+			group->AddSubItem(entries.AngleZ);
 		}
 	}
 
 	{
-		auto testprop = new CMFCPropertyGridProperty("FOV", COleVariant(90l));
-		testprop->EnableSpinControl(true, 20, 140);
-		testprop->SetData(ValueType::FOV);
+		entries.FOV = new CMFCPropertyGridProperty("FOV", COleVariant(90l));
+		entries.FOV->EnableSpinControl(true, 20, 140);
 
-		PropertyGrid.AddProperty(testprop);
+		PropertyGrid.AddProperty(entries.FOV);
 	}
 
 	{
-		auto testprop = new CMFCPropertyGridProperty("Speed", COleVariant(200l));
-		testprop->EnableSpinControl(true, 1, 1000);
-		testprop->SetData(ValueType::Speed);
+		entries.Speed = new CMFCPropertyGridProperty("Speed", COleVariant(200l));
+		entries.Speed->EnableSpinControl(true, 1, 1000);
 
-		PropertyGrid.AddProperty(testprop);
+		PropertyGrid.AddProperty(entries.Speed);
 	}
 
 	/*
@@ -537,7 +487,24 @@ LRESULT HLCamEditorDialog::OnPropertyGridItemChanged(WPARAM controlid, LPARAM pr
 {
 	auto prop = reinterpret_cast<CMFCPropertyGridProperty*>(propptr);
 
-	auto valuetype = static_cast<ValueType::Type>(prop->GetData());	
+	const auto& entries = PropertyGridEntries;
+	namespace Messages = Cam::Shared::Messages::App;
+
+	if (prop == entries.PositionX ||
+		prop == entries.PositionY ||
+		prop == entries.PositionZ)
+	{
+		AppServer.Write
+		(
+			Messages::Camera_ChangePosition,
+			Utility::BinaryBufferHelp::CreatePacket
+			(
+				entries.PositionX->GetValue().fltVal,
+				entries.PositionY->GetValue().fltVal,
+				entries.PositionZ->GetValue().fltVal
+			)
+		);
+	}
 
 	return 0;
 }
@@ -556,14 +523,67 @@ void HLCamEditorDialog::OnContextMenu(CWnd* window, CPoint point)
 	{
 		size_t flags;
 
+		CPoint screenpos = point;
+
 		TreeControl.ScreenToClient(&point);
 
-		auto test = TreeControl.HitTest(point , &flags);
+		auto item = TreeControl.HitTest(point , &flags);
 
-		auto asd = TreeControl.GetItemText(test);
+		if (!item)
+		{
+			return;
+		}
 
-		int a = 5;
-		a = a;
+		namespace Messages = Cam::Shared::Messages::App;
+
+		auto userdata = CurrentMap.FindUserDataByID(TreeControl.GetItemData(item));
+		
+		if (userdata && userdata->IsCamera)
+		{
+			App::Help::ContextMenuHelper menu;
+
+			auto cameraid = userdata->CameraID;
+
+			menu.AddEntry("Set view to this camera", [this, cameraid]
+			{
+				AppServer.Write
+				(
+					Messages::SetViewToCamera,
+					Utility::BinaryBufferHelp::CreatePacket
+					(
+						cameraid
+					)
+				);
+			});
+
+			menu.AddEntry("Move to this camera", [this, cameraid]
+			{
+				AppServer.Write
+				(
+					Messages::MoveToCamera,
+					Utility::BinaryBufferHelp::CreatePacket
+					(
+						cameraid
+					)
+				);
+			});
+
+			menu.AddSeparator();
+
+			menu.AddEntry("Go to first person", []
+			{
+
+			});
+
+			menu.AddSeparator();
+
+			menu.AddEntry("Remove", []
+			{
+
+			});
+
+			menu.Open(screenpos, window);
+		}
 	}
 }
 
@@ -579,6 +599,23 @@ void HLCamEditorDialog::OnTvnSelchangedTree1(NMHDR *pNMHDR, LRESULT *pResult)
 	{
 		if (userdata->IsCamera)
 		{
+			auto camera = CurrentMap.FindCameraByID(userdata->CameraID);
+
+			auto& entries = PropertyGridEntries;
+
+			entries.ID->SetValue(static_cast<long>(camera->ID));
+			entries.FOV->SetValue(static_cast<long>(camera->FOV));
+
+			entries.PositionX->SetValue(camera->Position.X);
+			entries.PositionY->SetValue(camera->Position.Y);
+			entries.PositionZ->SetValue(camera->Position.Z);
+
+			entries.AngleX->SetValue(camera->Angles.X);
+			entries.AngleY->SetValue(camera->Angles.Y);
+			entries.AngleZ->SetValue(camera->Angles.Z);
+
+			entries.Speed->SetValue(static_cast<long>(camera->MaxSpeed));
+
 			AppServer.Write
 			(
 				Messages::Camera_Select,

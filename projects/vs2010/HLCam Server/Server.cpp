@@ -460,15 +460,16 @@ namespace
 				return;
 			}
 
-			if (camera->TargetCamera)
+			if (camera == ActiveCamera)
 			{
-				if (camera == ActiveCamera)
+				if (camera->TargetCamera)
 				{
-					ActiveCamera->TargetCamera->Use(nullptr, nullptr, USE_OFF, 0);
-					ActiveCamera = nullptr;
+					camera->TargetCamera->Use(nullptr, nullptr, USE_OFF, 0);
+
+					UTIL_Remove(camera->TargetCamera);
 				}
 
-				UTIL_Remove(camera->TargetCamera);
+				ActiveCamera = nullptr;
 			}
 
 			if (camera->TriggerType == Cam::CameraTriggerType::ByUserTrigger)
@@ -595,6 +596,43 @@ namespace
 						WRITE_SHORT(TheCamMap.CurrentSelectionCameraID);
 
 						MESSAGE_END();
+					}
+
+					break;
+				}
+
+				case Message::Camera_ChangePosition:
+				{
+					auto newposx = data.GetValue<float>();
+					auto newposy = data.GetValue<float>();
+					auto newposz = data.GetValue<float>();
+
+					if (TheCamMap.CurrentSelectionCameraID != -1)
+					{
+						auto targetcam = TheCamMap.FindCameraByID(TheCamMap.CurrentSelectionCameraID);
+
+						targetcam->Position = {newposx, newposy, newposz};
+						targetcam->TargetCamera->pev->origin = targetcam->Position;
+					}
+
+					break;
+				}
+
+				case Message::SetViewToCamera:
+				{
+					auto cameraid = data.GetValue<size_t>();
+
+					if (TheCamMap.CurrentSelectionCameraID == cameraid)
+					{
+						auto camera = TheCamMap.FindCameraByID(cameraid);
+
+						if (TheCamMap.ActiveCamera)
+						{
+							TheCamMap.ActiveCamera->TargetCamera->Use(nullptr, nullptr, USE_OFF, 0.0f);
+						}
+
+						TheCamMap.ActiveCamera = camera;
+						TheCamMap.ActiveCamera->TargetCamera->Use(nullptr, nullptr, USE_ON, 1);
 					}
 
 					break;
