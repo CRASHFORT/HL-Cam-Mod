@@ -1253,43 +1253,48 @@ namespace
 			TheCamMap.NeedsToSendMapUpdate = false;
 		}
 
-		try
+		bool needsinitialize = !TheCamMap.GameServer.IsStarted();
+
+		if (needsinitialize)
 		{
-			TheCamMap.GameServer.Start("HLCAM_GAME");
-		}
-
-		catch (const boost::interprocess::interprocess_exception& error)
-		{
-			TheCamMap.GameServer.Stop();
-
-			auto code = error.get_error_code();
-
-			if (code == boost::interprocess::error_code_t::already_exists_error)
+			try
 			{
 				TheCamMap.GameServer.Start("HLCAM_GAME");
 			}
 
-			else
+			catch (const boost::interprocess::interprocess_exception& error)
 			{
-				g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Could not start HLCAM Game Server: \"%s\" (%d)\n", error.what(), code);
+				TheCamMap.GameServer.Stop();
+
+				auto code = error.get_error_code();
+
+				if (code == boost::interprocess::error_code_t::already_exists_error)
+				{
+					TheCamMap.GameServer.Start("HLCAM_GAME");
+				}
+
+				else
+				{
+					g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Could not start HLCAM Game Server: \"%s\" (%d)\n", error.what(), code);
+				}
 			}
+
+			try
+			{
+				TheCamMap.AppClient.Connect("HLCAM_APP");
+			}
+
+			catch (const boost::interprocess::interprocess_exception& error)
+			{
+				auto code = error.get_error_code();
+
+				g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Could not connect to HLCAM App Server: \"%s\" (%d)\n", error.what(), code);
+				TheCamMap.AppClient.Disconnect();
+			}
+
+			ShouldCloseMessageThread = false;
+			TheCamMap.MessageHandlerThread = std::thread(&MessageHandler);
 		}
-
-		try
-		{
-			TheCamMap.AppClient.Connect("HLCAM_APP");
-		}
-
-		catch (const boost::interprocess::interprocess_exception& error)
-		{
-			auto code = error.get_error_code();
-
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Could not connect to HLCAM App Server: \"%s\" (%d)\n", error.what(), code);
-			TheCamMap.AppClient.Disconnect();
-		}
-
-		ShouldCloseMessageThread = false;
-		TheCamMap.MessageHandlerThread = std::thread(&MessageHandler);
 
 		namespace Message = Cam::Shared::Messages::Game;
 
@@ -1340,6 +1345,11 @@ namespace
 		MESSAGE_END();
 
 		TheCamMap.GameServer.Write(Cam::Shared::Messages::Game::OnEditModeStopped);
+	}
+
+	void HLCAM_Shutdown()
+	{
+		TheCamMap.GameServer.Write(Cam::Shared::Messages::Game::OnShutdown);
 
 		ShouldCloseMessageThread = true;
 		TheCamMap.MessageHandlerThread.join();
@@ -1468,6 +1478,7 @@ void Cam::OnInit()
 
 	g_engfuncs.pfnAddServerCommand("hlcam_startedit", &HLCAM_StartEdit);
 	g_engfuncs.pfnAddServerCommand("hlcam_stopedit", &HLCAM_StopEdit);
+	g_engfuncs.pfnAddServerCommand("hlcam_shutdown", &HLCAM_Shutdown);
 
 	g_engfuncs.pfnAddServerCommand("hlcam_firstperson", &HLCAM_FirstPerson);
 	g_engfuncs.pfnAddServerCommand("hlcam_savemap", &HLCAM_SaveMap);

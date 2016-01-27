@@ -320,6 +320,9 @@ void HLCamEditorDialog::MessageHandler()
 		{
 			case Message::OnEditModeStarted:
 			{
+				PropertyGrid.EnableWindow(true);
+				TreeControl.EnableWindow(true);
+
 				auto ismapreset = data.GetValue<bool>();
 
 				if (ismapreset)
@@ -350,13 +353,29 @@ void HLCamEditorDialog::MessageHandler()
 					}
 				}
 
+				else
+				{
+					PropertyGrid.RedrawWindow();
+					TreeControl.RedrawWindow();
+				}
+
 				break;
 			}
 
 			case Message::OnEditModeStopped:
 			{
-				int a = 5;
-				a = a;
+				PropertyGrid.EnableWindow(false);
+				TreeControl.EnableWindow(false);
+				break;
+			}
+
+			case Message::OnShutdown:
+			{
+				ShouldCloseMessageThread = true;
+				MessageHandlerThread.join();
+
+				AppServer.Stop();
+				GameClient.Disconnect();
 				break;
 			}
 

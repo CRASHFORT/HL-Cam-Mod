@@ -69,6 +69,8 @@ namespace Cam
 					OnEditModeStarted,
 					OnEditModeStopped,
 
+					OnShutdown,
+
 					OnTriggerSelected,
 					OnCameraSelected,
 
