@@ -179,6 +179,7 @@ BOOL HLCamEditorDialog::OnInitDialog()
 
 	{
 		auto group = new CMFCPropertyGridProperty("Position", 0, true);
+		group->Enable(false);
 		PropertyGrid.AddProperty(group);
 
 		{
@@ -199,6 +200,7 @@ BOOL HLCamEditorDialog::OnInitDialog()
 
 	{
 		auto group = new CMFCPropertyGridProperty("Angle", 0, true);
+		group->Enable(false);
 		PropertyGrid.AddProperty(group);
 
 		{
@@ -490,21 +492,7 @@ LRESULT HLCamEditorDialog::OnPropertyGridItemChanged(WPARAM controlid, LPARAM pr
 	const auto& entries = PropertyGridEntries;
 	namespace Messages = Cam::Shared::Messages::App;
 
-	if (prop == entries.PositionX ||
-		prop == entries.PositionY ||
-		prop == entries.PositionZ)
-	{
-		AppServer.Write
-		(
-			Messages::Camera_ChangePosition,
-			Utility::BinaryBufferHelp::CreatePacket
-			(
-				entries.PositionX->GetValue().fltVal,
-				entries.PositionY->GetValue().fltVal,
-				entries.PositionZ->GetValue().fltVal
-			)
-		);
-	}
+
 
 	return 0;
 }
@@ -568,18 +556,37 @@ void HLCamEditorDialog::OnContextMenu(CWnd* window, CPoint point)
 				);
 			});
 
-			menu.AddSeparator();
-
-			menu.AddEntry("Go to first person", []
+			menu.AddEntry("Adjust this camera", [this, cameraid]
 			{
-
+				AppServer.Write
+				(
+					Messages::Camera_StartMoveSequence,
+					Utility::BinaryBufferHelp::CreatePacket
+					(
+						cameraid
+					)
+				);
 			});
 
 			menu.AddSeparator();
 
-			menu.AddEntry("Remove", []
+			menu.AddEntry("Go to first person", [this]
 			{
+				AppServer.Write(Messages::SetViewToPlayer);
+			});
 
+			menu.AddSeparator();
+
+			menu.AddEntry("Remove", [this, cameraid]
+			{
+				AppServer.Write
+				(
+					Messages::Camera_Remove,
+					Utility::BinaryBufferHelp::CreatePacket
+					(
+						cameraid
+					)
+				);
 			});
 
 			menu.Open(screenpos, window);

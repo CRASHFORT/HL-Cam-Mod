@@ -20,6 +20,12 @@ namespace Cam
 			*/
 			NeedsToCreateTriggerCorner1,
 			NeedsToCreateTriggerCorner2,
+
+			/*
+				State after receiving message from app
+				to start adjusting a camera.
+			*/
+			AdjustingCamera,
 		};
 
 		namespace Messages
@@ -31,17 +37,19 @@ namespace Cam
 				*/
 				enum Message
 				{
-					Camera_ChangeFOV,						
-					Camera_ChangePosition,
-					Camera_ChangeAngle,
+					Camera_ChangeFOV,
 					Camera_ChangeSpeed,
 					Camera_ChangeName,
 					Camera_ChangeAxisType,
 					Camera_ChangeActivateType,
 					Camera_ChangeLookType,
+
+					Camera_StartMoveSequence,
 					
 					Trigger_Select,
 					Camera_Select,
+
+					Camera_Remove,
 
 					SetViewToCamera,
 					SetViewToPlayer,

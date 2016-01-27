@@ -31,6 +31,8 @@ namespace Cam
 		float Angle[3] = {0};
 
 		bool Selected = false;
+
+		bool Adjusting = false;
 	};
 
 	struct ClientTrigger

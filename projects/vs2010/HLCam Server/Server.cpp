@@ -36,6 +36,8 @@ extern int MsgHLCAM_ItemHighlightedEnd;
 extern int MsgHLCAM_ItemSelectedStart;
 extern int MsgHLCAM_ItemSelectedEnd;
 
+extern int MsgHLCAM_CameraAdjust;
+
 /*
 	General one file content because Half-Life's project structure is awful.
 */
@@ -367,6 +369,26 @@ namespace
 			}
 		}
 
+		void GoFirstPerson()
+		{
+			if (!LocalPlayer)
+			{
+				return;
+			}
+
+			if (ActiveTrigger)
+			{
+				ActiveTrigger->Active = false;
+				ActiveTrigger = nullptr;
+			}
+
+			if (ActiveCamera)
+			{
+				ActiveCamera->TargetCamera->Use(nullptr, nullptr, USE_OFF, 0.0f);
+				ActiveCamera = nullptr;
+			}
+		}
+
 		Cam::MapTrigger* FindTriggerByID(size_t id)
 		{
 			for (auto& trig : Triggers)
@@ -601,18 +623,26 @@ namespace
 					break;
 				}
 
-				case Message::Camera_ChangePosition:
+				case Message::Camera_StartMoveSequence:
 				{
-					auto newposx = data.GetValue<float>();
-					auto newposy = data.GetValue<float>();
-					auto newposz = data.GetValue<float>();
-
-					if (TheCamMap.CurrentSelectionCameraID != -1)
+					if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
 					{
-						auto targetcam = TheCamMap.FindCameraByID(TheCamMap.CurrentSelectionCameraID);
+						g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
+						break;
+					}
 
-						targetcam->Position = {newposx, newposy, newposz};
-						targetcam->TargetCamera->pev->origin = targetcam->Position;
+					auto cameraid = data.GetValue<size_t>();
+
+					if (TheCamMap.CurrentSelectionCameraID == cameraid)
+					{
+						TheCamMap.CurrentState = Cam::Shared::StateType::AdjustingCamera;
+
+						MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_CameraAdjust, nullptr, TheCamMap.LocalPlayer->pev);
+						
+						WRITE_BYTE(0);
+						WRITE_SHORT(cameraid);
+					
+						MESSAGE_END();
 					}
 
 					break;
@@ -620,6 +650,12 @@ namespace
 
 				case Message::SetViewToCamera:
 				{
+					if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
+					{
+						g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
+						break;
+					}
+
 					auto cameraid = data.GetValue<size_t>();
 
 					if (TheCamMap.CurrentSelectionCameraID == cameraid)
@@ -633,6 +669,40 @@ namespace
 
 						TheCamMap.ActiveCamera = camera;
 						TheCamMap.ActiveCamera->TargetCamera->Use(nullptr, nullptr, USE_ON, 1);
+					}
+
+					break;
+				}
+
+				case Message::SetViewToPlayer:
+				{
+					if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
+					{
+						g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
+						break;
+					}
+
+					TheCamMap.GoFirstPerson();
+
+					break;
+				}
+
+				case Message::MoveToCamera:
+				{
+					if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive &&
+						TheCamMap.CurrentState != Cam::Shared::StateType::AdjustingCamera)
+					{
+						g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive or in camera adjust\n");
+						break;
+					}
+
+					auto cameraid = data.GetValue<size_t>();
+
+					if (TheCamMap.CurrentSelectionCameraID == cameraid)
+					{
+						auto targetcam = TheCamMap.FindCameraByID(TheCamMap.CurrentSelectionCameraID);
+
+						TheCamMap.LocalPlayer->pev->origin = targetcam->Position - TheCamMap.LocalPlayer->pev->view_ofs;
 					}
 
 					break;
@@ -1161,8 +1231,6 @@ namespace
 		TheCamMap.RemoveCamera(targetcam);
 	}
 
-	void HLCAM_FirstPerson();
-
 	void HLCAM_StartEdit()
 	{
 		if (TheCamMap.IsEditing)
@@ -1254,7 +1322,7 @@ namespace
 			);
 		}
 
-		HLCAM_FirstPerson();
+		TheCamMap.GoFirstPerson();
 	}
 
 	void HLCAM_StopEdit()
@@ -1381,22 +1449,7 @@ namespace
 
 	void HLCAM_FirstPerson()
 	{
-		if (!TheCamMap.LocalPlayer)
-		{
-			return;
-		}
-
-		if (TheCamMap.ActiveTrigger)
-		{
-			TheCamMap.ActiveTrigger->Active = false;
-			TheCamMap.ActiveTrigger = nullptr;
-		}
-
-		if (TheCamMap.ActiveCamera)
-		{
-			TheCamMap.ActiveCamera->TargetCamera->Use(nullptr, nullptr, USE_OFF, 0.0f);
-			TheCamMap.ActiveCamera = nullptr;
-		}
+		TheCamMap.GoFirstPerson();
 	}
 }
 
@@ -1454,20 +1507,20 @@ void Cam::OnPlayerPreUpdate(CBasePlayer* player)
 
 	if (IsInEditMode() && TheCamMap.CurrentState != StateType::Inactive)
 	{
-		auto creationtrig = TheCamMap.FindTriggerByID(TheCamMap.CreationTriggerID);
-
-		const auto& playerpos = TheCamMap.LocalPlayer->pev->origin;
-		const auto& playerang = TheCamMap.LocalPlayer->pev->v_angle;
-
-		if (!creationtrig)
-		{
-			return;
-		}
-
 		if (TheCamMap.LocalPlayer->pev->button & IN_ATTACK)
 		{
 			if (TheCamMap.CurrentState == StateType::NeedsToCreateTriggerCorner1)
 			{
+				auto creationtrig = TheCamMap.FindTriggerByID(TheCamMap.CreationTriggerID);
+
+				const auto& playerpos = TheCamMap.LocalPlayer->pev->origin;
+				const auto& playerang = TheCamMap.LocalPlayer->pev->v_angle;
+
+				if (!creationtrig)
+				{
+					return;
+				}
+
 				playerpos.CopyToArray(creationtrig->Corner1);
 
 				MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCreateTrigger, nullptr, TheCamMap.LocalPlayer->pev);
@@ -1482,12 +1535,51 @@ void Cam::OnPlayerPreUpdate(CBasePlayer* player)
 
 				TheCamMap.CurrentState = StateType::NeedsToCreateTriggerCorner2;
 			}
+
+			else if (TheCamMap.CurrentState == StateType::AdjustingCamera)
+			{
+				TheCamMap.CurrentState = StateType::Inactive;
+
+				auto targetcam = TheCamMap.FindCameraByID(TheCamMap.CurrentSelectionCameraID);
+
+				const auto& playerpos = TheCamMap.LocalPlayer->GetGunPosition();
+				const auto& playerang = TheCamMap.LocalPlayer->pev->v_angle;
+
+				targetcam->Position = playerpos;
+				targetcam->Angle = playerang;
+
+				targetcam->TargetCamera->pev->origin = playerpos;
+				targetcam->TargetCamera->pev->angles = playerang;
+
+				MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_CameraAdjust, nullptr, TheCamMap.LocalPlayer->pev);
+				
+				WRITE_BYTE(1);
+				WRITE_SHORT(targetcam->ID);
+				WRITE_COORD(playerpos.x);
+				WRITE_COORD(playerpos.y);
+				WRITE_COORD(playerpos.z);
+				WRITE_COORD(playerang.x);
+				WRITE_COORD(playerang.y);
+				WRITE_COORD(playerang.z);
+
+				MESSAGE_END();
+			}
 		}
 
 		else
 		{
 			if (TheCamMap.CurrentState == StateType::NeedsToCreateTriggerCorner2)
 			{
+				auto creationtrig = TheCamMap.FindTriggerByID(TheCamMap.CreationTriggerID);
+
+				const auto& playerpos = TheCamMap.LocalPlayer->pev->origin;
+				const auto& playerang = TheCamMap.LocalPlayer->pev->v_angle;
+
+				if (!creationtrig)
+				{
+					return;
+				}
+
 				playerpos.CopyToArray(creationtrig->Corner2);
 
 				MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCreateTrigger, nullptr, TheCamMap.LocalPlayer->pev);

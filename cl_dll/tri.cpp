@@ -365,6 +365,25 @@ void CL_DLLEXPORT HUD_DrawTransparentTriangles( void )
 
 					DrawWireframeBox(maxsel, minsel);
 				}
+
+				if (cam.Adjusting)
+				{
+					minsel.x -= camboxsize;
+					minsel.y -= camboxsize;
+					minsel.z -= camboxsize;
+
+					maxsel.x += camboxsize;
+					maxsel.y += camboxsize;
+					maxsel.z += camboxsize;
+
+					gEngfuncs.pTriAPI->RenderMode(kRenderTransAlpha);
+					gEngfuncs.pTriAPI->Color4f(0, 0, 1, 0.6);
+
+					DrawBox(maxsel, minsel);
+
+					gEngfuncs.pTriAPI->RenderMode(kRenderNormal);
+					gEngfuncs.pTriAPI->Color4f(1, 0, 0, 1);
+				}
 			}
 
 			/*

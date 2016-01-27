@@ -22,6 +22,8 @@ namespace
 		Cam::ClientTrigger* CurrentSelectionTrigger = nullptr;
 		Cam::ClientCamera* CurrentSelectionCamera = nullptr;
 
+		Cam::ClientCamera* CurrentAdjustingCamera = nullptr;
+
 		Cam::ClientTrigger* FindTriggerByID(size_t id)
 		{
 			for (auto& trig : Triggers)
@@ -291,24 +293,31 @@ namespace Cam
 			{
 				Menu::MenuQueueItem item;
 
+				using StateType = Cam::Shared::StateType;
+
 				switch (TheCamClient.CurrentState)
 				{
-					case Cam::Shared::StateType::Inactive:
+					case StateType::Inactive:
 					{
 						item.Text = "Current Mode: Inactive";
 						break;
 					}
 					
-					case Cam::Shared::StateType::NeedsToCreateTriggerCorner1:
+					case StateType::NeedsToCreateTriggerCorner1:
 					{
 						item.Text = "Current Mode: Need to create first trigger corner";
 						break;
 					}
 
-					case Cam::Shared::StateType::NeedsToCreateTriggerCorner2:
+					case StateType::NeedsToCreateTriggerCorner2:
 					{
 						item.Text = "Current Mode: Need to create second trigger corner";
 						break;
+					}
+
+					case StateType::AdjustingCamera:
+					{
+						item.Text = "Current Mode: Adjusting camera";
 					}
 				}
 
@@ -598,6 +607,43 @@ int HLCamClient_ItemSelectedEnd(const char* name, int size, void* buffer)
 	return 1;
 }
 
+int HLCamClient_CameraAdjust(const char* name, int size, void* buffer)
+{
+	BEGIN_READ(buffer, size);
+
+	auto state = READ_BYTE();
+
+	if (state == 0)
+	{
+		TheCamClient.CurrentState = Cam::Shared::StateType::AdjustingCamera;
+
+		auto cameraid = READ_SHORT();
+
+		TheCamClient.CurrentAdjustingCamera = TheCamClient.FindCameraByID(cameraid);
+		TheCamClient.CurrentAdjustingCamera->Adjusting = true;
+	}
+
+	else if (state == 1)
+	{
+		TheCamClient.CurrentState = Cam::Shared::StateType::Inactive;
+
+		auto cameraid = READ_SHORT();
+
+		TheCamClient.CurrentAdjustingCamera->Position[0] = READ_COORD();
+		TheCamClient.CurrentAdjustingCamera->Position[1] = READ_COORD();
+		TheCamClient.CurrentAdjustingCamera->Position[2] = READ_COORD();
+
+		TheCamClient.CurrentAdjustingCamera->Angle[0] = READ_COORD();
+		TheCamClient.CurrentAdjustingCamera->Angle[1] = READ_COORD();
+		TheCamClient.CurrentAdjustingCamera->Angle[2] = READ_COORD();
+
+		TheCamClient.CurrentAdjustingCamera->Adjusting = false;
+		TheCamClient.CurrentAdjustingCamera = nullptr;
+	}
+
+	return 1;
+}
+
 namespace Tri
 {
 	void VidInit();
@@ -620,6 +666,8 @@ namespace Cam
 
 		gEngfuncs.pfnHookUserMsg("CamSE1", &HLCamClient_ItemSelectedStart);
 		gEngfuncs.pfnHookUserMsg("CamSE2", &HLCamClient_ItemSelectedEnd);
+
+		gEngfuncs.pfnHookUserMsg("CamCA", &HLCamClient_CameraAdjust);
 	}
 
 	void VidInit()

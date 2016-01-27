@@ -256,6 +256,18 @@ int MsgHLCAM_ItemSelectedStart = 0;
 */
 int MsgHLCAM_ItemSelectedEnd = 0;
 
+/*
+	BYTE: State: 0 or 1
+
+	->	State == 0:
+	|	SHORT: Camera ID
+	->	State == 1:
+	|	SHORT: Camera ID
+	|	COORD x 3: New position
+	|	COORD x 3: New angle
+*/
+int MsgHLCAM_CameraAdjust = 0;
+
 void LinkUserMessages( void )
 {
 	// Already taken care of?
@@ -277,6 +289,8 @@ void LinkUserMessages( void )
 
 	MsgHLCAM_ItemSelectedStart = REG_USER_MSG("CamSE1", 3);
 	MsgHLCAM_ItemSelectedEnd = REG_USER_MSG("CamSE2", 0);
+
+	MsgHLCAM_CameraAdjust = REG_USER_MSG("CamCA", -1);
 
 	gmsgCurWeapon = REG_USER_MSG("CurWeapon", 3);
 	gmsgGeigerRange = REG_USER_MSG("Geiger", 1);
