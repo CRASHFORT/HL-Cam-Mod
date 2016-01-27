@@ -46,10 +46,11 @@ namespace Cam
 
 					Camera_StartMoveSequence,
 					
-					Trigger_Select,
 					Camera_Select,
+					Trigger_Select,
 
 					Camera_Remove,
+					Trigger_Remove,
 
 					SetViewToCamera,
 					SetViewToPlayer,

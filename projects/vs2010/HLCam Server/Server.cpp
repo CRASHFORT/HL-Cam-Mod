@@ -707,6 +707,27 @@ namespace
 
 					break;
 				}
+
+				case Message::MoveToTrigger:
+				{
+					if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive &&
+						TheCamMap.CurrentState != Cam::Shared::StateType::AdjustingCamera)
+					{
+						g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive or in camera adjust\n");
+						break;
+					}
+
+					auto triggerid = data.GetValue<size_t>();
+
+					if (TheCamMap.CurrentSelectionTriggerID == triggerid)
+					{
+						auto targettrig = TheCamMap.FindTriggerByID(TheCamMap.CurrentSelectionTriggerID);
+
+						TheCamMap.LocalPlayer->pev->origin = targettrig->CenterPos;
+					}
+
+					break;
+				}
 			}
 		}
 	}

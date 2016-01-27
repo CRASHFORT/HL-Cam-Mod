@@ -610,6 +610,41 @@ void HLCamEditorDialog::OnContextMenu(CWnd* window, CPoint point)
 
 			menu.Open(screenpos, window);
 		}
+
+		else if (userdata && !userdata->IsCamera)
+		{
+			App::Help::ContextMenuHelper menu;
+
+			auto triggerid = userdata->TriggerID;
+
+			menu.AddEntry("Move to this trigger", [this, triggerid]
+			{
+				AppServer.Write
+				(
+					Messages::MoveToTrigger,
+					Utility::BinaryBufferHelp::CreatePacket
+					(
+						triggerid
+					)
+				);
+			});
+
+			menu.AddSeparator();
+
+			menu.AddEntry("Remove", [this, triggerid]
+			{
+				AppServer.Write
+				(
+					Messages::Trigger_Remove,
+					Utility::BinaryBufferHelp::CreatePacket
+					(
+						triggerid
+					)
+				);
+			});
+
+			menu.Open(screenpos, window);
+		}
 	}
 }
 
