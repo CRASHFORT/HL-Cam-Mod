@@ -147,7 +147,7 @@ BOOL HLCamEditorDialog::OnInitDialog()
 	}
 
 	{
-		entries.ActivateType = new CMFCPropertyGridProperty("Activate type", "");
+		entries.ActivateType = new CMFCPropertyGridProperty("Activate type", "By trigger");
 		entries.ActivateType->AddOption("By trigger");
 		entries.ActivateType->AddOption("By name");
 
@@ -157,7 +157,7 @@ BOOL HLCamEditorDialog::OnInitDialog()
 	}
 
 	{
-		entries.LockAxis = new CMFCPropertyGridProperty("Lock axis", "");
+		entries.LockAxis = new CMFCPropertyGridProperty("Lock axis", "None");
 		entries.LockAxis->AddOption("None");
 		entries.LockAxis->AddOption("Horizontal");
 		entries.LockAxis->AddOption("Vertical");
@@ -168,7 +168,7 @@ BOOL HLCamEditorDialog::OnInitDialog()
 	}
 
 	{
-		entries.LookAtPlayer = new CMFCPropertyGridProperty("Look at player", "");
+		entries.LookAtPlayer = new CMFCPropertyGridProperty("Look at player", "No");
 		entries.LookAtPlayer->AddOption("Yes");
 		entries.LookAtPlayer->AddOption("No");
 
@@ -557,6 +557,8 @@ LRESULT HLCamEditorDialog::OnPropertyGridItemChanged(WPARAM controlid, LPARAM pr
 
 	if (userdata->IsCamera)
 	{
+		auto cam = CurrentMap.FindCameraByID(userdata->CameraID);
+
 		if (prop == entries.FOV)
 		{
 			auto newfov = prop->GetValue().lVal;
@@ -571,7 +573,6 @@ LRESULT HLCamEditorDialog::OnPropertyGridItemChanged(WPARAM controlid, LPARAM pr
 				)
 			);
 
-			auto cam = CurrentMap.FindCameraByID(userdata->CameraID);
 			cam->FOV = newfov;
 		}
 	}
