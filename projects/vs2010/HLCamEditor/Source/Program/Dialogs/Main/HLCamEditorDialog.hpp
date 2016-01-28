@@ -90,6 +90,7 @@ private:
 	std::thread MessageHandlerThread;
 	std::atomic_bool ShouldCloseMessageThread{false};
 
+	int CurrentUserDataID = -1;
 	App::HLMap CurrentMap;
 
 	void AddSingleCamera(App::HLCamera&& camera);

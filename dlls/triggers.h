@@ -35,6 +35,8 @@ public:
 	bool IsHLCam = false;
 	Cam::MapCamera HLCam;
 
+	void SetFov(int fov);
+
 	float m_flStopTime;
 	float m_moveDistance;
 	float m_targetSpeed;

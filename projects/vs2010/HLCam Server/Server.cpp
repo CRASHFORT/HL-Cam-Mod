@@ -752,6 +752,27 @@ namespace
 
 					break;
 				}
+
+				case Message::Camera_ChangeFOV:
+				{
+					if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
+					{
+						g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
+						break;
+					}
+
+					if (TheCamMap.CurrentSelectionCameraID == -1)
+					{
+						g_engfuncs.pfnAlertMessage(at_console, "HLCAM: No selected camera for app message\n");
+						break;
+					}
+
+					auto fov = data.GetValue<int>();
+
+					TheCamMap.ActiveCamera->TargetCamera->SetFov(fov);
+					TheCamMap.ActiveCamera->TargetCamera->HLCam.FOV = fov;
+					break;
+				}
 			}
 		}
 	}

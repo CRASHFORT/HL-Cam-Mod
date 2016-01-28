@@ -511,7 +511,32 @@ LRESULT HLCamEditorDialog::OnPropertyGridItemChanged(WPARAM controlid, LPARAM pr
 	const auto& entries = PropertyGridEntries;
 	namespace Messages = Cam::Shared::Messages::App;
 
+	if (CurrentUserDataID == -1)
+	{
+		return 0;
+	}
 
+	auto userdata = CurrentMap.FindUserDataByID(CurrentUserDataID);
+
+	if (userdata->IsCamera)
+	{
+		if (prop == entries.FOV)
+		{
+			auto newfov = prop->GetValue().lVal;
+
+			AppServer.Write
+			(
+				Messages::Camera_ChangeFOV,
+				Utility::BinaryBufferHelp::CreatePacket
+				(
+					newfov
+				)
+			);
+
+			auto cam = CurrentMap.FindCameraByID(userdata->CameraID);
+			cam->FOV = newfov;
+		}
+	}
 
 	return 0;
 }
@@ -658,6 +683,8 @@ void HLCamEditorDialog::OnTvnSelchangedTree1(NMHDR *pNMHDR, LRESULT *pResult)
 
 	if (userdata)
 	{
+		CurrentUserDataID = userdata->ID;
+
 		if (userdata->IsCamera)
 		{
 			auto camera = CurrentMap.FindCameraByID(userdata->CameraID);

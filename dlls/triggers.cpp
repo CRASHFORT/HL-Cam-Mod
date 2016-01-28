@@ -2204,7 +2204,16 @@ void CTriggerCamera :: KeyValue( KeyValueData *pkvd )
 		CBaseDelay::KeyValue( pkvd );
 }
 
+void CTriggerCamera::SetFov(int fov)
+{
+	if (!m_hPlayer)
+	{
+		return;
+	}
 
+	auto playerptr = static_cast<CBasePlayer*>(Instance(m_hPlayer.Get()));
+	playerptr->pev->fov = playerptr->m_iFOV = fov;
+}
 
 void CTriggerCamera::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
 {
@@ -2226,8 +2235,7 @@ void CTriggerCamera::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 			/*
 				Setting 0 restores fov to player preference
 			*/
-			auto playerptr = static_cast<CBasePlayer*>(Instance(m_hPlayer.Get()));
-			playerptr->pev->fov = playerptr->m_iFOV = 0;
+			SetFov(0);
 
 			return;
 		}
@@ -2340,8 +2348,7 @@ void CTriggerCamera::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 		Move();
 	}
 
-	auto playerptr = static_cast<CBasePlayer*>(Instance(m_hPlayer.Get()));
-	playerptr->pev->fov = playerptr->m_iFOV = HLCam.FOV;
+	SetFov(HLCam.FOV);
 }
 
 
