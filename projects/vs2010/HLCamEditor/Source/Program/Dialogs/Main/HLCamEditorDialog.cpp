@@ -299,6 +299,14 @@ void HLCamEditorDialog::RebuildPropertyGrid()
 
 void HLCamEditorDialog::MessageHandler()
 {
+	constexpr auto deepidlesleeptime = 1000ms;
+	constexpr auto idlesleeptime = 100ms;
+	constexpr auto worksleeptime = 1ms;
+
+	auto messagesleeptime = idlesleeptime;
+
+	auto lastmessagetime = std::chrono::system_clock::now();
+
 	while (!ShouldCloseMessageThread)
 	{
 		namespace Config = Shared::Interprocess::Config;
@@ -310,9 +318,25 @@ void HLCamEditorDialog::MessageHandler()
 
 		if (!res)
 		{
-			std::this_thread::sleep_for(1ms);
+			auto now = std::chrono::system_clock::now();
+
+			std::chrono::duration<float> diff = now - lastmessagetime;
+
+			if (diff.count() > 20)
+			{
+				messagesleeptime = deepidlesleeptime;
+			}
+
+			std::this_thread::sleep_for(messagesleeptime);
 			continue;
 		}
+
+		if (messagesleeptime == deepidlesleeptime)
+		{
+			messagesleeptime = worksleeptime;
+		}
+
+		lastmessagetime = std::chrono::system_clock::now();
 
 		namespace Message = Cam::Shared::Messages::Game;
 
@@ -366,6 +390,8 @@ void HLCamEditorDialog::MessageHandler()
 			{
 				PropertyGrid.EnableWindow(false);
 				TreeControl.EnableWindow(false);
+
+				messagesleeptime = idlesleeptime;
 				break;
 			}
 

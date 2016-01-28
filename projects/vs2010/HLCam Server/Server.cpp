@@ -577,8 +577,16 @@ namespace
 	static std::atomic_bool ShouldCloseMessageThread{false};
 	static MapCam TheCamMap;
 
+	constexpr auto DeepIdleSleepTime = 1000ms;
+	constexpr auto IdleSleepTime = 100ms;
+	constexpr auto WorkSleepTime = 1ms;
+
+	static auto MessageThreadSleepTime = IdleSleepTime;
+
 	void MessageHandler()
 	{
+		auto lastmessagetime = std::chrono::system_clock::now();
+
 		while (!ShouldCloseMessageThread)
 		{
 			namespace Config = Shared::Interprocess::Config;
@@ -590,9 +598,25 @@ namespace
 
 			if (!res)
 			{
-				std::this_thread::sleep_for(1ms);
+				auto now = std::chrono::system_clock::now();
+
+				std::chrono::duration<float> diff = now - lastmessagetime;
+
+				if (diff.count() > 20)
+				{
+					MessageThreadSleepTime = DeepIdleSleepTime;
+				}
+
+				std::this_thread::sleep_for(MessageThreadSleepTime);
 				continue;
 			}
+
+			if (MessageThreadSleepTime == DeepIdleSleepTime)
+			{
+				MessageThreadSleepTime = WorkSleepTime;
+			}
+
+			lastmessagetime = std::chrono::system_clock::now();
 
 			namespace Message = Cam::Shared::Messages::App;
 
@@ -1474,6 +1498,8 @@ namespace
 		MESSAGE_END();
 
 		TheCamMap.GameServer.Write(Cam::Shared::Messages::Game::OnEditModeStopped);
+
+		MessageThreadSleepTime = IdleSleepTime;
 	}
 
 	void HLCAM_Shutdown()
