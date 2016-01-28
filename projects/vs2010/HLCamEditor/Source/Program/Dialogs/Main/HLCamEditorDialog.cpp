@@ -102,6 +102,11 @@ namespace App
 		buffer >> camera.Angles.X;
 		buffer >> camera.Angles.Y;
 		buffer >> camera.Angles.Z;
+
+		camera.AngleType = static_cast<decltype(camera.AngleType)>(buffer.GetValue<unsigned char>());
+		camera.TriggerType = static_cast<decltype(camera.TriggerType)>(buffer.GetValue<unsigned char>());
+		camera.LookType = static_cast<decltype(camera.LookType)>(buffer.GetValue<unsigned char>());
+		camera.PlaneType = static_cast<decltype(camera.PlaneType)>(buffer.GetValue<unsigned char>());
 		
 		return camera;
 	}
@@ -168,13 +173,14 @@ BOOL HLCamEditorDialog::OnInitDialog()
 	}
 
 	{
-		entries.LookAtPlayer = new CMFCPropertyGridProperty("Look at player", "No");
-		entries.LookAtPlayer->AddOption("Yes");
-		entries.LookAtPlayer->AddOption("No");
+		entries.LookType = new CMFCPropertyGridProperty("Look at", "At angle");
+		entries.LookType->AddOption("At angle");
+		entries.LookType->AddOption("At player");
+		entries.LookType->AddOption("At target (name)");
 
-		entries.LookAtPlayer->AllowEdit(false);
+		entries.LookType->AllowEdit(false);
 
-		PropertyGrid.AddProperty(entries.LookAtPlayer);
+		PropertyGrid.AddProperty(entries.LookType);
 	}
 
 	{
@@ -743,6 +749,7 @@ void HLCamEditorDialog::OnTvnSelchangedTree1(NMHDR *pNMHDR, LRESULT *pResult)
 			auto& entries = PropertyGridEntries;
 
 			entries.ID->SetValue(static_cast<long>(camera->ID));
+			entries.Speed->SetValue(static_cast<long>(camera->MaxSpeed));
 			entries.FOV->SetValue(static_cast<long>(camera->FOV));
 
 			entries.PositionX->SetValue(camera->Position.X);
@@ -753,7 +760,62 @@ void HLCamEditorDialog::OnTvnSelchangedTree1(NMHDR *pNMHDR, LRESULT *pResult)
 			entries.AngleY->SetValue(camera->Angles.Y);
 			entries.AngleZ->SetValue(camera->Angles.Z);
 
-			entries.Speed->SetValue(static_cast<long>(camera->MaxSpeed));
+			switch (camera->TriggerType)
+			{
+				case Cam::Shared::CameraTriggerType::ByName:
+				{
+					entries.ActivateType->SetValue("By name");
+					break;
+				}
+
+				case Cam::Shared::CameraTriggerType::ByUserTrigger:
+				{
+					entries.ActivateType->SetValue("By trigger");
+					break;
+				}
+			}
+
+			switch (camera->LookType)
+			{
+				case Cam::Shared::CameraLookType::AtPlayer:
+				{
+					entries.LookType->SetValue("At player");
+					break;
+				}
+
+				case Cam::Shared::CameraLookType::AtAngle:
+				{
+					entries.LookType->SetValue("At angle");
+					break;
+				}
+
+				case Cam::Shared::CameraLookType::AtTarget:
+				{
+					entries.LookType->SetValue("At target");
+					break;
+				}
+			}
+
+			switch (camera->PlaneType)
+			{
+				case Cam::Shared::CameraPlaneType::Horizontal:
+				{
+					entries.LockAxis->SetValue("Horizontal");
+					break;
+				}
+
+				case Cam::Shared::CameraPlaneType::Vertical:
+				{
+					entries.LockAxis->SetValue("Vertical");
+					break;
+				}
+
+				case Cam::Shared::CameraPlaneType::Both:
+				{
+					entries.LockAxis->SetValue("None");
+					break;
+				}
+			}
 
 			AppServer.Write
 			(

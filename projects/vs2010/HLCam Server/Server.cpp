@@ -570,6 +570,11 @@ namespace
 			ret << camera.Angle.y;
 			ret << camera.Angle.z;
 
+			ret << static_cast<unsigned char>(camera.AngleType);
+			ret << static_cast<unsigned char>(camera.TriggerType);
+			ret << static_cast<unsigned char>(camera.LookType);
+			ret << static_cast<unsigned char>(camera.PlaneType);
+
 			return ret;
 		}
 	};

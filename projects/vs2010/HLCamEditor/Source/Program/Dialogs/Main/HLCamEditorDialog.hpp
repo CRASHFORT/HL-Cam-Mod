@@ -2,6 +2,8 @@
 #include "afxpropertygridctrl.h"
 #include "afxcmn.h"
 
+#include "Shared\Shared.hpp"
+
 namespace App
 {
 	struct Vector
@@ -30,6 +32,12 @@ namespace App
 
 		float MaxSpeed;
 		size_t FOV;
+
+		Cam::Shared::CameraAngleType AngleType;
+		Cam::Shared::CameraTriggerType TriggerType;
+		Cam::Shared::CameraLookType LookType;
+		Cam::Shared::CameraPlaneType PlaneType;
+		Cam::Shared::CameraFOVType FOVType;
 
 		HTREEITEM TreeItem;
 	};
@@ -108,7 +116,7 @@ private:
 		CMFCPropertyGridProperty* Name;
 		CMFCPropertyGridProperty* ActivateType;
 		CMFCPropertyGridProperty* LockAxis;
-		CMFCPropertyGridProperty* LookAtPlayer;
+		CMFCPropertyGridProperty* LookType;
 		CMFCPropertyGridProperty* PositionX;
 		CMFCPropertyGridProperty* PositionY;
 		CMFCPropertyGridProperty* PositionZ;

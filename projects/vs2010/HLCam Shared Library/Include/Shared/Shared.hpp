@@ -41,6 +41,7 @@ namespace Cam
 		{
 			AtPlayer,
 			AtAngle,
+			AtTarget,
 		};
 
 		enum class CameraPlaneType
