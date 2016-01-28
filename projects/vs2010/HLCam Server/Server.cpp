@@ -753,6 +753,16 @@ namespace
 
 						if (TheCamMap.ActiveCamera)
 						{
+							if (TheCamMap.InCameraPreview)
+							{
+								MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_CameraPreview, nullptr, TheCamMap.LocalPlayer->pev);
+
+								WRITE_SHORT(TheCamMap.ActiveCamera->ID);
+								WRITE_BYTE(0);
+
+								MESSAGE_END();
+							}
+
 							TheCamMap.ActiveCamera->TargetCamera->Use(nullptr, nullptr, USE_OFF, 0.0f);
 						}
 
