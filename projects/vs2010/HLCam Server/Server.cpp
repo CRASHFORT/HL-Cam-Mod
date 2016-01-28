@@ -727,6 +727,10 @@ namespace
 						auto targetcam = TheCamMap.FindCameraByID(TheCamMap.CurrentSelectionCameraID);
 
 						TheCamMap.LocalPlayer->pev->origin = targetcam->Position - TheCamMap.LocalPlayer->pev->view_ofs;
+						
+						TheCamMap.LocalPlayer->pev->angles = targetcam->Angle;
+						TheCamMap.LocalPlayer->pev->v_angle = targetcam->Angle;
+						TheCamMap.LocalPlayer->pev->fixangle = 1;
 					}
 
 					break;
