@@ -258,6 +258,8 @@ namespace
 
 		bool InCameraPreview = false;
 
+		bool AddingTriggerToCamera = false;
+
 		void UnHighlightAll()
 		{
 			if (CurrentHighlightTriggerID != -1)
@@ -658,6 +660,49 @@ namespace
 						WRITE_SHORT(cameraid);
 					
 						MESSAGE_END();
+					}
+
+					break;
+				}
+
+				case Message::Camera_AddTriggerToCamera:
+				{
+					if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
+					{
+						g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
+						break;
+					}
+
+					auto cameraid = data.GetValue<size_t>();
+
+					if (TheCamMap.CurrentSelectionCameraID == cameraid)
+					{
+						TheCamMap.AddingTriggerToCamera = true;
+
+						Cam::MapTrigger newtrig;
+						newtrig.ID = TheCamMap.NextTriggerID;
+						newtrig.LinkedCameraID = cameraid;
+
+						auto newcam = TheCamMap.FindCameraByID(cameraid);
+
+						newcam->LinkedTriggerIDs.push_back(newtrig.ID);
+
+						TheCamMap.CurrentState = Cam::Shared::StateType::NeedsToCreateTriggerCorner1;
+
+						MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCreateTrigger, nullptr, TheCamMap.LocalPlayer->pev);
+
+						WRITE_BYTE(0);
+
+						WRITE_SHORT(newtrig.ID);
+						WRITE_SHORT(cameraid);
+
+						MESSAGE_END();
+
+						TheCamMap.CreationTriggerID = newtrig.ID;
+
+						TheCamMap.NextTriggerID++;
+
+						TheCamMap.Triggers.push_back(newtrig);
 					}
 
 					break;
@@ -1691,23 +1736,43 @@ void Cam::OnPlayerPreUpdate(CBasePlayer* player)
 
 				auto linkedcam = TheCamMap.GetLinkedCamera(*creationtrig);
 
-				if (linkedcam)
+				if (!TheCamMap.AddingTriggerToCamera)
 				{
-					auto newent = CBaseEntity::Create("trigger_camera", linkedcam->Position, linkedcam->Angle);
-					linkedcam->TargetCamera = static_cast<CTriggerCamera*>(newent);
-					linkedcam->TargetCamera->IsHLCam = true;
+					if (linkedcam)
+					{
+						auto newent = CBaseEntity::Create("trigger_camera", linkedcam->Position, linkedcam->Angle);
+						linkedcam->TargetCamera = static_cast<CTriggerCamera*>(newent);
+						linkedcam->TargetCamera->IsHLCam = true;
+					}
 				}
 
 				creationtrig->SetupPositions();
 
 				auto fullpack = TheCamMap.GetInterprocessTriggerInfo(*creationtrig);
-				fullpack.Append(TheCamMap.GetInterprocessCameraInfo(*linkedcam));
 
-				TheCamMap.GameServer.Write
-				(
-					Cam::Shared::Messages::Game::OnTriggerAndCameraAdded,
-					std::move(fullpack)
-				);
+				if (!TheCamMap.AddingTriggerToCamera)
+				{
+					fullpack.Append(TheCamMap.GetInterprocessCameraInfo(*linkedcam));
+
+					TheCamMap.GameServer.Write
+					(
+						Cam::Shared::Messages::Game::OnTriggerAndCameraAdded,
+						std::move(fullpack)
+					);
+				}
+				
+				else
+				{
+					fullpack << linkedcam->ID;
+
+					TheCamMap.GameServer.Write
+					(
+						Cam::Shared::Messages::Game::OnTriggerAddedToCamera,
+						std::move(fullpack)
+					);
+
+					TheCamMap.AddingTriggerToCamera = false;
+				}
 			}
 		}
 	}

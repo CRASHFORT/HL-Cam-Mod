@@ -45,6 +45,7 @@ namespace Cam
 					Camera_ChangeLookType,
 
 					Camera_StartMoveSequence,
+					Camera_AddTriggerToCamera,
 					
 					Camera_Select,
 					Trigger_Select,

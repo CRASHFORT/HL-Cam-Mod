@@ -385,6 +385,17 @@ void HLCamEditorDialog::MessageHandler()
 				break;
 			}
 
+			case Message::OnTriggerAddedToCamera:
+			{
+				auto trig = data.GetValue<App::HLTrigger>();
+
+				auto cameraid = data.GetValue<size_t>();
+				auto camera = CurrentMap.FindCameraByID(cameraid);
+
+				AddTriggerToCamera(*camera, std::move(trig));
+				break;
+			}
+
 			case Message::OnTriggerSelected:
 			{
 				auto triggerid = data.GetValue<size_t>();				
@@ -606,6 +617,18 @@ void HLCamEditorDialog::OnContextMenu(CWnd* window, CPoint point)
 				AppServer.Write
 				(
 					Messages::Camera_StartMoveSequence,
+					Utility::BinaryBufferHelp::CreatePacket
+					(
+						cameraid
+					)
+				);
+			});
+
+			menu.AddEntry("Add trigger this camera", [this, cameraid]
+			{
+				AppServer.Write
+				(
+					Messages::Camera_AddTriggerToCamera,
 					Utility::BinaryBufferHelp::CreatePacket
 					(
 						cameraid
