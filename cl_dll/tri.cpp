@@ -322,6 +322,14 @@ void CL_DLLEXPORT HUD_DrawTransparentTriangles( void )
 
 		for (const auto& cam : cameras)
 		{
+			/*
+				Don't render cams that are in the primary view.
+			*/
+			if (cam.InPreview)
+			{
+				continue;
+			}
+
 			Vector pos;
 			pos.x = cam.Position[0];
 			pos.y = cam.Position[1];

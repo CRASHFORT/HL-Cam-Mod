@@ -268,6 +268,12 @@ int MsgHLCAM_ItemSelectedEnd = 0;
 */
 int MsgHLCAM_CameraAdjust = 0;
 
+/*
+	SHORT: Camera ID
+	BYTE: On or off
+*/
+int MsgHLCAM_CameraPreview = 0;
+
 void LinkUserMessages( void )
 {
 	// Already taken care of?
@@ -291,6 +297,7 @@ void LinkUserMessages( void )
 	MsgHLCAM_ItemSelectedEnd = REG_USER_MSG("CamSE2", 0);
 
 	MsgHLCAM_CameraAdjust = REG_USER_MSG("CamCA", -1);
+	MsgHLCAM_CameraPreview = REG_USER_MSG("CamPW", 3);
 
 	gmsgCurWeapon = REG_USER_MSG("CurWeapon", 3);
 	gmsgGeigerRange = REG_USER_MSG("Geiger", 1);

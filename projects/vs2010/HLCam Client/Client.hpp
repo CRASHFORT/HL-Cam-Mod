@@ -33,6 +33,8 @@ namespace Cam
 		bool Selected = false;
 
 		bool Adjusting = false;
+
+		bool InPreview = false;
 	};
 
 	struct ClientTrigger

@@ -37,6 +37,7 @@ extern int MsgHLCAM_ItemSelectedStart;
 extern int MsgHLCAM_ItemSelectedEnd;
 
 extern int MsgHLCAM_CameraAdjust;
+extern int MsgHLCAM_CameraPreview;
 
 /*
 	General one file content because Half-Life's project structure is awful.
@@ -255,6 +256,8 @@ namespace
 		int CurrentSelectionTriggerID = -1;
 		int CurrentSelectionCameraID = -1;
 
+		bool InCameraPreview = false;
+
 		void UnHighlightAll()
 		{
 			if (CurrentHighlightTriggerID != -1)
@@ -384,6 +387,18 @@ namespace
 
 			if (ActiveCamera)
 			{
+				if (InCameraPreview)
+				{
+					InCameraPreview = false;
+
+					MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_CameraPreview, nullptr, LocalPlayer->pev);
+
+					WRITE_SHORT(ActiveCamera->ID);
+					WRITE_BYTE(0);
+
+					MESSAGE_END();
+				}
+
 				ActiveCamera->TargetCamera->Use(nullptr, nullptr, USE_OFF, 0.0f);
 				ActiveCamera = nullptr;
 			}
@@ -669,6 +684,15 @@ namespace
 
 						TheCamMap.ActiveCamera = camera;
 						TheCamMap.ActiveCamera->TargetCamera->Use(nullptr, nullptr, USE_ON, 1);
+
+						TheCamMap.InCameraPreview = true;
+
+						MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_CameraPreview, nullptr, TheCamMap.LocalPlayer->pev);
+
+						WRITE_SHORT(cameraid);
+						WRITE_BYTE(1);
+
+						MESSAGE_END();
 					}
 
 					break;

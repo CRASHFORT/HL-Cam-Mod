@@ -644,6 +644,28 @@ int HLCamClient_CameraAdjust(const char* name, int size, void* buffer)
 	return 1;
 }
 
+int HLCamClient_CameraPreview(const char* name, int size, void* buffer)
+{
+	BEGIN_READ(buffer, size);
+
+	size_t cameraid = READ_SHORT();
+	auto state = READ_BYTE();
+
+	auto targetcam = TheCamClient.FindCameraByID(cameraid);
+
+	if (state == 0)
+	{
+		targetcam->InPreview = false;
+	}
+
+	else if (state == 1)
+	{
+		targetcam->InPreview = true;
+	}
+
+	return 1;
+}
+
 namespace Tri
 {
 	void VidInit();
@@ -668,6 +690,7 @@ namespace Cam
 		gEngfuncs.pfnHookUserMsg("CamSE2", &HLCamClient_ItemSelectedEnd);
 
 		gEngfuncs.pfnHookUserMsg("CamCA", &HLCamClient_CameraAdjust);
+		gEngfuncs.pfnHookUserMsg("CamPW", &HLCamClient_CameraPreview);
 	}
 
 	void VidInit()
