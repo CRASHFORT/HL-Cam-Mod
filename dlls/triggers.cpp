@@ -2219,7 +2219,10 @@ void CTriggerCamera::SetPlayerFOV(int fov)
 	auto playerptr = static_cast<CBasePlayer*>(Instance(m_hPlayer.Get()));
 	playerptr->pev->fov = playerptr->m_iFOV = fov;
 
-	SetFov(fov);
+	if (fov != 0)
+	{
+		SetFov(fov);
+	}
 }
 
 void CTriggerCamera::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
