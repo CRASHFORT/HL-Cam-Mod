@@ -36,6 +36,7 @@ public:
 	Cam::MapCamera HLCam;
 
 	void SetFov(int fov);
+	void SetPlayerFOV(int fov);
 
 	float m_flStopTime;
 	float m_moveDistance;

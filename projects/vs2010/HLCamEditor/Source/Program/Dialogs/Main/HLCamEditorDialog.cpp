@@ -529,6 +529,7 @@ LRESULT HLCamEditorDialog::OnPropertyGridItemChanged(WPARAM controlid, LPARAM pr
 				Messages::Camera_ChangeFOV,
 				Utility::BinaryBufferHelp::CreatePacket
 				(
+					userdata->CameraID,
 					newfov
 				)
 			);

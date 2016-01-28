@@ -765,16 +765,30 @@ namespace
 						break;
 					}
 
-					if (TheCamMap.CurrentSelectionCameraID == -1)
+					auto cameraid = data.GetValue<size_t>();
+
+					if (TheCamMap.CurrentSelectionCameraID != cameraid)
 					{
 						g_engfuncs.pfnAlertMessage(at_console, "HLCAM: No selected camera for app message\n");
 						break;
 					}
 
+					Cam::MapCamera* endcamera;
+					
 					auto fov = data.GetValue<int>();
 
-					TheCamMap.ActiveCamera->TargetCamera->SetFov(fov);
-					TheCamMap.ActiveCamera->TargetCamera->HLCam.FOV = fov;
+					if (TheCamMap.ActiveCamera)
+					{
+						endcamera = TheCamMap.ActiveCamera;
+						endcamera->TargetCamera->SetPlayerFOV(fov);
+					}
+
+					else
+					{
+						endcamera = TheCamMap.FindCameraByID(cameraid);
+						endcamera->TargetCamera->SetFov(fov);
+					}
+
 					break;
 				}
 			}
