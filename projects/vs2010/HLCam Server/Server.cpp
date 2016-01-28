@@ -307,7 +307,7 @@ namespace
 				{
 					MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCameraCreated, nullptr, LocalPlayer->pev);
 
-					bool isnamed = cam.TriggerType == Cam::CameraTriggerType::ByName;
+					bool isnamed = cam.TriggerType == Cam::Shared::CameraTriggerType::ByName;
 
 					WRITE_SHORT(cam.ID);
 					WRITE_BYTE(isnamed);
@@ -511,7 +511,7 @@ namespace
 				ActiveCamera = nullptr;
 			}
 
-			if (camera->TriggerType == Cam::CameraTriggerType::ByUserTrigger)
+			if (camera->TriggerType == Cam::Shared::CameraTriggerType::ByUserTrigger)
 			{
 				while (!camera->LinkedTriggerIDs.empty())
 				{
@@ -931,7 +931,7 @@ namespace
 
 					if (triggerit == camval.MemberEnd())
 					{
-						curcam.TriggerType = Cam::CameraTriggerType::ByName;
+						curcam.TriggerType = Cam::Shared::CameraTriggerType::ByName;
 					}
 
 					else
@@ -1042,7 +1042,7 @@ namespace
 
 					if (lookatitr != camval.MemberEnd())
 					{
-						curcam.LookType = Cam::CameraLookType::AtPlayer;
+						curcam.LookType = Cam::Shared::CameraLookType::AtPlayer;
 					}
 				}
 
@@ -1051,7 +1051,7 @@ namespace
 
 					if (fovfactoritr != camval.MemberEnd())
 					{
-						curcam.FOVType = Cam::CameraFOVType::OnDistance;
+						curcam.FOVType = Cam::Shared::CameraFOVType::OnDistance;
 						curcam.FOVDistanceFactor = fovfactoritr->value.GetDouble();
 					}
 				}
@@ -1076,24 +1076,24 @@ namespace
 
 						if (strcmp(speedstr, "Horizontal") == 0)
 						{
-							curcam.PlaneType = Cam::CameraPlaneType::Horizontal;
+							curcam.PlaneType = Cam::Shared::CameraPlaneType::Horizontal;
 						}
 						
 						else if (strcmp(speedstr, "Vertical") == 0)
 						{
-							curcam.PlaneType = Cam::CameraPlaneType::Vertical;
+							curcam.PlaneType = Cam::Shared::CameraPlaneType::Vertical;
 						}
 					}
 				}
 
 				curcam.TargetCamera = static_cast<CTriggerCamera*>(CBaseEntity::Create("trigger_camera", curcam.Position, curcam.Angle));
 
-				if (curcam.TargetCamera && curcam.LookType == Cam::CameraLookType::AtPlayer)
+				if (curcam.TargetCamera && curcam.LookType == Cam::Shared::CameraLookType::AtPlayer)
 				{
 					curcam.TargetCamera->pev->spawnflags |= SF_CAMERA_PLAYER_TARGET;
 				}
 
-				if (curcam.TriggerType == Cam::CameraTriggerType::ByName)
+				if (curcam.TriggerType == Cam::Shared::CameraTriggerType::ByName)
 				{
 					const auto& nameit = camval.FindMember("Name");
 
@@ -1322,7 +1322,7 @@ namespace
 			return;
 		}
 
-		bool hastrigger = targetcamera->TriggerType == Cam::CameraTriggerType::ByUserTrigger;
+		bool hastrigger = targetcamera->TriggerType == Cam::Shared::CameraTriggerType::ByUserTrigger;
 
 		if (!hastrigger)
 		{
@@ -1359,7 +1359,7 @@ namespace
 
 		for (auto& cam : TheCamMap.Cameras)
 		{
-			if (cam.TriggerType == Cam::CameraTriggerType::ByName)
+			if (cam.TriggerType == Cam::Shared::CameraTriggerType::ByName)
 			{
 				if (strcmp(cam.Name, name))
 				{
@@ -1542,7 +1542,7 @@ namespace
 
 			const Cam::MapTrigger* linkedtrig = nullptr;
 
-			if (cam.TriggerType == Cam::CameraTriggerType::ByUserTrigger)
+			if (cam.TriggerType == Cam::Shared::CameraTriggerType::ByUserTrigger)
 			{
 				rapidjson::Value trigarray(rapidjson::kArrayType);
 

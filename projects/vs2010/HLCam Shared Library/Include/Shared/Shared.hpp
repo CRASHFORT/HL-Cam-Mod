@@ -27,6 +27,48 @@ namespace Cam
 			*/
 			AdjustingCamera,
 		};
+		/*
+			Different ways how camera angles are transformed.
+		*/
+		enum class CameraAngleType
+		{
+			Linear,
+			Smooth,
+			Exponential,
+		};
+
+		enum class CameraLookType
+		{
+			AtPlayer,
+			AtAngle,
+		};
+
+		enum class CameraPlaneType
+		{
+			Horizontal,
+			Vertical,
+			Both,
+		};
+
+		enum class CameraFOVType
+		{
+			OnDistance,
+			Fixed,
+		};
+
+		/*
+			Cameras fired by name are meant to
+			be called from existing map entities,
+			such as having the same name as another entity.
+
+			User triggers are a second layer of map triggers that
+			can fire the cameras.
+		*/
+		enum class CameraTriggerType
+		{
+			ByName,
+			ByUserTrigger
+		};
 
 		namespace Messages
 		{

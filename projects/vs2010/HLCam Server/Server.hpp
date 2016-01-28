@@ -1,5 +1,6 @@
 #pragma once
 #include "extdll.h"
+#include "Shared\Shared.hpp"
 #include <vector>
 
 class CTriggerCamera;
@@ -27,49 +28,6 @@ namespace Cam
 	void OnPlayerPreUpdate(CBasePlayer* player);
 	void OnPlayerPostUpdate(CBasePlayer* player);
 
-	/*
-		Different ways how camera angles are transformed.
-	*/
-	enum class CameraAngleType
-	{
-		Linear,
-		Smooth,
-		Exponential,
-	};
-
-	enum class CameraLookType
-	{
-		AtPlayer,
-		AtAngle,
-	};
-
-	enum class CameraPlaneType
-	{
-		Horizontal,
-		Vertical,
-		Both,
-	};
-
-	enum class CameraFOVType
-	{
-		OnDistance,
-		Fixed,
-	};
-
-	/*
-		Cameras fired by name are meant to
-		be called from existing map entities,
-		such as having the same name as another entity.
-
-		User triggers are a second layer of map triggers that
-		can fire the cameras.
-	*/
-	enum class CameraTriggerType
-	{
-		ByName,
-		ByUserTrigger
-	};
-
 	struct MapCamera
 	{
 		/*
@@ -87,11 +45,11 @@ namespace Cam
 		*/
 		char Name[64];
 
-		CameraAngleType AngleType = CameraAngleType::Linear;
-		CameraTriggerType TriggerType = CameraTriggerType::ByUserTrigger;
-		CameraLookType LookType = CameraLookType::AtAngle;
-		CameraPlaneType PlaneType = CameraPlaneType::Both;
-		CameraFOVType FOVType = CameraFOVType::Fixed;
+		Shared::CameraAngleType AngleType = Shared::CameraAngleType::Linear;
+		Shared::CameraTriggerType TriggerType = Shared::CameraTriggerType::ByUserTrigger;
+		Shared::CameraLookType LookType = Shared::CameraLookType::AtAngle;
+		Shared::CameraPlaneType PlaneType = Shared::CameraPlaneType::Both;
+		Shared::CameraFOVType FOVType = Shared::CameraFOVType::Fixed;
 
 		size_t FOV = 90;
 		float FOVDistanceFactor = 0.5f;

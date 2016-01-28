@@ -2343,7 +2343,7 @@ void CTriggerCamera::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 		usedefaultthink = true;
 	}
 
-	else if (IsHLCam && HLCam.LookType == Cam::CameraLookType::AtPlayer)
+	else if (IsHLCam && HLCam.LookType == Cam::Shared::CameraLookType::AtPlayer)
 	{
 		usedefaultthink = true;
 	}
@@ -2385,7 +2385,7 @@ void CTriggerCamera::FollowTarget( )
 		}
 	}
 
-	if (IsHLCam && HLCam.FOVType == Cam::CameraFOVType::OnDistance)
+	if (IsHLCam && HLCam.FOVType == Cam::Shared::CameraFOVType::OnDistance)
 	{
 		/*float newfov;
 
@@ -2425,19 +2425,19 @@ void CTriggerCamera::FollowTarget( )
 	{
 		float endspeed = HLCam.MaxSpeed / 100.0f;
 
-		if (HLCam.PlaneType == Cam::CameraPlaneType::Both)
+		if (HLCam.PlaneType == Cam::Shared::CameraPlaneType::Both)
 		{
 			pev->avelocity.x = dx * endspeed;
 			pev->avelocity.y = dy * endspeed;
 		}
 
-		else if (HLCam.PlaneType == Cam::CameraPlaneType::Vertical)
+		else if (HLCam.PlaneType == Cam::Shared::CameraPlaneType::Vertical)
 		{
 			pev->avelocity.x = dx * endspeed;
 			pev->avelocity.y = 0;
 		}
 
-		else if (HLCam.PlaneType == Cam::CameraPlaneType::Horizontal)
+		else if (HLCam.PlaneType == Cam::Shared::CameraPlaneType::Horizontal)
 		{
 			pev->avelocity.x = 0;
 			pev->avelocity.y = dy * endspeed;

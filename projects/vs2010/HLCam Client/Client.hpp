@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include "Shared\Shared.hpp"
 
 namespace Cam
 {
