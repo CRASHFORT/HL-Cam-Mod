@@ -62,6 +62,20 @@ namespace
 				return;
 			}
 
+			{
+				auto targetcam = GetLinkedCamera(*trigger);
+
+				auto& container = targetcam->LinkedTriggerIDs;
+
+				container.erase
+				(
+					std::remove_if(container.begin(), container.end(), [trigger](const size_t& otherid)
+					{
+						return otherid == trigger->ID;
+					})
+				);
+			}
+
 			Triggers.erase
 			(
 				std::remove_if(Triggers.begin(), Triggers.end(), [trigger](const Cam::ClientTrigger& other)
@@ -541,6 +555,18 @@ int HLCamClient_OnCameraRemovedMessage(const char* name, int size, void* buffer)
 	return 1;
 }
 
+int HLCamClient_RemoveTrigger(const char* name, int size, void* buffer)
+{
+	BEGIN_READ(buffer, size);
+
+	size_t trigid = READ_SHORT();
+
+	auto targettrig = TheCamClient.FindTriggerByID(trigid);
+	TheCamClient.RemoveTrigger(targettrig);
+
+	return 1;
+}
+
 int HLCamClient_OnItemHighlightedStartMessage(const char* name, int size, void* buffer)
 {
 	BEGIN_READ(buffer, size);
@@ -679,7 +705,10 @@ namespace Cam
 
 		gEngfuncs.pfnHookUserMsg("CamCreate", &HLCamClient_OnCameraCreatedMessage);
 		gEngfuncs.pfnHookUserMsg("TrgCreate", &HLCamClient_OnTriggerCreatedMessage);
+		
 		gEngfuncs.pfnHookUserMsg("CamRem", &HLCamClient_OnCameraRemovedMessage);
+		gEngfuncs.pfnHookUserMsg("TrgRem", &HLCamClient_RemoveTrigger);
+		
 		gEngfuncs.pfnHookUserMsg("CamEdit", &HLCamClient_OnMapEditMessage);
 		gEngfuncs.pfnHookUserMsg("CamReset", &HLCamClient_OnMapResetMessage);
 		

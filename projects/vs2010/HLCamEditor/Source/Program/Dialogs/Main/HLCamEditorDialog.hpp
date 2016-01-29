@@ -49,6 +49,8 @@ namespace App
 		bool IsCamera;
 		size_t TriggerID;
 		size_t CameraID;
+
+		HTREEITEM TreeItem;
 	};
 
 	struct HLMap
@@ -58,6 +60,7 @@ namespace App
 
 		void AddUserData(HLUserData& userdata);
 		HLUserData* FindUserDataByID(size_t id);
+		void RemoveUserData(HLUserData* userdata);
 		
 		std::string Name;
 		

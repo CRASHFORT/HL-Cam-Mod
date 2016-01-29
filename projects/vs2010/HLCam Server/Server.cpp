@@ -25,7 +25,10 @@ using namespace std::literals::chrono_literals;
 
 extern int MsgHLCAM_OnCameraCreated;
 extern int MsgHLCAM_OnCreateTrigger;
-extern int MsgHLCAM_OnCameraRemoved;
+
+extern int MsgHLCAM_RemoveCamera;
+extern int MsgHLCAM_RemoveTrigger;
+
 extern int MsgHLCAM_MapEditStateChanged;
 extern int MsgHLCAM_MapReset;
 extern int MsgHLCAM_ShowEditMenu;
@@ -456,6 +459,10 @@ namespace
 				return;
 			}
 
+			MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_RemoveTrigger, nullptr, LocalPlayer->pev);
+			WRITE_SHORT(trigger->ID);
+			MESSAGE_END();
+
 			if (trigger->ID == CurrentHighlightTriggerID)
 			{
 				UnHighlightAll();
@@ -489,7 +496,7 @@ namespace
 		}
 
 		/*
-			Also removes its linked trigger if it's
+			Also removes its linked triggers if it's
 			of that type.
 		*/
 		void RemoveCamera(Cam::MapCamera* camera)
@@ -498,6 +505,10 @@ namespace
 			{
 				return;
 			}
+
+			MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_RemoveCamera, nullptr, LocalPlayer->pev);
+			WRITE_SHORT(camera->ID);
+			MESSAGE_END();
 
 			if (camera == ActiveCamera)
 			{
@@ -872,6 +883,34 @@ namespace
 						endcamera = TheCamMap.FindCameraByID(cameraid);
 						endcamera->TargetCamera->SetFov(fov);
 					}
+
+					break;
+				}
+
+				case Message::Camera_Remove:
+				{
+					if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
+					{
+						g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
+						break;
+					}
+
+					auto cameraid = data.GetValue<size_t>();
+					TheCamMap.RemoveCamera(TheCamMap.FindCameraByID(cameraid));
+
+					break;
+				}
+
+				case Message::Trigger_Remove:
+				{
+					if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
+					{
+						g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
+						break;
+					}
+
+					auto triggerid = data.GetValue<size_t>();
+					TheCamMap.RemoveTrigger(TheCamMap.FindTriggerByID(triggerid));
 
 					break;
 				}
@@ -1345,10 +1384,6 @@ namespace
 			return;
 		}
 
-		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCameraRemoved, nullptr, TheCamMap.LocalPlayer->pev);		
-		WRITE_SHORT(targetcamera->ID);
-		MESSAGE_END();
-
 		g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Removed camera with ID \"%u\"\n", targetcamera->ID);
 
 		TheCamMap.RemoveCamera(targetcamera);
@@ -1389,10 +1424,6 @@ namespace
 			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: No camera with name \"%s\"\n", name);
 			return;
 		}
-
-		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCameraRemoved, nullptr, TheCamMap.LocalPlayer->pev);
-		WRITE_SHORT(targetcam->ID);		
-		MESSAGE_END();
 
 		g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Removed camera with ID \"%u\"\n", targetcam->ID);
 

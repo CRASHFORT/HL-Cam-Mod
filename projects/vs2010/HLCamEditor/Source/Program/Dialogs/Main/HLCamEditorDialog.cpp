@@ -60,6 +60,22 @@ namespace App
 
 		return nullptr;
 	}
+	
+	void HLMap::RemoveUserData(HLUserData* userdata)
+	{
+		if (!userdata)
+		{
+			return;
+		}
+
+		AllUserData.erase
+		(
+			std::remove_if(AllUserData.begin(), AllUserData.end(), [userdata](const HLUserData& other)
+			{
+				return other.ID == userdata->ID;
+			})
+		);
+	}
 
 	HLTrigger& operator>>(Utility::BinaryBuffer& buffer, HLTrigger& trigger)
 	{
@@ -481,6 +497,7 @@ void HLCamEditorDialog::AddSingleCameraToList(App::HLCamera& camera)
 		App::HLUserData camuserdata;
 		camuserdata.IsCamera = true;
 		camuserdata.CameraID = camera.ID;
+		camuserdata.TreeItem = camera.TreeItem;
 
 		TreeControl.SetItemData(camera.TreeItem, CurrentMap.NextUserDataID);
 		CurrentMap.AddUserData(camuserdata);
@@ -506,6 +523,7 @@ void HLCamEditorDialog::AddCameraAndTriggerToList(App::HLCamera& camera)
 		App::HLUserData camuserdata;
 		camuserdata.IsCamera = true;
 		camuserdata.CameraID = camera.ID;
+		camuserdata.TreeItem = camera.TreeItem;
 
 		TreeControl.SetItemData(camera.TreeItem, CurrentMap.NextUserDataID);
 		CurrentMap.AddUserData(camuserdata);
@@ -534,6 +552,7 @@ void HLCamEditorDialog::AddCamerasTriggersToList(App::HLCamera& camera, std::vec
 			App::HLUserData triguserdata;
 			triguserdata.IsCamera = false;
 			triguserdata.TriggerID = trig.ID;
+			triguserdata.TreeItem = trig.TreeItem;
 
 			TreeControl.SetItemData(trig.TreeItem, CurrentMap.NextUserDataID);
 			CurrentMap.AddUserData(triguserdata);
@@ -678,16 +697,19 @@ void HLCamEditorDialog::OnContextMenu(CWnd* window, CPoint point)
 
 			menu.AddSeparator();
 
-			menu.AddEntry("Remove", [this, cameraid]
+			menu.AddEntry("Remove", [this, userdata]
 			{
 				AppServer.Write
 				(
 					Messages::Camera_Remove,
 					Utility::BinaryBufferHelp::CreatePacket
 					(
-						cameraid
+						userdata->CameraID
 					)
 				);
+
+				TreeControl.DeleteItem(userdata->TreeItem);
+				CurrentMap.RemoveUserData(userdata);
 			});
 
 			menu.Open(screenpos, window);
@@ -713,16 +735,19 @@ void HLCamEditorDialog::OnContextMenu(CWnd* window, CPoint point)
 
 			menu.AddSeparator();
 
-			menu.AddEntry("Remove", [this, triggerid]
+			menu.AddEntry("Remove", [this, userdata]
 			{
 				AppServer.Write
 				(
 					Messages::Trigger_Remove,
 					Utility::BinaryBufferHelp::CreatePacket
 					(
-						triggerid
+						userdata->TriggerID
 					)
 				);
+
+				TreeControl.DeleteItem(userdata->TreeItem);
+				CurrentMap.RemoveUserData(userdata);
 			});
 
 			menu.Open(screenpos, window);

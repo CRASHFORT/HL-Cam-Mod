@@ -222,7 +222,12 @@ int MsgHLCAM_OnCreateTrigger = 0;
 	If a trigger is linked to this camera
 	it will be removed too.
 */
-int MsgHLCAM_OnCameraRemoved = 0;
+int MsgHLCAM_RemoveCamera = 0;
+
+/*
+	SHORT: ID
+*/
+int MsgHLCAM_RemoveTrigger = 0;
 
 /*
 	BYTE: On or off
@@ -286,7 +291,10 @@ void LinkUserMessages( void )
 
 	MsgHLCAM_OnCameraCreated = REG_USER_MSG("CamCreate", -1);
 	MsgHLCAM_OnCreateTrigger = REG_USER_MSG("TrgCreate", -1);
-	MsgHLCAM_OnCameraRemoved = REG_USER_MSG("CamRem", 2);
+	
+	MsgHLCAM_RemoveCamera = REG_USER_MSG("CamRem", 2);
+	MsgHLCAM_RemoveTrigger = REG_USER_MSG("TrgRem", 2);
+
 	MsgHLCAM_MapEditStateChanged = REG_USER_MSG("CamEdit", 1);
 	MsgHLCAM_MapReset = REG_USER_MSG("CamReset", 0);
 	
