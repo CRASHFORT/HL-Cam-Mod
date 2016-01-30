@@ -20,6 +20,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HLCamEditor", "HLCamEditor\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HLCam Shared Library", "HLCam Shared Library\HLCam Shared Library.vcxproj", "{CDF0C39A-448B-44AD-A710-71F6453A5653}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "InterprocessDisconnector", "Camera Projects\InterprocessDisconnector\InterprocessDisconnector.vcxproj", "{A3617CBB-13CE-4955-8B08-CC3887A122F3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -56,6 +58,14 @@ Global
 		{CDF0C39A-448B-44AD-A710-71F6453A5653}.Release|Win32.Build.0 = Release|Win32
 		{CDF0C39A-448B-44AD-A710-71F6453A5653}.Release|x64.ActiveCfg = Release|x64
 		{CDF0C39A-448B-44AD-A710-71F6453A5653}.Release|x64.Build.0 = Release|x64
+		{A3617CBB-13CE-4955-8B08-CC3887A122F3}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A3617CBB-13CE-4955-8B08-CC3887A122F3}.Debug|Win32.Build.0 = Debug|Win32
+		{A3617CBB-13CE-4955-8B08-CC3887A122F3}.Debug|x64.ActiveCfg = Debug|x64
+		{A3617CBB-13CE-4955-8B08-CC3887A122F3}.Debug|x64.Build.0 = Debug|x64
+		{A3617CBB-13CE-4955-8B08-CC3887A122F3}.Release|Win32.ActiveCfg = Release|Win32
+		{A3617CBB-13CE-4955-8B08-CC3887A122F3}.Release|Win32.Build.0 = Release|Win32
+		{A3617CBB-13CE-4955-8B08-CC3887A122F3}.Release|x64.ActiveCfg = Release|x64
+		{A3617CBB-13CE-4955-8B08-CC3887A122F3}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
