@@ -353,7 +353,7 @@ void HLCamEditorDialog::MessageHandler()
 			continue;
 		}
 
-		if (messagesleeptime == deepidlesleeptime)
+		if (messagesleeptime != worksleeptime)
 		{
 			messagesleeptime = worksleeptime;
 		}

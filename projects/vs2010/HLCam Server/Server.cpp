@@ -627,7 +627,7 @@ namespace
 				continue;
 			}
 
-			if (MessageThreadSleepTime == DeepIdleSleepTime)
+			if (MessageThreadSleepTime != WorkSleepTime)
 			{
 				MessageThreadSleepTime = WorkSleepTime;
 			}
