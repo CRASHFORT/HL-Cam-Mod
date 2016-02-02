@@ -23,24 +23,8 @@ using namespace std::literals::chrono_literals;
 #include "boost\interprocess\ipc\message_queue.hpp"
 #include "Shared\Interprocess\Interprocess.hpp"
 
-extern int MsgHLCAM_OnCameraCreated;
-extern int MsgHLCAM_OnCreateTrigger;
-
-extern int MsgHLCAM_RemoveCamera;
-extern int MsgHLCAM_RemoveTrigger;
-
-extern int MsgHLCAM_MapEditStateChanged;
-extern int MsgHLCAM_MapReset;
-extern int MsgHLCAM_ShowEditMenu;
-
-extern int MsgHLCAM_ItemHighlightedStart;
-extern int MsgHLCAM_ItemHighlightedEnd;
-
-extern int MsgHLCAM_ItemSelectedStart;
-extern int MsgHLCAM_ItemSelectedEnd;
-
-extern int MsgHLCAM_CameraAdjust;
-extern int MsgHLCAM_CameraPreview;
+#define CAM_EXTERN
+#include "Messages.hpp"
 
 /*
 	General one file content because Half-Life's project structure is awful.
@@ -267,7 +251,7 @@ namespace
 		{
 			if (CurrentHighlightTriggerID != -1)
 			{
-				MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_ItemHighlightedEnd, nullptr, LocalPlayer->pev);
+				MESSAGE_BEGIN(MSG_ONE, HLCamMessage::ItemHighlightedEnd, nullptr, LocalPlayer->pev);
 				MESSAGE_END();
 			}
 
@@ -278,7 +262,7 @@ namespace
 		{
 			if (CurrentSelectionCameraID != -1 || CurrentSelectionTriggerID != -1)
 			{
-				MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_ItemSelectedEnd, nullptr, LocalPlayer->pev);
+				MESSAGE_BEGIN(MSG_ONE, HLCamMessage::ItemSelectedEnd, nullptr, LocalPlayer->pev);
 				MESSAGE_END();
 			}
 
@@ -308,7 +292,7 @@ namespace
 			{
 				for (const auto& cam : Cameras)
 				{
-					MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCameraCreated, nullptr, LocalPlayer->pev);
+					MESSAGE_BEGIN(MSG_ONE, HLCamMessage::CreateCamera, nullptr, LocalPlayer->pev);
 
 					bool isnamed = cam.TriggerType == Cam::Shared::CameraTriggerType::ByName;
 
@@ -339,7 +323,7 @@ namespace
 					/*
 						Part 0
 					*/
-					MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCreateTrigger, nullptr, LocalPlayer->pev);
+					MESSAGE_BEGIN(MSG_ONE, HLCamMessage::CreateTrigger, nullptr, LocalPlayer->pev);
 
 					WRITE_BYTE(0);
 
@@ -351,7 +335,7 @@ namespace
 					/*
 						Part 1
 					*/
-					MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCreateTrigger, nullptr, LocalPlayer->pev);
+					MESSAGE_BEGIN(MSG_ONE, HLCamMessage::CreateTrigger, nullptr, LocalPlayer->pev);
 
 					WRITE_BYTE(1);
 
@@ -364,7 +348,7 @@ namespace
 					/*
 						Part 2
 					*/
-					MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCreateTrigger, nullptr, LocalPlayer->pev);
+					MESSAGE_BEGIN(MSG_ONE, HLCamMessage::CreateTrigger, nullptr, LocalPlayer->pev);
 
 					WRITE_BYTE(2);
 
@@ -396,7 +380,7 @@ namespace
 				{
 					InCameraPreview = false;
 
-					MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_CameraPreview, nullptr, LocalPlayer->pev);
+					MESSAGE_BEGIN(MSG_ONE, HLCamMessage::CameraPreview, nullptr, LocalPlayer->pev);
 
 					WRITE_SHORT(ActiveCamera->ID);
 					WRITE_BYTE(0);
@@ -459,7 +443,7 @@ namespace
 				return;
 			}
 
-			MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_RemoveTrigger, nullptr, LocalPlayer->pev);
+			MESSAGE_BEGIN(MSG_ONE, HLCamMessage::RemoveTrigger, nullptr, LocalPlayer->pev);
 			WRITE_SHORT(trigger->ID);
 			MESSAGE_END();
 
@@ -506,7 +490,7 @@ namespace
 				return;
 			}
 
-			MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_RemoveCamera, nullptr, LocalPlayer->pev);
+			MESSAGE_BEGIN(MSG_ONE, HLCamMessage::RemoveCamera, nullptr, LocalPlayer->pev);
 			WRITE_SHORT(camera->ID);
 			MESSAGE_END();
 
@@ -648,7 +632,7 @@ namespace
 
 						TheCamMap.CurrentSelectionTriggerID = triggerid;
 
-						MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_ItemSelectedStart, nullptr, TheCamMap.LocalPlayer->pev);
+						MESSAGE_BEGIN(MSG_ONE, HLCamMessage::ItemSelectedStart, nullptr, TheCamMap.LocalPlayer->pev);
 
 						WRITE_BYTE(0);
 						WRITE_SHORT(TheCamMap.CurrentSelectionTriggerID);
@@ -669,7 +653,7 @@ namespace
 
 						TheCamMap.CurrentSelectionCameraID = cameraid;
 
-						MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_ItemSelectedStart, nullptr, TheCamMap.LocalPlayer->pev);
+						MESSAGE_BEGIN(MSG_ONE, HLCamMessage::ItemSelectedStart, nullptr, TheCamMap.LocalPlayer->pev);
 
 						WRITE_BYTE(1);
 						WRITE_SHORT(TheCamMap.CurrentSelectionCameraID);
@@ -694,7 +678,7 @@ namespace
 					{
 						TheCamMap.CurrentState = Cam::Shared::StateType::AdjustingCamera;
 
-						MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_CameraAdjust, nullptr, TheCamMap.LocalPlayer->pev);
+						MESSAGE_BEGIN(MSG_ONE, HLCamMessage::CameraAdjust, nullptr, TheCamMap.LocalPlayer->pev);
 						
 						WRITE_BYTE(0);
 						WRITE_SHORT(cameraid);
@@ -729,7 +713,7 @@ namespace
 
 						TheCamMap.CurrentState = Cam::Shared::StateType::NeedsToCreateTriggerCorner1;
 
-						MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCreateTrigger, nullptr, TheCamMap.LocalPlayer->pev);
+						MESSAGE_BEGIN(MSG_ONE, HLCamMessage::CreateTrigger, nullptr, TheCamMap.LocalPlayer->pev);
 
 						WRITE_BYTE(0);
 
@@ -766,7 +750,7 @@ namespace
 						{
 							if (TheCamMap.InCameraPreview)
 							{
-								MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_CameraPreview, nullptr, TheCamMap.LocalPlayer->pev);
+								MESSAGE_BEGIN(MSG_ONE, HLCamMessage::CameraPreview, nullptr, TheCamMap.LocalPlayer->pev);
 
 								WRITE_SHORT(TheCamMap.ActiveCamera->ID);
 								WRITE_BYTE(0);
@@ -782,7 +766,7 @@ namespace
 
 						TheCamMap.InCameraPreview = true;
 
-						MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_CameraPreview, nullptr, TheCamMap.LocalPlayer->pev);
+						MESSAGE_BEGIN(MSG_ONE, HLCamMessage::CameraPreview, nullptr, TheCamMap.LocalPlayer->pev);
 
 						WRITE_SHORT(cameraid);
 						WRITE_BYTE(1);
@@ -1319,7 +1303,7 @@ namespace
 		TheCamMap.UnHighlightAll();
 		TheCamMap.UnSelectAll();
 
-		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCameraCreated, nullptr, TheCamMap.LocalPlayer->pev);
+		MESSAGE_BEGIN(MSG_ONE, HLCamMessage::CreateCamera, nullptr, TheCamMap.LocalPlayer->pev);
 
 		WRITE_SHORT(newcam.ID);
 		WRITE_BYTE(isnamed);
@@ -1349,7 +1333,7 @@ namespace
 
 			TheCamMap.CurrentState = Cam::Shared::StateType::NeedsToCreateTriggerCorner1;
 
-			MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCreateTrigger, nullptr, TheCamMap.LocalPlayer->pev);
+			MESSAGE_BEGIN(MSG_ONE, HLCamMessage::CreateTrigger, nullptr, TheCamMap.LocalPlayer->pev);
 
 			WRITE_BYTE(0);
 			
@@ -1470,7 +1454,7 @@ namespace
 
 		TheCamMap.IsEditing = true;
 
-		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_MapEditStateChanged, nullptr, TheCamMap.LocalPlayer->pev);
+		MESSAGE_BEGIN(MSG_ONE, HLCamMessage::MapEditStateChanged, nullptr, TheCamMap.LocalPlayer->pev);
 		WRITE_BYTE(TheCamMap.IsEditing);
 		MESSAGE_END();
 
@@ -1569,7 +1553,7 @@ namespace
 
 		TheCamMap.IsEditing = false;
 
-		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_MapEditStateChanged, nullptr, TheCamMap.LocalPlayer->pev);
+		MESSAGE_BEGIN(MSG_ONE, HLCamMessage::MapEditStateChanged, nullptr, TheCamMap.LocalPlayer->pev);
 		WRITE_BYTE(TheCamMap.IsEditing);
 		MESSAGE_END();
 
@@ -1739,7 +1723,7 @@ void Cam::OnPlayerPreUpdate(CBasePlayer* player)
 
 	if (TheCamMap.NeedsToSendResetMessage)
 	{
-		MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_MapReset, nullptr, TheCamMap.LocalPlayer->pev);
+		MESSAGE_BEGIN(MSG_ONE, HLCamMessage::MapReset, nullptr, TheCamMap.LocalPlayer->pev);
 		MESSAGE_END();
 
 		TheCamMap.NeedsToSendResetMessage = false;
@@ -1765,7 +1749,7 @@ void Cam::OnPlayerPreUpdate(CBasePlayer* player)
 
 				playerpos.CopyToArray(creationtrig->Corner1);
 
-				MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCreateTrigger, nullptr, TheCamMap.LocalPlayer->pev);
+				MESSAGE_BEGIN(MSG_ONE, HLCamMessage::CreateTrigger, nullptr, TheCamMap.LocalPlayer->pev);
 
 				WRITE_BYTE(1);
 
@@ -1793,7 +1777,7 @@ void Cam::OnPlayerPreUpdate(CBasePlayer* player)
 				targetcam->TargetCamera->pev->origin = playerpos;
 				targetcam->TargetCamera->pev->angles = playerang;
 
-				MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_CameraAdjust, nullptr, TheCamMap.LocalPlayer->pev);
+				MESSAGE_BEGIN(MSG_ONE, HLCamMessage::CameraAdjust, nullptr, TheCamMap.LocalPlayer->pev);
 				
 				WRITE_BYTE(1);
 				WRITE_SHORT(targetcam->ID);
@@ -1824,7 +1808,7 @@ void Cam::OnPlayerPreUpdate(CBasePlayer* player)
 
 				playerpos.CopyToArray(creationtrig->Corner2);
 
-				MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_OnCreateTrigger, nullptr, TheCamMap.LocalPlayer->pev);
+				MESSAGE_BEGIN(MSG_ONE, HLCamMessage::CreateTrigger, nullptr, TheCamMap.LocalPlayer->pev);
 
 				WRITE_BYTE(2);
 
@@ -1891,7 +1875,7 @@ void Cam::OnPlayerPreUpdate(CBasePlayer* player)
 
 					TheCamMap.CurrentSelectionTriggerID = TheCamMap.CurrentHighlightTriggerID;
 
-					MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_ItemSelectedStart, nullptr, TheCamMap.LocalPlayer->pev);
+					MESSAGE_BEGIN(MSG_ONE, HLCamMessage::ItemSelectedStart, nullptr, TheCamMap.LocalPlayer->pev);
 
 					WRITE_BYTE(0);
 					WRITE_SHORT(TheCamMap.CurrentSelectionTriggerID);
@@ -1982,7 +1966,7 @@ void Cam::OnPlayerPostUpdate(CBasePlayer* player)
 							TheCamMap.UnHighlightAll();
 						}
 
-						MESSAGE_BEGIN(MSG_ONE, MsgHLCAM_ItemHighlightedStart, nullptr, TheCamMap.LocalPlayer->pev);
+						MESSAGE_BEGIN(MSG_ONE, HLCamMessage::ItemHighlightedStart, nullptr, TheCamMap.LocalPlayer->pev);
 
 						WRITE_BYTE(0);
 						WRITE_SHORT(trig->ID);

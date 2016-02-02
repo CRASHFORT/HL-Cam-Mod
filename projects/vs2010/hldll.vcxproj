@@ -262,6 +262,7 @@
     <ClInclude Include="..\..\pm_shared\pm_materials.h" />
     <ClInclude Include="..\..\pm_shared\pm_movevars.h" />
     <ClInclude Include="..\..\pm_shared\pm_shared.h" />
+    <ClInclude Include="HLCam Server\Messages.hpp" />
     <ClInclude Include="HLCam Server\Server.hpp" />
   </ItemGroup>
   <ItemGroup>

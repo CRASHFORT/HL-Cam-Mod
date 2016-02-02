@@ -186,98 +186,9 @@ int gmsgGeigerRange = 0;
 int gmsgTeamNames = 0;
 
 int gmsgStatusText = 0;
-int gmsgStatusValue = 0; 
+int gmsgStatusValue = 0;
 
-/*
-	SHORT: ID
-	BYTE: Is named
-	COORD x 3: Position XYZ
-	COORD x 3: Angle XYZ
-
-	->	Is named:
-	|	STRING: Camera name
-
-	If this is not a named camera, MsgHLCAM_OnCreateTrigger
-	will be sent after this to make the player create a
-	linked trigger.
-*/
-int MsgHLCAM_OnCameraCreated = 0;
-
-/*	
-	BYTE: Part
-	
-	->	Part == 0:
-	|	SHORT: ID
-	|	SHORT: Camera ID
-	->	Part == 1:
-	|	COORD x 3: Corner 1 XYZ
-	->	Part == 2:
-	|	COORD x 3: Corner 2 XYZ
-*/
-int MsgHLCAM_OnCreateTrigger = 0;
-
-/*
-	SHORT: ID
-
-	If a trigger is linked to this camera
-	it will be removed too.
-*/
-int MsgHLCAM_RemoveCamera = 0;
-
-/*
-	SHORT: ID
-*/
-int MsgHLCAM_RemoveTrigger = 0;
-
-/*
-	BYTE: On or off
-*/
-int MsgHLCAM_MapEditStateChanged = 0;
-
-/*
-	Message to reset client stuff
-*/
-int MsgHLCAM_MapReset = 0;
-
-/*
-	BYTE: 0 for trigger, 1 for camera
-	SHORT: Item ID
-*/
-int MsgHLCAM_ItemHighlightedStart = 0;
-
-/*
-	Previous item is not highlighted anymore
-*/
-int MsgHLCAM_ItemHighlightedEnd = 0;
-
-/*
-	BYTE: 0 for trigger, 1 for camera
-	SHORT: Item ID
-*/
-int MsgHLCAM_ItemSelectedStart = 0;
-
-/*
-	Previous item is not selected anymore
-*/
-int MsgHLCAM_ItemSelectedEnd = 0;
-
-/*
-	BYTE: State: 0 or 1
-
-	->	State == 0:
-	|	SHORT: Camera ID
-	->	State == 1:
-	|	SHORT: Camera ID
-	|	COORD x 3: New position
-	|	COORD x 3: New angle
-*/
-int MsgHLCAM_CameraAdjust = 0;
-
-/*
-	SHORT: Camera ID
-	BYTE: On or off
-*/
-int MsgHLCAM_CameraPreview = 0;
+#include "HLCam Server\Messages.hpp"
 
 void LinkUserMessages( void )
 {
@@ -289,23 +200,23 @@ void LinkUserMessages( void )
 
 	gmsgSelAmmo = REG_USER_MSG("SelAmmo", sizeof(SelAmmo));
 
-	MsgHLCAM_OnCameraCreated = REG_USER_MSG("CamCreate", -1);
-	MsgHLCAM_OnCreateTrigger = REG_USER_MSG("TrgCreate", -1);
+	HLCamMessage::CreateCamera = REG_USER_MSG("CamCreate", -1);
+	HLCamMessage::CreateTrigger = REG_USER_MSG("TrgCreate", -1);
 	
-	MsgHLCAM_RemoveCamera = REG_USER_MSG("CamRem", 2);
-	MsgHLCAM_RemoveTrigger = REG_USER_MSG("TrgRem", 2);
+	HLCamMessage::RemoveCamera = REG_USER_MSG("CamRem", 2);
+	HLCamMessage::RemoveTrigger = REG_USER_MSG("TrgRem", 2);
 
-	MsgHLCAM_MapEditStateChanged = REG_USER_MSG("CamEdit", 1);
-	MsgHLCAM_MapReset = REG_USER_MSG("CamReset", 0);
+	HLCamMessage::MapEditStateChanged = REG_USER_MSG("CamEdit", 1);
+	HLCamMessage::MapReset = REG_USER_MSG("CamReset", 0);
 	
-	MsgHLCAM_ItemHighlightedStart = REG_USER_MSG("CamHT1", 3);
-	MsgHLCAM_ItemHighlightedEnd = REG_USER_MSG("CamHT2", 0);
+	HLCamMessage::ItemHighlightedStart = REG_USER_MSG("CamHT1", 3);
+	HLCamMessage::ItemHighlightedEnd = REG_USER_MSG("CamHT2", 0);
 
-	MsgHLCAM_ItemSelectedStart = REG_USER_MSG("CamSE1", 3);
-	MsgHLCAM_ItemSelectedEnd = REG_USER_MSG("CamSE2", 0);
+	HLCamMessage::ItemSelectedStart = REG_USER_MSG("CamSE1", 3);
+	HLCamMessage::ItemSelectedEnd = REG_USER_MSG("CamSE2", 0);
 
-	MsgHLCAM_CameraAdjust = REG_USER_MSG("CamCA", -1);
-	MsgHLCAM_CameraPreview = REG_USER_MSG("CamPW", 3);
+	HLCamMessage::CameraAdjust = REG_USER_MSG("CamCA", -1);
+	HLCamMessage::CameraPreview = REG_USER_MSG("CamPW", 3);
 
 	gmsgCurWeapon = REG_USER_MSG("CurWeapon", 3);
 	gmsgGeigerRange = REG_USER_MSG("Geiger", 1);
