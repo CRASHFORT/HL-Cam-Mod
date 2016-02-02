@@ -85,6 +85,14 @@ color24 gTracerColors[] =
 #define FTENT_NOMODEL			0x00040000 // Doesn't have a model, never try to draw ( it just triggers other things )
 #define FTENT_CLIENTCUSTOM		0x00080000 // Must specify callback.  Callback function is responsible for killing tempent and updating fields ( unless other flags specify how to do things )
 
+/*
+	CRASH FORT:
+	The HLCAM flag makes it so the tent is not removed by time but
+	rather by a flag to specify a custom condition for removal.
+*/
+#define FTENT_HLCAM 0x00100000
+#define FTENT_KILLME 0x00200000
+
 typedef struct tempent_s
 {
 	int			flags;

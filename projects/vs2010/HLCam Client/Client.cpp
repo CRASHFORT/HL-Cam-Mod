@@ -160,8 +160,8 @@ namespace
 					kRenderTransAdd,
 					kRenderFxNone,
 					255,
-					999999999999999999999999.0f,
-					FTENT_NONE | FTENT_PERSIST
+					0.0f,
+					FTENT_NONE | FTENT_PERSIST | FTENT_HLCAM
 				);
 			}
 
@@ -169,8 +169,19 @@ namespace
 			{
 				if (PointPtr)
 				{
-					PointPtr->die = 0.0f;
+					PointPtr->flags |= FTENT_KILLME;
 					PointPtr = nullptr;
+				}
+			}
+
+			void DestroyBeam()
+			{
+				BeamEnabled = false;
+
+				if (BeamPtr)
+				{
+					BeamPtr->die = 0.0f;
+					BeamPtr = nullptr;
 				}
 			}
 
@@ -492,6 +503,10 @@ namespace Cam
 			{
 				CAM_ToFirstPerson();
 				m_iFlags |= HUD_ACTIVE;
+
+				TheCamClient.AimGuide.InBeamToggle = false;
+				TheCamClient.AimGuide.DestroyPoint();
+				TheCamClient.AimGuide.DestroyBeam();
 			}
 
 			else
@@ -760,72 +775,31 @@ namespace
 	{
 		void AimBeamOn()
 		{
-			if (TheCamClient.AimGuide.InBeamToggle)
+			if (TheCamClient.AimGuide.InBeamToggle || TheCamClient.InEditMode)
 			{
 				return;
 			}
 
 			TheCamClient.AimGuide.BeamEnabled = true;
-
-			Vector viewangles;
-			gEngfuncs.GetViewAngles(viewangles);
-
-			auto player = gEngfuncs.GetLocalPlayer();
-
-			Vector position = player->attachment[0];
-
-			Vector forward;
-			gEngfuncs.pfnAngleVectors(viewangles, forward, nullptr, nullptr);
-
-			VectorScale(forward, 2048, forward);
-
-			VectorAdd(forward, position, forward);
-
-			auto trace = gEngfuncs.PM_TraceLine(position, forward, PM_TRACELINE_PHYSENTSONLY, 2, -1);
-			
-			if (trace->fraction != 1.0)
-			{
-				auto beamindex = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/smoke.spr");
-
-				TheCamClient.AimGuide.BeamPtr = gEngfuncs.pEfxAPI->R_BeamEntPoint
-				(
-					player->index | 0x1000,
-					trace->endpos,
-					beamindex,
-					999999999999999999999999.0f,
-					2.0f,
-					0.05f,
-					0.1f,
-					15,
-					0,
-					0,
-					255,
-					255,
-					255
-				);
-
-				TheCamClient.AimGuide.BeamPtr->flags |= FBEAM_SHADEIN | FBEAM_ISACTIVE;
-			}
 		}
 
 		void AimBeamOff()
 		{
-			if (TheCamClient.AimGuide.InBeamToggle)
+			if (TheCamClient.AimGuide.InBeamToggle || TheCamClient.InEditMode)
 			{
 				return;
 			}
 
-			TheCamClient.AimGuide.BeamEnabled = false;
-
-			if (TheCamClient.AimGuide.BeamPtr)
-			{
-				TheCamClient.AimGuide.BeamPtr->die = 0.0f;
-				TheCamClient.AimGuide.BeamPtr = nullptr;
-			}
+			TheCamClient.AimGuide.DestroyBeam();
 		}
 
 		void AimBeamToggle()
 		{
+			if (TheCamClient.InEditMode)
+			{
+				return;
+			}
+
 			TheCamClient.AimGuide.BeamEnabled = !TheCamClient.AimGuide.BeamEnabled;
 
 			if (TheCamClient.AimGuide.BeamEnabled)
@@ -900,6 +874,11 @@ namespace Cam
 			}
 		}
 
+		if (TheCamClient.InEditMode)
+		{
+			return;
+		}
+
 		if (TheCamClient.AimGuide.BeamEnabled || Commands::UseAimSpot->value > 0)
 		{
 			Vector viewangles;
@@ -934,6 +913,33 @@ namespace Cam
 					if (trace->fraction != 1.0)
 					{
 						TheCamClient.AimGuide.BeamPtr->target = trace->endpos;
+					}
+				}
+
+				else
+				{
+					if (trace->fraction != 1.0)
+					{
+						auto beamindex = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/smoke.spr");
+
+						TheCamClient.AimGuide.BeamPtr = gEngfuncs.pEfxAPI->R_BeamEntPoint
+						(
+							player->index | 0x1000,
+							trace->endpos,
+							beamindex,
+							999999999999999999999999.0f,
+							2.0f,
+							0.05f,
+							0.1f,
+							15,
+							0,
+							0,
+							255,
+							255,
+							255
+						);
+
+						TheCamClient.AimGuide.BeamPtr->flags |= FBEAM_SHADEIN | FBEAM_ISACTIVE;
 					}
 				}
 			}

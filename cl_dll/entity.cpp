@@ -454,7 +454,21 @@ void CL_DLLEXPORT HUD_TempEntUpdate (
 
 		life = pTemp->die - client_time;
 		pnext = pTemp->next;
-		if ( life < 0 )
+
+		/*
+			CRASH FORT:
+		*/
+		bool ishlcam = pTemp->flags & FTENT_HLCAM;
+
+		if (ishlcam)
+		{
+			if (pTemp->flags & FTENT_KILLME)
+			{
+				active = 0;
+			}
+		}
+
+		if ( life < 0 && !ishlcam )
 		{
 			if ( pTemp->flags & FTENT_FADEOUT )
 			{
