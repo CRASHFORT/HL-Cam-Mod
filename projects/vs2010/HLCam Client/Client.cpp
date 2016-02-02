@@ -121,8 +121,16 @@ namespace
 
 		size_t CurrentTriggerID;
 
-		struct
+		struct AimGuideData
 		{
+			~AimGuideData()
+			{
+				if (BeamPtr)
+				{
+					BeamPtr->die = 0.0f;
+				}
+			}
+
 			bool Enabled = false;
 			BEAM* BeamPtr = nullptr;
 		} AimGuide;
