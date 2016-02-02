@@ -1201,25 +1201,14 @@ void Cam::OnNewMap(const char* name)
 
 namespace
 {
-	void HLCAM_PrintCam()
-	{
-		auto player = TheCamMap.LocalPlayer;
-
-		const auto& pos = player->pev->origin;
-		const auto& ang = player->pev->v_angle;
-
-		std::string endstr =
-			"\"Camera\":\n"
-			"{\n"
-			"\t\"Position\": [" + std::to_string(pos.x) + ", " + std::to_string(pos.y) + ", " + std::to_string(pos.z) + "],\n"
-			"\t\"Angle\": [" + std::to_string(ang.x) + ", " + std::to_string(ang.y) + ", " + std::to_string(ang.z) + "]\n"
-			"}\n";
-
-		g_engfuncs.pfnAlertMessage(at_console, &endstr[0]);
-	}
-
 	void HLCAM_CreateCamera()
 	{
+		if (!TheCamMap.IsEditing)
+		{
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Need to be in edit mode\n");
+			return;
+		}
+
 		if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
 		{
 			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
@@ -1304,6 +1293,12 @@ namespace
 
 	void HLCAM_RemoveCamera()
 	{
+		if (!TheCamMap.IsEditing)
+		{
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Need to be in edit mode\n");
+			return;
+		}
+
 		if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
 		{
 			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
@@ -1627,8 +1622,6 @@ namespace
 
 void Cam::OnInit()
 {
-	g_engfuncs.pfnAddServerCommand("hlcam_printcam", &HLCAM_PrintCam);
-
 	/*
 		These commands are used to edit camera maps in game.
 	*/
