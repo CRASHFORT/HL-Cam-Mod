@@ -1625,18 +1625,18 @@ void Cam::OnInit()
 	/*
 		These commands are used to edit camera maps in game.
 	*/
-	g_engfuncs.pfnAddServerCommand("hlcam_createcamera", &HLCAM_CreateCamera);
-	g_engfuncs.pfnAddServerCommand("hlcam_createcamera_named", &HLCAM_CreateCamera);
+	g_engfuncs.pfnAddServerCommand("hlcam_createcamera", HLCAM_CreateCamera);
+	g_engfuncs.pfnAddServerCommand("hlcam_createcamera_named", HLCAM_CreateCamera);
 	
-	g_engfuncs.pfnAddServerCommand("hlcam_removecamera", &HLCAM_RemoveCamera);
-	g_engfuncs.pfnAddServerCommand("hlcam_removecamera_named", &HLCAM_RemoveCamera_Named);
+	g_engfuncs.pfnAddServerCommand("hlcam_removecamera", HLCAM_RemoveCamera);
+	g_engfuncs.pfnAddServerCommand("hlcam_removecamera_named", HLCAM_RemoveCamera_Named);
 
-	g_engfuncs.pfnAddServerCommand("hlcam_startedit", &HLCAM_StartEdit);
-	g_engfuncs.pfnAddServerCommand("hlcam_stopedit", &HLCAM_StopEdit);
-	g_engfuncs.pfnAddServerCommand("hlcam_shutdown", &HLCAM_Shutdown);
+	g_engfuncs.pfnAddServerCommand("hlcam_startedit", HLCAM_StartEdit);
+	g_engfuncs.pfnAddServerCommand("hlcam_stopedit", HLCAM_StopEdit);
+	g_engfuncs.pfnAddServerCommand("hlcam_shutdown", HLCAM_Shutdown);
 
-	g_engfuncs.pfnAddServerCommand("hlcam_firstperson", &HLCAM_FirstPerson);
-	g_engfuncs.pfnAddServerCommand("hlcam_savemap", &HLCAM_SaveMap);
+	g_engfuncs.pfnAddServerCommand("hlcam_firstperson", HLCAM_FirstPerson);
+	g_engfuncs.pfnAddServerCommand("hlcam_savemap", HLCAM_SaveMap);
 }
 
 void Cam::OnPlayerSpawn(CBasePlayer* player)

@@ -856,23 +856,23 @@ namespace Cam
 	{
 		gHUD.HLCamHUD.Init();
 
-		gEngfuncs.pfnHookUserMsg("CamCreate", &HLCamClient_OnCameraCreatedMessage);
-		gEngfuncs.pfnHookUserMsg("TrgCreate", &HLCamClient_OnTriggerCreatedMessage);
+		gEngfuncs.pfnHookUserMsg("CamCreate", HLCamClient_OnCameraCreatedMessage);
+		gEngfuncs.pfnHookUserMsg("TrgCreate", HLCamClient_OnTriggerCreatedMessage);
 		
-		gEngfuncs.pfnHookUserMsg("CamRem", &HLCamClient_OnCameraRemovedMessage);
-		gEngfuncs.pfnHookUserMsg("TrgRem", &HLCamClient_RemoveTrigger);
+		gEngfuncs.pfnHookUserMsg("CamRem", HLCamClient_OnCameraRemovedMessage);
+		gEngfuncs.pfnHookUserMsg("TrgRem", HLCamClient_RemoveTrigger);
 		
-		gEngfuncs.pfnHookUserMsg("CamEdit", &HLCamClient_OnMapEditMessage);
-		gEngfuncs.pfnHookUserMsg("CamReset", &HLCamClient_OnMapResetMessage);
+		gEngfuncs.pfnHookUserMsg("CamEdit", HLCamClient_OnMapEditMessage);
+		gEngfuncs.pfnHookUserMsg("CamReset", HLCamClient_OnMapResetMessage);
 		
-		gEngfuncs.pfnHookUserMsg("CamHT1", &HLCamClient_OnItemHighlightedStartMessage);
-		gEngfuncs.pfnHookUserMsg("CamHT2", &HLCamClient_OnItemHighlightedEndMessage);
+		gEngfuncs.pfnHookUserMsg("CamHT1", HLCamClient_OnItemHighlightedStartMessage);
+		gEngfuncs.pfnHookUserMsg("CamHT2", HLCamClient_OnItemHighlightedEndMessage);
 
-		gEngfuncs.pfnHookUserMsg("CamSE1", &HLCamClient_ItemSelectedStart);
-		gEngfuncs.pfnHookUserMsg("CamSE2", &HLCamClient_ItemSelectedEnd);
+		gEngfuncs.pfnHookUserMsg("CamSE1", HLCamClient_ItemSelectedStart);
+		gEngfuncs.pfnHookUserMsg("CamSE2", HLCamClient_ItemSelectedEnd);
 
-		gEngfuncs.pfnHookUserMsg("CamCA", &HLCamClient_CameraAdjust);
-		gEngfuncs.pfnHookUserMsg("CamPW", &HLCamClient_CameraPreview);
+		gEngfuncs.pfnHookUserMsg("CamCA", HLCamClient_CameraAdjust);
+		gEngfuncs.pfnHookUserMsg("CamPW", HLCamClient_CameraPreview);
 
 		gEngfuncs.pfnAddCommand("+hlcam_aimbeam", Commands::AimBeamOn);
 		gEngfuncs.pfnAddCommand("-hlcam_aimbeam", Commands::AimBeamOff);
