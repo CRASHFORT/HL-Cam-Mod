@@ -149,18 +149,18 @@ namespace
 					DestroyPoint();
 				}
 
-				auto glowindex = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/hotglow.spr");
+				auto glowindex = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/laserdot.spr");
 
 				PointPtr = gEngfuncs.pEfxAPI->R_TempSprite
 				(
 					position,
 					vec3_origin,
-					0.5f,
+					1.5f,
 					glowindex,
-					kRenderTransAdd,
-					kRenderFxNone,
-					255,
-					0.0f,
+					kRenderGlow,
+					kRenderFxNoDissipation,
+					150.0f / 255.0f,
+					0,
 					FTENT_NONE | FTENT_PERSIST | FTENT_HLCAM
 				);
 			}
@@ -929,8 +929,8 @@ namespace Cam
 							beamindex,
 							999999999999999999999999.0f,
 							2.0f,
-							0.05f,
-							0.1f,
+							0,
+							0.0015f,
 							15,
 							0,
 							0,
