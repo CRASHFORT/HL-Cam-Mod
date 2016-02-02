@@ -69,7 +69,7 @@ vec3_t cam_ofs;
 
 
 // In third person
-int cam_thirdperson;
+int cam_thirdperson = 1;
 int cam_mousemove; //true if we are moving the cam with the mouse, False if not
 int iMouseInUse=0;
 int cam_distancemove;

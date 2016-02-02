@@ -266,6 +266,9 @@ namespace
 	}
 }
 
+void CAM_ToThirdPerson(void);
+void CAM_ToFirstPerson(void);
+
 namespace Cam
 {
 	namespace ClientHUD
@@ -430,11 +433,13 @@ namespace Cam
 
 			if (shouldedit)
 			{
+				CAM_ToFirstPerson();
 				m_iFlags |= HUD_ACTIVE;
 			}
 
 			else
 			{
+				CAM_ToThirdPerson();
 				m_iFlags &= ~HUD_ACTIVE;
 			}
 
