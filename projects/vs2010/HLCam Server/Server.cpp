@@ -1844,7 +1844,7 @@ void Cam::OnPlayerPreUpdate(CBasePlayer* player)
 					{
 						auto newent = CBaseEntity::Create("trigger_camera", linkedcam->Position, linkedcam->Angle);
 						linkedcam->TargetCamera = static_cast<CTriggerCamera*>(newent);
-						linkedcam->TargetCamera->IsHLCam = true;
+						linkedcam->TargetCamera->SetupHLCamera(*linkedcam);
 					}
 				}
 
