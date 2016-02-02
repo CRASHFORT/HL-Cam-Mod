@@ -129,10 +129,49 @@ namespace
 				{
 					BeamPtr->die = 0.0f;
 				}
+
+				if (PointPtr)
+				{
+					PointPtr->die = 0.0f;
+				}
 			}
 
-			bool Enabled = false;
+			bool BeamEnabled = false;
 			BEAM* BeamPtr = nullptr;
+			TEMPENTITY* PointPtr = nullptr;
+
+			void CreatePoint(Vector& position)
+			{
+				if (PointPtr)
+				{
+					DestroyPoint();
+				}
+
+				auto glowindex = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/hotglow.spr");
+
+				PointPtr = gEngfuncs.pEfxAPI->R_TempSprite
+				(
+					position,
+					vec3_origin,
+					0.5f,
+					glowindex,
+					kRenderTransAdd,
+					kRenderFxNone,
+					255,
+					999999999999999999999999.0f,
+					FTENT_NONE | FTENT_PERSIST
+				);
+			}
+
+			void DestroyPoint()
+			{
+				if (PointPtr)
+				{
+					PointPtr->die = 0.0f;
+					PointPtr = nullptr;
+				}
+			}
+
 		} AimGuide;
 	};
 
@@ -717,9 +756,9 @@ namespace
 {
 	namespace Commands
 	{
-		void AimGuideOn()
+		void AimBeamOn()
 		{
-			TheCamClient.AimGuide.Enabled = true;
+			TheCamClient.AimGuide.BeamEnabled = true;
 
 			Vector viewangles;
 			gEngfuncs.GetViewAngles(viewangles);
@@ -746,7 +785,7 @@ namespace
 					player->index | 0x1000,
 					trace->endpos,
 					beamindex,
-					99999,
+					999999999999999999999999.0f,
 					2.0f,
 					0.05f,
 					0.1f,
@@ -755,13 +794,16 @@ namespace
 					0,
 					255,
 					255,
-					255);
+					255
+				);
+
+				TheCamClient.AimGuide.BeamPtr->flags |= FBEAM_SHADEIN | FBEAM_ISACTIVE;
 			}
 		}
 
-		void AimGuideOff()
+		void AimBeamOff()
 		{
-			TheCamClient.AimGuide.Enabled = false;
+			TheCamClient.AimGuide.BeamEnabled = false;
 
 			if (TheCamClient.AimGuide.BeamPtr)
 			{
@@ -769,6 +811,8 @@ namespace
 				TheCamClient.AimGuide.BeamPtr = nullptr;
 			}
 		}
+
+		cvar_t* UseAimSpot;
 	}
 }
 
@@ -801,8 +845,10 @@ namespace Cam
 		gEngfuncs.pfnHookUserMsg("CamCA", &HLCamClient_CameraAdjust);
 		gEngfuncs.pfnHookUserMsg("CamPW", &HLCamClient_CameraPreview);
 
-		gEngfuncs.pfnAddCommand("+hlcam_aimguide", Commands::AimGuideOn);
-		gEngfuncs.pfnAddCommand("-hlcam_aimguide", Commands::AimGuideOff);
+		gEngfuncs.pfnAddCommand("+hlcam_aimbeam", Commands::AimBeamOn);
+		gEngfuncs.pfnAddCommand("-hlcam_aimbeam", Commands::AimBeamOff);
+
+		Commands::UseAimSpot = gEngfuncs.pfnRegisterVariable("hlcam_aimspot", "1", FCVAR_ARCHIVE);
 	}
 
 	void VidInit()
@@ -823,7 +869,7 @@ namespace Cam
 			}
 		}
 
-		if (TheCamClient.AimGuide.Enabled)
+		if (TheCamClient.AimGuide.BeamEnabled || Commands::UseAimSpot->value > 0)
 		{
 			Vector viewangles;
 			gEngfuncs.GetViewAngles(viewangles);
@@ -840,11 +886,43 @@ namespace Cam
 			VectorAdd(forward, position, forward);
 
 			auto trace = gEngfuncs.PM_TraceLine(position, forward, PM_TRACELINE_PHYSENTSONLY, 2, -1);
-			
-			if (trace->fraction != 1.0)
+
+			if (TheCamClient.AimGuide.BeamEnabled)
 			{
-				//TheCamClient.AimGuide.BeamPtr->source = position;
-				TheCamClient.AimGuide.BeamPtr->target = trace->endpos;
+				if (TheCamClient.AimGuide.BeamPtr)
+				{
+					/*
+						Create a new beam if the current one is expiring
+					*/
+					if (TheCamClient.AimGuide.BeamPtr->t < 0.1f)
+					{
+						Commands::AimBeamOff();
+						Commands::AimBeamOn();
+					}
+
+					if (trace->fraction != 1.0)
+					{
+						TheCamClient.AimGuide.BeamPtr->target = trace->endpos;
+					}
+				}
+			}
+
+			if (Commands::UseAimSpot->value > 0)
+			{
+				if (!TheCamClient.AimGuide.PointPtr)
+				{
+					TheCamClient.AimGuide.CreatePoint(trace->endpos);
+				}
+
+				else
+				{
+					TheCamClient.AimGuide.PointPtr->entity.origin = trace->endpos;
+				}
+			}
+
+			else
+			{
+				TheCamClient.AimGuide.DestroyPoint();
 			}
 		}
 	}
