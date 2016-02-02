@@ -7,6 +7,8 @@
 #include "hud.h"
 #include "cl_util.h"
 #include "parsemsg.h"
+#include "pm_defs.h"
+#include "event_api.h"
 
 namespace
 {
@@ -118,6 +120,12 @@ namespace
 		Cam::Shared::StateType CurrentState = Cam::Shared::StateType::Inactive;
 
 		size_t CurrentTriggerID;
+
+		struct
+		{
+			bool Enabled = false;
+			BEAM* BeamPtr = nullptr;
+		} AimGuide;
 	};
 
 	static HLCamClient TheCamClient;
@@ -697,6 +705,65 @@ int HLCamClient_CameraPreview(const char* name, int size, void* buffer)
 	return 1;
 }
 
+namespace
+{
+	namespace Commands
+	{
+		void AimGuideOn()
+		{
+			TheCamClient.AimGuide.Enabled = true;
+
+			Vector viewangles;
+			gEngfuncs.GetViewAngles(viewangles);
+
+			auto player = gEngfuncs.GetLocalPlayer();
+
+			Vector position = player->attachment[0];
+
+			Vector forward;
+			gEngfuncs.pfnAngleVectors(viewangles, forward, nullptr, nullptr);
+
+			VectorScale(forward, 2048, forward);
+
+			VectorAdd(forward, position, forward);
+
+			auto trace = gEngfuncs.PM_TraceLine(position, forward, PM_TRACELINE_PHYSENTSONLY, 2, -1);
+			
+			if (trace->fraction != 1.0)
+			{
+				auto beamindex = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/smoke.spr");
+
+				TheCamClient.AimGuide.BeamPtr = gEngfuncs.pEfxAPI->R_BeamEntPoint
+				(
+					player->index | 0x1000,
+					trace->endpos,
+					beamindex,
+					99999,
+					2.0f,
+					0.05f,
+					0.1f,
+					15,
+					0,
+					0,
+					255,
+					255,
+					255);
+			}
+		}
+
+		void AimGuideOff()
+		{
+			TheCamClient.AimGuide.Enabled = false;
+
+			if (TheCamClient.AimGuide.BeamPtr)
+			{
+				TheCamClient.AimGuide.BeamPtr->die = 0.0f;
+				TheCamClient.AimGuide.BeamPtr = nullptr;
+			}
+		}
+	}
+}
+
 namespace Tri
 {
 	void VidInit();
@@ -725,6 +792,9 @@ namespace Cam
 
 		gEngfuncs.pfnHookUserMsg("CamCA", &HLCamClient_CameraAdjust);
 		gEngfuncs.pfnHookUserMsg("CamPW", &HLCamClient_CameraPreview);
+
+		gEngfuncs.pfnAddCommand("+hlcam_aimguide", Commands::AimGuideOn);
+		gEngfuncs.pfnAddCommand("-hlcam_aimguide", Commands::AimGuideOff);
 	}
 
 	void VidInit()
@@ -742,6 +812,31 @@ namespace Cam
 			{
 				const auto& clientpos = gEngfuncs.GetLocalPlayer()->origin;
 				clientpos.CopyToArray(trigger->Corner2);
+			}
+		}
+
+		if (TheCamClient.AimGuide.Enabled)
+		{
+			Vector viewangles;
+			gEngfuncs.GetViewAngles(viewangles);
+
+			auto player = gEngfuncs.GetLocalPlayer();
+
+			Vector position = player->attachment[0];
+
+			Vector forward;
+			gEngfuncs.pfnAngleVectors(viewangles, forward, nullptr, nullptr);
+
+			VectorScale(forward, 2048, forward);
+
+			VectorAdd(forward, position, forward);
+
+			auto trace = gEngfuncs.PM_TraceLine(position, forward, PM_TRACELINE_PHYSENTSONLY, 2, -1);
+			
+			if (trace->fraction != 1.0)
+			{
+				//TheCamClient.AimGuide.BeamPtr->source = position;
+				TheCamClient.AimGuide.BeamPtr->target = trace->endpos;
 			}
 		}
 	}

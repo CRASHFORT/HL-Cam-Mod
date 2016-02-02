@@ -136,59 +136,6 @@ namespace
 
 namespace Cam
 {
-	namespace Entity
-	{
-		LINK_ENTITY_TO_CLASS(hlcam_aimguidespot, CamAimGuide);
-
-		void CamAimGuide::Spawn()
-		{
-			Precache();
-			pev->movetype = MOVETYPE_NONE;
-			pev->solid = SOLID_NOT;
-
-			pev->rendermode = kRenderGlow;
-			pev->renderfx = kRenderFxNoDissipation;
-			pev->renderamt = 255;
-
-			SET_MODEL(ENT(pev), "sprites/laserdot.spr");
-			UTIL_SetOrigin(pev, pev->origin);
-		}
-
-		void CamAimGuide::Precache()
-		{
-			PRECACHE_MODEL("sprites/laserdot.spr");
-		}
-
-		int CamAimGuide::ObjectCaps()
-		{
-			return FCAP_DONT_SAVE;
-		}
-
-		void CamAimGuide::Suspend(float suspendtime)
-		{
-			pev->effects |= EF_NODRAW;
-
-			SetThink(&CamAimGuide::Revive);
-			pev->nextthink = gpGlobals->time + suspendtime;
-		}
-
-		void EXPORT CamAimGuide::Revive()
-		{
-			pev->effects &= ~EF_NODRAW;
-			SetThink(nullptr);
-		}
-
-		CamAimGuide* CamAimGuide::CreateSpot()
-		{
-			auto spot = GetClassPtr((CamAimGuide*)nullptr);
-			spot->Spawn();
-
-			spot->pev->classname = MAKE_STRING("hlcam_aimguidespot");
-
-			return spot;
-		}
-	}
-
 	void MapTrigger::SetupPositions()
 	{
 		MinPos.x = fmin(Corner1.x, Corner2.x);
