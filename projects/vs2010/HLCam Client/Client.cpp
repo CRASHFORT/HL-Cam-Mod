@@ -879,23 +879,25 @@ namespace Cam
 			return;
 		}
 
-		if (TheCamClient.AimGuide.BeamEnabled || Commands::UseAimSpot->value > 0)
 		{
-			Vector viewangles;
-			gEngfuncs.GetViewAngles(viewangles);
+			auto gettrace = []
+			{
+				Vector viewangles;
+				gEngfuncs.GetViewAngles(viewangles);
 
-			auto player = gEngfuncs.GetLocalPlayer();
+				auto player = gEngfuncs.GetLocalPlayer();
 
-			Vector position = player->attachment[0];
+				Vector position = player->attachment[0];
 
-			Vector forward;
-			gEngfuncs.pfnAngleVectors(viewangles, forward, nullptr, nullptr);
+				Vector forward;
+				gEngfuncs.pfnAngleVectors(viewangles, forward, nullptr, nullptr);
 
-			VectorScale(forward, 2048, forward);
+				VectorScale(forward, 2048, forward);
 
-			VectorAdd(forward, position, forward);
+				VectorAdd(forward, position, forward);
 
-			auto trace = gEngfuncs.PM_TraceLine(position, forward, PM_TRACELINE_PHYSENTSONLY, 2, -1);
+				return gEngfuncs.PM_TraceLine(position, forward, PM_TRACELINE_PHYSENTSONLY, 2, -1);
+			};
 
 			if (TheCamClient.AimGuide.BeamEnabled)
 			{
@@ -910,6 +912,8 @@ namespace Cam
 						Commands::AimBeamOn();
 					}
 
+					auto trace = gettrace();
+
 					if (trace->fraction != 1.0)
 					{
 						TheCamClient.AimGuide.BeamPtr->target = trace->endpos;
@@ -918,13 +922,15 @@ namespace Cam
 
 				else
 				{
+					auto trace = gettrace();
+
 					if (trace->fraction != 1.0)
 					{
 						auto beamindex = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/smoke.spr");
 
 						TheCamClient.AimGuide.BeamPtr = gEngfuncs.pEfxAPI->R_BeamEntPoint
 						(
-							player->index | 0x1000,
+							gEngfuncs.GetLocalPlayer()->index | 0x1000,
 							trace->endpos,
 							beamindex,
 							999999999999999999999999.0f,
@@ -946,6 +952,8 @@ namespace Cam
 
 			if (Commands::UseAimSpot->value > 0)
 			{
+				auto trace = gettrace();
+
 				if (!TheCamClient.AimGuide.PointPtr)
 				{
 					TheCamClient.AimGuide.CreatePoint(trace->endpos);
