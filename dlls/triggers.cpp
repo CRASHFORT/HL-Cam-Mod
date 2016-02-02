@@ -2204,6 +2204,13 @@ void CTriggerCamera :: KeyValue( KeyValueData *pkvd )
 		CBaseDelay::KeyValue( pkvd );
 }
 
+void CTriggerCamera::SetupHLCamera(const Cam::MapCamera& camera)
+{
+	IsHLCam = true;
+
+	HLCam = camera;
+}
+
 void CTriggerCamera::SetFov(int fov)
 {
 	HLCam.FOV = fov;

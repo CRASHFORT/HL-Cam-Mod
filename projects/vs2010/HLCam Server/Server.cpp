@@ -1178,11 +1178,6 @@ namespace
 
 				curcam.TargetCamera = static_cast<CTriggerCamera*>(CBaseEntity::Create("trigger_camera", curcam.Position, curcam.Angle));
 
-				if (curcam.TargetCamera && curcam.LookType == Cam::Shared::CameraLookType::AtPlayer)
-				{
-					curcam.TargetCamera->pev->spawnflags |= SF_CAMERA_PLAYER_TARGET;
-				}
-
 				if (curcam.TriggerType == Cam::Shared::CameraTriggerType::ByName)
 				{
 					const auto& nameit = camval.FindMember("Name");
@@ -1198,8 +1193,7 @@ namespace
 					curcam.TargetCamera->pev->targetname = g_engfuncs.pfnAllocString(curcam.Name);
 				}
 
-				curcam.TargetCamera->IsHLCam = true;
-				curcam.TargetCamera->HLCam = curcam;
+				curcam.TargetCamera->SetupHLCamera(curcam);
 
 				TheCamMap.Cameras.push_back(curcam);
 			}
