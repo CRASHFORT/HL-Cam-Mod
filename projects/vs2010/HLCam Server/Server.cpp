@@ -887,6 +887,42 @@ namespace
 					break;
 				}
 
+				case Message::Camera_ChangeLookType:
+				{
+					if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
+					{
+						g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
+						break;
+					}
+
+					auto cameraid = data.GetValue<size_t>();
+
+					if (TheCamMap.CurrentSelectionCameraID != cameraid)
+					{
+						g_engfuncs.pfnAlertMessage(at_console, "HLCAM: No selected camera for app message\n");
+						break;
+					}
+
+					Cam::MapCamera* endcamera;
+					
+					auto looktype = data.GetValue<unsigned char>();
+
+					if (TheCamMap.ActiveCamera)
+					{
+						endcamera = TheCamMap.ActiveCamera;
+					}
+
+					else
+					{
+						endcamera = TheCamMap.FindCameraByID(cameraid);
+					}
+
+					endcamera->LookType = static_cast<decltype(endcamera->LookType)>(looktype);
+					endcamera->TargetCamera->HLCam.LookType = endcamera->LookType;
+
+					break;
+				}
+
 				case Message::Camera_Remove:
 				{
 					if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)

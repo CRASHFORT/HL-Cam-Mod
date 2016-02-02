@@ -1,5 +1,7 @@
 #pragma once
 
+#undef CompareString
+
 namespace Utility
 {
 	std::string WStringToUTF8(const wchar_t* str);

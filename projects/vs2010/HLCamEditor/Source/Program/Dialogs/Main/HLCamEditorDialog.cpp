@@ -10,6 +10,52 @@
 #define new DEBUG_NEW
 #endif
 
+namespace
+{
+	const char* CameraLookTypeStringFromEnum(Cam::Shared::CameraLookType type)
+	{
+		switch (type)
+		{
+			case Cam::Shared::CameraLookType::AtPlayer:
+			{
+				return "At player";
+			}
+
+			case Cam::Shared::CameraLookType::AtAngle:
+			{
+				return "At angle";
+			}
+
+			case Cam::Shared::CameraLookType::AtTarget:
+			{
+				return "At target";
+			}
+		}
+
+		return nullptr;
+	}
+
+	Cam::Shared::CameraLookType CameraLookTypeEnumFromString(const wchar_t* name)
+	{
+		if (Utility::CompareString(name, L"At player"))
+		{
+			return Cam::Shared::CameraLookType::AtPlayer;
+		}
+
+		else if (Utility::CompareString(name, L"At angle"))
+		{
+			return Cam::Shared::CameraLookType::AtAngle;
+		}
+
+		else if (Utility::CompareString(name, L"At target"))
+		{
+			return Cam::Shared::CameraLookType::AtTarget;
+		}
+
+		return Cam::Shared::CameraLookType::AtPlayer;
+	}
+}
+
 namespace App
 {
 	HLCamera* HLMap::FindCameraByID(size_t id)
@@ -189,10 +235,12 @@ BOOL HLCamEditorDialog::OnInitDialog()
 	}
 
 	{
-		entries.LookType = new CMFCPropertyGridProperty("Look at", "At angle");
-		entries.LookType->AddOption("At angle");
-		entries.LookType->AddOption("At player");
-		entries.LookType->AddOption("At target (name)");
+		using LookType = Cam::Shared::CameraLookType;
+
+		entries.LookType = new CMFCPropertyGridProperty("Look at", CameraLookTypeStringFromEnum(LookType::AtAngle));
+		entries.LookType->AddOption(CameraLookTypeStringFromEnum(LookType::AtAngle));
+		entries.LookType->AddOption(CameraLookTypeStringFromEnum(LookType::AtPlayer));
+		entries.LookType->AddOption(CameraLookTypeStringFromEnum(LookType::AtTarget));
 
 		entries.LookType->AllowEdit(false);
 
@@ -599,6 +647,25 @@ LRESULT HLCamEditorDialog::OnPropertyGridItemChanged(WPARAM controlid, LPARAM pr
 			);
 
 			cam->FOV = newfov;
+		}
+
+		else if (prop == entries.LookType)
+		{
+			auto newvalstr = prop->GetValue().bstrVal;
+
+			auto newval = CameraLookTypeEnumFromString(newvalstr);
+
+			AppServer.Write
+			(
+				Messages::Camera_ChangeLookType,
+				Utility::BinaryBufferHelp::CreatePacket
+				(
+					userdata->CameraID,
+					static_cast<unsigned char>(newval)
+				)
+			);
+
+			cam->LookType = newval;
 		}
 	}
 
