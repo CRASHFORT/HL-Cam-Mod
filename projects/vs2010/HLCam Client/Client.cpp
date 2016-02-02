@@ -140,6 +140,8 @@ namespace
 			BEAM* BeamPtr = nullptr;
 			TEMPENTITY* PointPtr = nullptr;
 
+			bool InBeamToggle = false;
+
 			void CreatePoint(Vector& position)
 			{
 				if (PointPtr)
@@ -758,6 +760,11 @@ namespace
 	{
 		void AimBeamOn()
 		{
+			if (TheCamClient.AimGuide.InBeamToggle)
+			{
+				return;
+			}
+
 			TheCamClient.AimGuide.BeamEnabled = true;
 
 			Vector viewangles;
@@ -803,12 +810,34 @@ namespace
 
 		void AimBeamOff()
 		{
+			if (TheCamClient.AimGuide.InBeamToggle)
+			{
+				return;
+			}
+
 			TheCamClient.AimGuide.BeamEnabled = false;
 
 			if (TheCamClient.AimGuide.BeamPtr)
 			{
 				TheCamClient.AimGuide.BeamPtr->die = 0.0f;
 				TheCamClient.AimGuide.BeamPtr = nullptr;
+			}
+		}
+
+		void AimBeamToggle()
+		{
+			TheCamClient.AimGuide.BeamEnabled = !TheCamClient.AimGuide.BeamEnabled;
+
+			if (TheCamClient.AimGuide.BeamEnabled)
+			{
+				AimBeamOn();
+				TheCamClient.AimGuide.InBeamToggle = true;
+			}
+
+			else
+			{
+				TheCamClient.AimGuide.InBeamToggle = false;
+				AimBeamOff();
 			}
 		}
 
@@ -847,6 +876,8 @@ namespace Cam
 
 		gEngfuncs.pfnAddCommand("+hlcam_aimbeam", Commands::AimBeamOn);
 		gEngfuncs.pfnAddCommand("-hlcam_aimbeam", Commands::AimBeamOff);
+
+		gEngfuncs.pfnAddCommand("hlcam_aimbeam_toggle", Commands::AimBeamToggle);
 
 		Commands::UseAimSpot = gEngfuncs.pfnRegisterVariable("hlcam_aimspot", "1", FCVAR_ARCHIVE);
 	}
