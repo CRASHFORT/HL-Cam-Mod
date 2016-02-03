@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <thread>
 #include <atomic>
+#include <mutex>
 
 using namespace std::literals::chrono_literals;
 
@@ -477,6 +478,10 @@ namespace
 		Shared::Interprocess::Client AppClient;
 		Shared::Interprocess::Server GameServer;
 
+		void InvokeMessageFunction(std::function<void()>&& func);
+
+		std::vector<std::function<void()>> InvokeList;
+
 		Utility::BinaryBuffer GetInterprocessTriggerInfo(const Cam::MapTrigger& trigger)
 		{
 			return Utility::BinaryBufferHelp::CreatePacket
@@ -518,6 +523,14 @@ namespace
 			return ret;
 		}
 	};
+
+	static std::mutex MessageInvokeMutex;
+
+	void MapCam::InvokeMessageFunction(std::function<void()>&& func)
+	{
+		std::lock_guard<std::mutex> g(MessageInvokeMutex);
+		InvokeList.emplace_back(std::move(func));
+	}
 
 	static std::thread MessageHandlerThread;
 	static std::atomic_bool ShouldCloseMessageThread{false};
@@ -578,19 +591,22 @@ namespace
 				{
 					auto triggerid = data.GetValue<size_t>();
 
-					if (TheCamMap.CurrentSelectionTriggerID != triggerid)
+					TheCamMap.InvokeMessageFunction([triggerid]
 					{
-						TheCamMap.UnSelectAll();
+						if (TheCamMap.CurrentSelectionTriggerID != triggerid)
+						{
+							TheCamMap.UnSelectAll();
 
-						TheCamMap.CurrentSelectionTriggerID = triggerid;
+							TheCamMap.CurrentSelectionTriggerID = triggerid;
 
-						MESSAGE_BEGIN(MSG_ONE, HLCamMessage::ItemSelectedStart, nullptr, TheCamMap.LocalPlayer->pev);
+							MESSAGE_BEGIN(MSG_ONE, HLCamMessage::ItemSelectedStart, nullptr, TheCamMap.LocalPlayer->pev);
 
-						WRITE_BYTE(0);
-						WRITE_SHORT(TheCamMap.CurrentSelectionTriggerID);
+							WRITE_BYTE(0);
+							WRITE_SHORT(TheCamMap.CurrentSelectionTriggerID);
 
-						MESSAGE_END();
-					}
+							MESSAGE_END();
+						}
+					});
 
 					break;
 				}
@@ -599,290 +615,323 @@ namespace
 				{
 					auto cameraid = data.GetValue<size_t>();
 
-					if (TheCamMap.CurrentSelectionCameraID != cameraid)
+					TheCamMap.InvokeMessageFunction([cameraid]
 					{
-						TheCamMap.UnSelectAll();
+						if (TheCamMap.CurrentSelectionCameraID != cameraid)
+						{
+							TheCamMap.UnSelectAll();
 
-						TheCamMap.CurrentSelectionCameraID = cameraid;
+							TheCamMap.CurrentSelectionCameraID = cameraid;
 
-						MESSAGE_BEGIN(MSG_ONE, HLCamMessage::ItemSelectedStart, nullptr, TheCamMap.LocalPlayer->pev);
+							MESSAGE_BEGIN(MSG_ONE, HLCamMessage::ItemSelectedStart, nullptr, TheCamMap.LocalPlayer->pev);
 
-						WRITE_BYTE(1);
-						WRITE_SHORT(TheCamMap.CurrentSelectionCameraID);
+							WRITE_BYTE(1);
+							WRITE_SHORT(TheCamMap.CurrentSelectionCameraID);
 
-						MESSAGE_END();
-					}
+							MESSAGE_END();
+						}
+					});
 
 					break;
 				}
 
 				case Message::Camera_StartMoveSequence:
 				{
-					if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
-					{
-						g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
-						break;
-					}
-
 					auto cameraid = data.GetValue<size_t>();
 
-					if (TheCamMap.CurrentSelectionCameraID == cameraid)
+					TheCamMap.InvokeMessageFunction([cameraid]
 					{
-						TheCamMap.CurrentState = Cam::Shared::StateType::AdjustingCamera;
+						if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
+						{
+							g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
+							return;
+						}
 
-						MESSAGE_BEGIN(MSG_ONE, HLCamMessage::CameraAdjust, nullptr, TheCamMap.LocalPlayer->pev);
-						
-						WRITE_BYTE(0);
-						WRITE_SHORT(cameraid);
-					
-						MESSAGE_END();
-					}
+						if (TheCamMap.CurrentSelectionCameraID == cameraid)
+						{
+							TheCamMap.CurrentState = Cam::Shared::StateType::AdjustingCamera;
+
+							MESSAGE_BEGIN(MSG_ONE, HLCamMessage::CameraAdjust, nullptr, TheCamMap.LocalPlayer->pev);
+
+							WRITE_BYTE(0);
+							WRITE_SHORT(cameraid);
+
+							MESSAGE_END();
+						}
+					});
 
 					break;
 				}
 
 				case Message::Camera_AddTriggerToCamera:
 				{
-					if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
-					{
-						g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
-						break;
-					}
-
 					auto cameraid = data.GetValue<size_t>();
 
-					if (TheCamMap.CurrentSelectionCameraID == cameraid)
+					TheCamMap.InvokeMessageFunction([cameraid]
 					{
-						TheCamMap.AddingTriggerToCamera = true;
+						if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
+						{
+							g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
+							return;
+						}
 
-						Cam::MapTrigger newtrig;
-						newtrig.ID = TheCamMap.NextTriggerID;
-						newtrig.LinkedCameraID = cameraid;
+						if (TheCamMap.CurrentSelectionCameraID == cameraid)
+						{
+							TheCamMap.AddingTriggerToCamera = true;
 
-						auto newcam = TheCamMap.FindCameraByID(cameraid);
+							Cam::MapTrigger newtrig;
+							newtrig.ID = TheCamMap.NextTriggerID;
+							newtrig.LinkedCameraID = cameraid;
 
-						newcam->LinkedTriggerIDs.push_back(newtrig.ID);
+							auto newcam = TheCamMap.FindCameraByID(cameraid);
 
-						TheCamMap.CurrentState = Cam::Shared::StateType::NeedsToCreateTriggerCorner1;
+							newcam->LinkedTriggerIDs.push_back(newtrig.ID);
 
-						MESSAGE_BEGIN(MSG_ONE, HLCamMessage::CreateTrigger, nullptr, TheCamMap.LocalPlayer->pev);
+							TheCamMap.CurrentState = Cam::Shared::StateType::NeedsToCreateTriggerCorner1;
 
-						WRITE_BYTE(0);
+							MESSAGE_BEGIN(MSG_ONE, HLCamMessage::CreateTrigger, nullptr, TheCamMap.LocalPlayer->pev);
 
-						WRITE_SHORT(newtrig.ID);
-						WRITE_SHORT(cameraid);
+							WRITE_BYTE(0);
 
-						MESSAGE_END();
+							WRITE_SHORT(newtrig.ID);
+							WRITE_SHORT(cameraid);
 
-						TheCamMap.CreationTriggerID = newtrig.ID;
+							MESSAGE_END();
 
-						TheCamMap.NextTriggerID++;
+							TheCamMap.CreationTriggerID = newtrig.ID;
 
-						TheCamMap.Triggers.push_back(newtrig);
-					}
+							TheCamMap.NextTriggerID++;
+
+							TheCamMap.Triggers.push_back(newtrig);
+						}
+					});
 
 					break;
 				}
 
 				case Message::SetViewToCamera:
 				{
-					if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
-					{
-						g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
-						break;
-					}
-
 					auto cameraid = data.GetValue<size_t>();
 
-					if (TheCamMap.CurrentSelectionCameraID == cameraid)
+					TheCamMap.InvokeMessageFunction([cameraid]
 					{
-						auto camera = TheCamMap.FindCameraByID(cameraid);
-
-						if (TheCamMap.ActiveCamera)
+						if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
 						{
-							if (TheCamMap.InCameraPreview)
-							{
-								MESSAGE_BEGIN(MSG_ONE, HLCamMessage::CameraPreview, nullptr, TheCamMap.LocalPlayer->pev);
-
-								WRITE_SHORT(TheCamMap.ActiveCamera->ID);
-								WRITE_BYTE(0);
-
-								MESSAGE_END();
-							}
-
-							TheCamMap.ActiveCamera->TargetCamera->Use(nullptr, nullptr, USE_OFF, 0.0f);
+							g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
+							return;
 						}
 
-						TheCamMap.ActiveCamera = camera;
-						TheCamMap.ActiveCamera->TargetCamera->Use(nullptr, nullptr, USE_ON, 1);
+						if (TheCamMap.CurrentSelectionCameraID == cameraid)
+						{
+							auto camera = TheCamMap.FindCameraByID(cameraid);
 
-						TheCamMap.InCameraPreview = true;
+							if (TheCamMap.ActiveCamera)
+							{
+								if (TheCamMap.InCameraPreview)
+								{
+									MESSAGE_BEGIN(MSG_ONE, HLCamMessage::CameraPreview, nullptr, TheCamMap.LocalPlayer->pev);
 
-						MESSAGE_BEGIN(MSG_ONE, HLCamMessage::CameraPreview, nullptr, TheCamMap.LocalPlayer->pev);
+									WRITE_SHORT(TheCamMap.ActiveCamera->ID);
+									WRITE_BYTE(0);
 
-						WRITE_SHORT(cameraid);
-						WRITE_BYTE(1);
+									MESSAGE_END();
+								}
 
-						MESSAGE_END();
-					}
+								TheCamMap.ActiveCamera->TargetCamera->Use(nullptr, nullptr, USE_OFF, 0.0f);
+							}
+
+							TheCamMap.ActiveCamera = camera;
+							TheCamMap.ActiveCamera->TargetCamera->Use(nullptr, nullptr, USE_ON, 1);
+
+							TheCamMap.InCameraPreview = true;
+
+							MESSAGE_BEGIN(MSG_ONE, HLCamMessage::CameraPreview, nullptr, TheCamMap.LocalPlayer->pev);
+
+							WRITE_SHORT(cameraid);
+							WRITE_BYTE(1);
+
+							MESSAGE_END();
+						}
+					});
 
 					break;
 				}
 
 				case Message::SetViewToPlayer:
 				{
-					if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
+					TheCamMap.InvokeMessageFunction([]
 					{
-						g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
-						break;
-					}
+						if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
+						{
+							g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
+							return;
+						}
 
-					TheCamMap.GoFirstPerson();
+						TheCamMap.GoFirstPerson();
+					});
 
 					break;
 				}
 
 				case Message::MoveToCamera:
 				{
-					if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive &&
-						TheCamMap.CurrentState != Cam::Shared::StateType::AdjustingCamera)
-					{
-						g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive or in camera adjust\n");
-						break;
-					}
-
 					auto cameraid = data.GetValue<size_t>();
 
-					if (TheCamMap.CurrentSelectionCameraID == cameraid)
+					TheCamMap.InvokeMessageFunction([cameraid]
 					{
-						auto targetcam = TheCamMap.FindCameraByID(TheCamMap.CurrentSelectionCameraID);
+						if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive &&
+							TheCamMap.CurrentState != Cam::Shared::StateType::AdjustingCamera)
+						{
+							g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive or in camera adjust\n");
+							return;
+						}
 
-						TheCamMap.LocalPlayer->pev->origin = targetcam->Position - TheCamMap.LocalPlayer->pev->view_ofs;
-						
-						TheCamMap.LocalPlayer->pev->angles = targetcam->Angle;
-						TheCamMap.LocalPlayer->pev->v_angle = targetcam->Angle;
-						TheCamMap.LocalPlayer->pev->fixangle = 1;
-					}
+						if (TheCamMap.CurrentSelectionCameraID == cameraid)
+						{
+							auto targetcam = TheCamMap.FindCameraByID(TheCamMap.CurrentSelectionCameraID);
+
+							TheCamMap.LocalPlayer->pev->origin = targetcam->Position - TheCamMap.LocalPlayer->pev->view_ofs;
+
+							TheCamMap.LocalPlayer->pev->angles = targetcam->Angle;
+							TheCamMap.LocalPlayer->pev->v_angle = targetcam->Angle;
+							TheCamMap.LocalPlayer->pev->fixangle = 1;
+						}
+					});
 
 					break;
 				}
 
 				case Message::MoveToTrigger:
 				{
-					if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive &&
-						TheCamMap.CurrentState != Cam::Shared::StateType::AdjustingCamera)
-					{
-						g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive or in camera adjust\n");
-						break;
-					}
-
 					auto triggerid = data.GetValue<size_t>();
 
-					if (TheCamMap.CurrentSelectionTriggerID == triggerid)
+					TheCamMap.InvokeMessageFunction([triggerid]
 					{
-						auto targettrig = TheCamMap.FindTriggerByID(TheCamMap.CurrentSelectionTriggerID);
+						if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive &&
+							TheCamMap.CurrentState != Cam::Shared::StateType::AdjustingCamera)
+						{
+							g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive or in camera adjust\n");
+							return;
+						}
 
-						TheCamMap.LocalPlayer->pev->origin = targettrig->CenterPos;
-					}
+						if (TheCamMap.CurrentSelectionTriggerID == triggerid)
+						{
+							auto targettrig = TheCamMap.FindTriggerByID(TheCamMap.CurrentSelectionTriggerID);
+
+							TheCamMap.LocalPlayer->pev->origin = targettrig->CenterPos;
+						}
+					});
 
 					break;
 				}
 
 				case Message::Camera_ChangeFOV:
 				{
-					if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
-					{
-						g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
-						break;
-					}
-
 					auto cameraid = data.GetValue<size_t>();
-
-					if (TheCamMap.CurrentSelectionCameraID != cameraid)
-					{
-						g_engfuncs.pfnAlertMessage(at_console, "HLCAM: No selected camera for app message\n");
-						break;
-					}
-
-					Cam::MapCamera* endcamera;
-					
 					auto fov = data.GetValue<int>();
 
-					if (TheCamMap.ActiveCamera)
+					TheCamMap.InvokeMessageFunction([cameraid, fov]
 					{
-						endcamera = TheCamMap.ActiveCamera;
-						endcamera->TargetCamera->SetPlayerFOV(fov);
-					}
+						if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
+						{
+							g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
+							return;
+						}
 
-					else
-					{
-						endcamera = TheCamMap.FindCameraByID(cameraid);
-						endcamera->TargetCamera->SetFov(fov);
-					}
+						if (TheCamMap.CurrentSelectionCameraID != cameraid)
+						{
+							g_engfuncs.pfnAlertMessage(at_console, "HLCAM: No selected camera for app message\n");
+							return;
+						}
+
+						Cam::MapCamera* endcamera;
+
+						if (TheCamMap.ActiveCamera)
+						{
+							endcamera = TheCamMap.ActiveCamera;
+							endcamera->TargetCamera->SetPlayerFOV(fov);
+						}
+
+						else
+						{
+							endcamera = TheCamMap.FindCameraByID(cameraid);
+							endcamera->TargetCamera->SetFov(fov);
+						}
+					});
 
 					break;
 				}
 
 				case Message::Camera_ChangeLookType:
 				{
-					if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
-					{
-						g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
-						break;
-					}
-
 					auto cameraid = data.GetValue<size_t>();
-
-					if (TheCamMap.CurrentSelectionCameraID != cameraid)
-					{
-						g_engfuncs.pfnAlertMessage(at_console, "HLCAM: No selected camera for app message\n");
-						break;
-					}
-
-					Cam::MapCamera* endcamera;
-					
 					auto looktype = data.GetValue<unsigned char>();
 
-					if (TheCamMap.ActiveCamera)
+					TheCamMap.InvokeMessageFunction([cameraid, looktype]
 					{
-						endcamera = TheCamMap.ActiveCamera;
-					}
+						if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
+						{
+							g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
+							return;
+						}
 
-					else
-					{
-						endcamera = TheCamMap.FindCameraByID(cameraid);
-					}
+						if (TheCamMap.CurrentSelectionCameraID != cameraid)
+						{
+							g_engfuncs.pfnAlertMessage(at_console, "HLCAM: No selected camera for app message\n");
+							return;
+						}
 
-					endcamera->LookType = static_cast<decltype(endcamera->LookType)>(looktype);
-					endcamera->TargetCamera->HLCam.LookType = endcamera->LookType;
+						Cam::MapCamera* endcamera;
+
+						if (TheCamMap.ActiveCamera)
+						{
+							endcamera = TheCamMap.ActiveCamera;
+						}
+
+						else
+						{
+							endcamera = TheCamMap.FindCameraByID(cameraid);
+						}
+
+						endcamera->LookType = static_cast<decltype(endcamera->LookType)>(looktype);
+						endcamera->TargetCamera->HLCam.LookType = endcamera->LookType;
+					});
 
 					break;
 				}
 
 				case Message::Camera_Remove:
 				{
-					if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
-					{
-						g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
-						break;
-					}
-
 					auto cameraid = data.GetValue<size_t>();
-					TheCamMap.RemoveCamera(TheCamMap.FindCameraByID(cameraid));
+
+					TheCamMap.InvokeMessageFunction([cameraid]
+					{
+						if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
+						{
+							g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
+							return;
+						}
+
+						TheCamMap.RemoveCamera(TheCamMap.FindCameraByID(cameraid));
+					});
 
 					break;
 				}
 
 				case Message::Trigger_Remove:
 				{
-					if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
-					{
-						g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
-						break;
-					}
-
 					auto triggerid = data.GetValue<size_t>();
-					TheCamMap.RemoveTrigger(TheCamMap.FindTriggerByID(triggerid));
+
+					TheCamMap.InvokeMessageFunction([triggerid]
+					{
+						if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
+						{
+							g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
+							return;
+						}
+
+						TheCamMap.RemoveTrigger(TheCamMap.FindTriggerByID(triggerid));
+					});
 
 					break;
 				}
@@ -1942,6 +1991,18 @@ void Cam::OnPlayerPostUpdate(CBasePlayer* player)
 			{
 				TheCamMap.UnHighlightAll();
 			}
+		}
+
+		if (!TheCamMap.InvokeList.empty())
+		{
+			std::lock_guard<std::mutex> g(MessageInvokeMutex);
+
+			for (auto&& func : TheCamMap.InvokeList)
+			{
+				func();
+			}
+
+			TheCamMap.InvokeList.clear();
 		}
 
 		return;
