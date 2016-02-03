@@ -477,8 +477,6 @@ namespace
 		Shared::Interprocess::Client AppClient;
 		Shared::Interprocess::Server GameServer;
 
-		std::thread MessageHandlerThread;
-
 		Utility::BinaryBuffer GetInterprocessTriggerInfo(const Cam::MapTrigger& trigger)
 		{
 			return Utility::BinaryBufferHelp::CreatePacket
@@ -521,7 +519,9 @@ namespace
 		}
 	};
 
+	static std::thread MessageHandlerThread;
 	static std::atomic_bool ShouldCloseMessageThread{false};
+	static std::atomic_bool MessageThreadIsDone{false};
 	static MapCam TheCamMap;
 
 	constexpr auto DeepIdleSleepTime = 1000ms;
@@ -545,6 +545,11 @@ namespace
 
 			if (!res)
 			{
+				if (ShouldCloseMessageThread)
+				{
+					return;
+				}
+
 				auto now = std::chrono::system_clock::now();
 
 				std::chrono::duration<float> diff = now - lastmessagetime;
@@ -883,12 +888,18 @@ namespace
 				}
 			}
 		}
+
+		MessageThreadIsDone = true;
 	}
 
 	void ResetCurrentMap()
 	{
 		ShouldCloseMessageThread = true;
-		TheCamMap.MessageHandlerThread.join();
+
+		while (!MessageThreadIsDone)
+		{
+			std::this_thread::sleep_for(1ms);
+		}
 
 		TheCamMap = MapCam();
 		TheCamMap.NeedsToSendResetMessage = true;
@@ -1448,7 +1459,9 @@ namespace
 			}
 
 			ShouldCloseMessageThread = false;
-			TheCamMap.MessageHandlerThread = std::thread(&MessageHandler);
+			MessageThreadIsDone = false;
+			MessageHandlerThread = std::thread(&MessageHandler);
+			MessageHandlerThread.detach();
 		}
 
 		namespace Message = Cam::Shared::Messages::Game;
@@ -1509,7 +1522,11 @@ namespace
 		TheCamMap.GameServer.Write(Cam::Shared::Messages::Game::OnShutdown);
 
 		ShouldCloseMessageThread = true;
-		TheCamMap.MessageHandlerThread.join();
+
+		while (!MessageThreadIsDone)
+		{
+			std::this_thread::sleep_for(1ms);
+		}
 
 		TheCamMap.GameServer.Stop();
 		TheCamMap.AppClient.Disconnect();
