@@ -1593,6 +1593,8 @@ namespace
 
 			cameraval.AddMember("Position", std::move(camposval), alloc);
 			cameraval.AddMember("Angle", std::move(camangval), alloc);
+			cameraval.AddMember("FOV", rapidjson::Value(cam.FOV), alloc);
+			cameraval.AddMember("Speed", rapidjson::Value(cam.MaxSpeed), alloc);
 
 			thisvalue.AddMember("Camera", std::move(cameraval), alloc);
 
