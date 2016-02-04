@@ -1363,98 +1363,6 @@ namespace
 		TheCamMap.Cameras.push_back(newcam);
 	}
 
-	void HLCAM_RemoveCamera()
-	{
-		if (!EnsureEditMode())
-		{
-			return;
-		}
-
-		if (!EnsureInactiveState())
-		{
-			return;
-		}
-
-		if (g_engfuncs.pfnCmd_Argc() != 2)
-		{
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Missing ID argument\n");
-			return;
-		}
-
-		size_t camindex;
-
-		try
-		{
-			camindex = std::stoul(g_engfuncs.pfnCmd_Argv(1));
-		}
-
-		catch (const std::invalid_argument&)
-		{
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Argument not a number\n");
-			return;
-		}
-
-		auto targetcamera = TheCamMap.FindCameraByID(camindex);
-
-		if (!targetcamera)
-		{
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: No camera with ID \"%u\"\n", camindex);
-			return;
-		}
-
-		bool hastrigger = targetcamera->TriggerType == Cam::Shared::CameraTriggerType::ByUserTrigger;
-
-		if (!hastrigger)
-		{
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Camera is named, use hlcam_removecamera_named\n");
-			return;
-		}
-
-		g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Removed camera with ID \"%u\"\n", targetcamera->ID);
-
-		TheCamMap.RemoveCamera(targetcamera);
-	}
-
-	void HLCAM_RemoveCamera_Named()
-	{
-		if (!EnsureInactiveState())
-		{
-			return;
-		}
-
-		if (g_engfuncs.pfnCmd_Argc() != 2)
-		{
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Missing name argument\n");
-			return;
-		}
-
-		auto name = g_engfuncs.pfnCmd_Argv(1);
-
-		Cam::MapCamera* targetcam = nullptr;
-
-		for (auto& cam : TheCamMap.Cameras)
-		{
-			if (cam.TriggerType == Cam::Shared::CameraTriggerType::ByName)
-			{
-				if (strcmp(cam.Name, name))
-				{
-					targetcam = &cam;
-					break;
-				}
-			}
-		}
-
-		if (!targetcam)
-		{
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: No camera with name \"%s\"\n", name);
-			return;
-		}
-
-		g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Removed camera with ID \"%u\"\n", targetcam->ID);
-
-		TheCamMap.RemoveCamera(targetcam);
-	}
-
 	void HLCAM_StartEdit()
 	{
 		if (TheCamMap.IsEditing)
@@ -1700,9 +1608,6 @@ void Cam::OnInit()
 	*/
 	g_engfuncs.pfnAddServerCommand("hlcam_createcamera", HLCAM_CreateCamera);
 	g_engfuncs.pfnAddServerCommand("hlcam_createcamera_named", HLCAM_CreateCamera);
-	
-	g_engfuncs.pfnAddServerCommand("hlcam_removecamera", HLCAM_RemoveCamera);
-	g_engfuncs.pfnAddServerCommand("hlcam_removecamera_named", HLCAM_RemoveCamera_Named);
 
 	g_engfuncs.pfnAddServerCommand("hlcam_startedit", HLCAM_StartEdit);
 	g_engfuncs.pfnAddServerCommand("hlcam_stopedit", HLCAM_StopEdit);
