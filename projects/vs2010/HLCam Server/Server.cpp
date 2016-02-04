@@ -535,6 +535,7 @@ namespace
 	static std::thread MessageHandlerThread;
 	static std::atomic_bool ShouldCloseMessageThread{false};
 	static std::atomic_bool MessageThreadIsDone{false};
+	static std::atomic_bool ShouldPauseMessageThread{false};
 	static MapCam TheCamMap;
 
 	constexpr auto DeepIdleSleepTime = 1000ms;
@@ -583,6 +584,14 @@ namespace
 				if (ShouldCloseMessageThread)
 				{
 					return;
+				}
+
+				if (ShouldPauseMessageThread)
+				{
+					while (ShouldPauseMessageThread)
+					{
+						std::this_thread::sleep_for(1ms);
+					}
 				}
 
 				auto now = std::chrono::system_clock::now();
@@ -957,15 +966,12 @@ namespace
 
 	void ResetCurrentMap()
 	{
-		ShouldCloseMessageThread = true;
-
-		while (!MessageThreadIsDone)
-		{
-			std::this_thread::sleep_for(1ms);
-		}
+		ShouldPauseMessageThread = true;
 
 		TheCamMap = MapCam();
 		TheCamMap.NeedsToSendResetMessage = true;
+
+		ShouldPauseMessageThread = false;
 	}
 
 	void LoadMapDataFromFile(const std::string& mapname)
@@ -1271,6 +1277,19 @@ namespace
 void Cam::OnNewMap(const char* name)
 {
 	LoadNewMap(name);
+}
+
+void Cam::Deactivate()
+{
+	ShouldPauseMessageThread = true;
+
+	for (auto& cam : TheCamMap.Cameras)
+	{
+		UTIL_Remove(cam.TargetCamera);
+		cam.TargetCamera = nullptr;
+	}
+
+	ShouldPauseMessageThread = false;
 }
 
 namespace

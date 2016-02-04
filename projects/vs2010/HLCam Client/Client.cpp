@@ -174,6 +174,30 @@ namespace
 				}
 			}
 
+			void CreateBeam(Vector& endpos)
+			{
+				auto beamindex = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/smoke.spr");
+
+				BeamPtr = gEngfuncs.pEfxAPI->R_BeamEntPoint
+				(
+					gEngfuncs.GetLocalPlayer()->index | 0x1000,
+					endpos,
+					beamindex,
+					999999999999999999999999.0f,
+					2.0f,
+					0,
+					0.0015f,
+					15,
+					0,
+					0,
+					255,
+					255,
+					255
+				);
+
+				BeamPtr->flags |= FBEAM_SHADEIN | FBEAM_ISACTIVE;
+			}
+
 			void DestroyBeam()
 			{
 				BeamEnabled = false;
@@ -879,6 +903,17 @@ namespace Cam
 			return;
 		}
 
+		/*
+			This gets reset every map change, and there is some dead time
+			where some funcs cant be called apparently.
+		*/
+		auto clienttime = gEngfuncs.GetClientTime();
+
+		if (clienttime < 1.0f)
+		{
+			return;
+		}
+
 		{
 			auto gettrace = []
 			{
@@ -903,6 +938,8 @@ namespace Cam
 			{
 				if (TheCamClient.AimGuide.BeamPtr)
 				{
+					auto trace = gettrace();
+
 					/*
 						Create a new beam if the current one is expiring
 					*/
@@ -910,9 +947,9 @@ namespace Cam
 					{
 						Commands::AimBeamOff();
 						Commands::AimBeamOn();
-					}
 
-					auto trace = gettrace();
+						TheCamClient.AimGuide.CreateBeam(trace->endpos);
+					}
 
 					if (trace->fraction != 1.0)
 					{
@@ -923,30 +960,7 @@ namespace Cam
 				else
 				{
 					auto trace = gettrace();
-
-					if (trace->fraction != 1.0)
-					{
-						auto beamindex = gEngfuncs.pEventAPI->EV_FindModelIndex("sprites/smoke.spr");
-
-						TheCamClient.AimGuide.BeamPtr = gEngfuncs.pEfxAPI->R_BeamEntPoint
-						(
-							gEngfuncs.GetLocalPlayer()->index | 0x1000,
-							trace->endpos,
-							beamindex,
-							999999999999999999999999.0f,
-							2.0f,
-							0,
-							0.0015f,
-							15,
-							0,
-							0,
-							255,
-							255,
-							255
-						);
-
-						TheCamClient.AimGuide.BeamPtr->flags |= FBEAM_SHADEIN | FBEAM_ISACTIVE;
-					}
+					TheCamClient.AimGuide.CreateBeam(trace->endpos);
 				}
 			}
 

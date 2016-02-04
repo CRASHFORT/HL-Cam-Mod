@@ -743,12 +743,6 @@ void ServerActivate( edict_t *pEdictList, int edictCount, int clientMax )
 		If we remove our stuff after the game, our ents become invalid.
 	*/
 	auto curmapname = STRING(gpGlobals->mapname);
-
-	if (strcmp(curmapname, Cam::GetLastMap()) != 0)
-	{
-
-	}
-
 	Cam::OnNewMap(curmapname);
 }
 
@@ -810,6 +804,27 @@ void ParmsNewLevel( void )
 
 void ParmsChangeLevel( void )
 {
+	/*
+		CRASH FORT:
+		This function gets called 3 times:
+		* 1st time on old map (g_serveractive = 1)
+		* 2nd time on new map (g_serveractive = 0)
+		* 3rd time on new map (g_serveractive = 1)
+
+		The first time is before ServerDeactivate, we need to remove
+		our own created entities here or else they will forever fill up
+		the edict list and eventually crash the game.
+	*/
+	static int callcount = 0;
+
+	if (callcount == 0 && g_serveractive == 1)
+	{
+		callcount -= 3;
+		Cam::Deactivate();
+	}
+
+	callcount++;
+
 	// retrieve the pointer to the save data
 	SAVERESTOREDATA *pSaveData = (SAVERESTOREDATA *)gpGlobals->pSaveData;
 

@@ -122,9 +122,8 @@ namespace Shared
 			if (other.MessageQueue)
 			{
 				MessageQueue = std::move(other.MessageQueue);
+				ConnectionPoint = std::move(other.ConnectionPoint);
 			}
-
-			ConnectionPoint = std::move(other.ConnectionPoint);
 
 			return *this;
 		}
@@ -167,9 +166,8 @@ namespace Shared
 			if (other.MessageQueue)
 			{
 				MessageQueue = std::move(other.MessageQueue);
+				ConnectionPoint = std::move(other.ConnectionPoint);
 			}
-
-			ConnectionPoint = std::move(other.ConnectionPoint);
 
 			return *this;
 		}

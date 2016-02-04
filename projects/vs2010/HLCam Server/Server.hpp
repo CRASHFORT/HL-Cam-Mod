@@ -18,6 +18,7 @@ namespace Cam
 	void OnNewMap(const char* name);
 	void OnInit();
 	void OnPlayerSpawn(CBasePlayer* player);
+	void Deactivate();
 
 	/*
 		Internal output functions that we answer.
