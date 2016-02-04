@@ -421,6 +421,7 @@ void HLCamEditorDialog::MessageHandler()
 
 				if (ismapreset)
 				{
+					TreeControl.DeleteAllItems();
 					CurrentMap = App::HLMap();
 
 					CurrentMap.Name = data.GetNormalString();
