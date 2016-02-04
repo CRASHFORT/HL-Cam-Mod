@@ -543,6 +543,28 @@ namespace
 
 	static auto MessageThreadSleepTime = IdleSleepTime;
 
+	bool EnsureInactiveState()
+	{
+		if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
+		{
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
+			return false;
+		}
+
+		return true;
+	}
+
+	bool EnsureEditMode()
+	{
+		if (!TheCamMap.IsEditing)
+		{
+			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Need to be in edit mode\n");
+			return false;
+		}
+
+		return true;
+	}
+
 	void MessageHandler()
 	{
 		auto lastmessagetime = std::chrono::system_clock::now();
@@ -641,9 +663,8 @@ namespace
 
 					TheCamMap.InvokeMessageFunction([cameraid]
 					{
-						if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
+						if (!EnsureInactiveState())
 						{
-							g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
 							return;
 						}
 
@@ -669,9 +690,8 @@ namespace
 
 					TheCamMap.InvokeMessageFunction([cameraid]
 					{
-						if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
+						if (!EnsureInactiveState())
 						{
-							g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
 							return;
 						}
 
@@ -715,9 +735,8 @@ namespace
 
 					TheCamMap.InvokeMessageFunction([cameraid]
 					{
-						if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
+						if (!EnsureInactiveState())
 						{
-							g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
 							return;
 						}
 
@@ -761,9 +780,8 @@ namespace
 				{
 					TheCamMap.InvokeMessageFunction([]
 					{
-						if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
+						if (!EnsureInactiveState())
 						{
-							g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
 							return;
 						}
 
@@ -832,9 +850,8 @@ namespace
 
 					TheCamMap.InvokeMessageFunction([cameraid, fov]
 					{
-						if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
+						if (!EnsureInactiveState())
 						{
-							g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
 							return;
 						}
 
@@ -869,9 +886,8 @@ namespace
 
 					TheCamMap.InvokeMessageFunction([cameraid, looktype]
 					{
-						if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
+						if (!EnsureInactiveState())
 						{
-							g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
 							return;
 						}
 
@@ -906,9 +922,8 @@ namespace
 
 					TheCamMap.InvokeMessageFunction([cameraid]
 					{
-						if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
+						if (!EnsureInactiveState())
 						{
-							g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
 							return;
 						}
 
@@ -924,9 +939,8 @@ namespace
 
 					TheCamMap.InvokeMessageFunction([triggerid]
 					{
-						if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
+						if (!EnsureInactiveState())
 						{
-							g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
 							return;
 						}
 
@@ -1263,15 +1277,13 @@ namespace
 {
 	void HLCAM_CreateCamera()
 	{
-		if (!TheCamMap.IsEditing)
+		if (!EnsureEditMode())
 		{
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Need to be in edit mode\n");
 			return;
 		}
 
-		if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
+		if (!EnsureInactiveState())
 		{
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
 			return;
 		}
 
@@ -1353,15 +1365,13 @@ namespace
 
 	void HLCAM_RemoveCamera()
 	{
-		if (!TheCamMap.IsEditing)
+		if (!EnsureEditMode())
 		{
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Need to be in edit mode\n");
 			return;
 		}
 
-		if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
+		if (!EnsureInactiveState())
 		{
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
 			return;
 		}
 
@@ -1407,9 +1417,8 @@ namespace
 
 	void HLCAM_RemoveCamera_Named()
 	{
-		if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
+		if (!EnsureInactiveState())
 		{
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
 			return;
 		}
 
@@ -1549,9 +1558,8 @@ namespace
 
 	void HLCAM_StopEdit()
 	{
-		if (!TheCamMap.IsEditing)
+		if (!EnsureEditMode())
 		{
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Not editing\n");
 			return;
 		}
 
@@ -1589,9 +1597,8 @@ namespace
 			return;
 		}
 
-		if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive)
+		if (!EnsureInactiveState())
 		{
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Map edit state should be inactive\n");
 			return;
 		}
 
