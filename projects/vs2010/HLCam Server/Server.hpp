@@ -50,11 +50,8 @@ namespace Cam
 		Shared::CameraTriggerType TriggerType = Shared::CameraTriggerType::ByUserTrigger;
 		Shared::CameraLookType LookType = Shared::CameraLookType::AtAngle;
 		Shared::CameraPlaneType PlaneType = Shared::CameraPlaneType::Both;
-		Shared::CameraFOVType FOVType = Shared::CameraFOVType::Fixed;
 
 		size_t FOV = 90;
-		float FOVDistanceFactor = 0.5f;
-		float FOVFactorDistances[2] = {50, 200};
 
 		float MaxSpeed = 200;
 

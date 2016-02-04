@@ -27,6 +27,7 @@ namespace Cam
 			*/
 			AdjustingCamera,
 		};
+		
 		/*
 			Different ways how camera angles are transformed.
 		*/
@@ -49,12 +50,6 @@ namespace Cam
 			Horizontal,
 			Vertical,
 			Both,
-		};
-
-		enum class CameraFOVType
-		{
-			OnDistance,
-			Fixed,
 		};
 
 		/*

@@ -2392,20 +2392,6 @@ void CTriggerCamera::FollowTarget( )
 		}
 	}
 
-	if (IsHLCam && HLCam.FOVType == Cam::Shared::CameraFOVType::OnDistance)
-	{
-		/*float newfov;
-
-		const auto& campos = pev->origin;
-		const auto& playerpos = m_hPlayer->pev->origin;
-
-		auto length = (campos - playerpos).Length();
-
-		newfov = HLCam.FOV / (length / HLCam.FOVFactorDistances[1]);
-
-		m_hPlayer->pev->fov = newfov;*/
-	}
-
 	Vector vecGoal = UTIL_VecToAngles( m_hTarget->pev->origin - pev->origin );
 	vecGoal.x = -vecGoal.x;
 

@@ -37,7 +37,6 @@ namespace App
 		Cam::Shared::CameraTriggerType TriggerType;
 		Cam::Shared::CameraLookType LookType;
 		Cam::Shared::CameraPlaneType PlaneType;
-		Cam::Shared::CameraFOVType FOVType;
 
 		HTREEITEM TreeItem;
 	};

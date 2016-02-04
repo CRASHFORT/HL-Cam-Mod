@@ -478,6 +478,9 @@ namespace
 		Shared::Interprocess::Client AppClient;
 		Shared::Interprocess::Server GameServer;
 
+		/*
+			Add a function to be run in the main thread.
+		*/
 		void InvokeMessageFunction(std::function<void()>&& func);
 
 		std::vector<std::function<void()>> InvokeList;
@@ -1144,27 +1147,6 @@ namespace
 					if (lookatitr != camval.MemberEnd())
 					{
 						curcam.LookType = Cam::Shared::CameraLookType::AtPlayer;
-					}
-				}
-
-				{
-					const auto& fovfactoritr = camval.FindMember("FOVFactor");
-
-					if (fovfactoritr != camval.MemberEnd())
-					{
-						curcam.FOVType = Cam::Shared::CameraFOVType::OnDistance;
-						curcam.FOVDistanceFactor = fovfactoritr->value.GetDouble();
-					}
-				}
-
-				{
-					const auto& distancesitr = camval.FindMember("FOVFactorDistances");
-
-					if (distancesitr != camval.MemberEnd())
-					{
-						const auto& distanceval = distancesitr->value;
-						curcam.FOVFactorDistances[0] = distanceval[0].GetDouble();
-						curcam.FOVFactorDistances[1] = distanceval[1].GetDouble();
 					}
 				}
 
