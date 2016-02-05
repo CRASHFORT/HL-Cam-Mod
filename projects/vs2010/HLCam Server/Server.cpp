@@ -1209,7 +1209,7 @@ namespace
 				}
 
 				{
-					const auto& speeditr = camval.FindMember("MaxSpeed");
+					const auto& speeditr = camval.FindMember("Speed");
 
 					if (speeditr != camval.MemberEnd())
 					{
@@ -1218,30 +1218,29 @@ namespace
 				}
 
 				{
-					const auto& lookatitr = camval.FindMember("LookAtPlayer");
+					const auto& looktypeitr = camval.FindMember("LookType");
 
-					if (lookatitr != camval.MemberEnd())
+					if (looktypeitr != camval.MemberEnd())
 					{
-						curcam.LookType = Cam::Shared::CameraLookType::AtPlayer;
+						curcam.LookType = Cam::Shared::CameraLookTypeFromString(looktypeitr->value.GetString());
 					}
 				}
 
 				{
-					const auto& planeitr = camval.FindMember("PlaneType");
+					const auto& looktypeitr = camval.FindMember("PlaneType");
 
-					if (planeitr != camval.MemberEnd())
+					if (looktypeitr != camval.MemberEnd())
 					{
-						auto speedstr = planeitr->value.GetString();
+						curcam.PlaneType = Cam::Shared::CameraPlaneTypeFromString(looktypeitr->value.GetString());
+					}
+				}
 
-						if (strcmp(speedstr, "Horizontal") == 0)
-						{
-							curcam.PlaneType = Cam::Shared::CameraPlaneType::Horizontal;
-						}
-						
-						else if (strcmp(speedstr, "Vertical") == 0)
-						{
-							curcam.PlaneType = Cam::Shared::CameraPlaneType::Vertical;
-						}
+				{
+					const auto& looktypeitr = camval.FindMember("TriggerType");
+
+					if (looktypeitr != camval.MemberEnd())
+					{
+						curcam.TriggerType = Cam::Shared::CameraTriggerTypeFromString(looktypeitr->value.GetString());
 					}
 				}
 
@@ -1649,10 +1648,15 @@ namespace
 				in game through vgui or something.
 			*/
 
+			using namespace Cam::Shared;
+
 			cameraval.AddMember("Position", std::move(camposval), alloc);
 			cameraval.AddMember("Angle", std::move(camangval), alloc);
 			cameraval.AddMember("FOV", rapidjson::Value(cam.FOV), alloc);
 			cameraval.AddMember("Speed", rapidjson::Value(cam.MaxSpeed), alloc);
+			cameraval.AddMember("LookType", rapidjson::Value(CameraLookTypeToString(cam.LookType), alloc), alloc);
+			cameraval.AddMember("PlaneType", rapidjson::Value(CameraPlaneTypeToString(cam.PlaneType), alloc), alloc);
+			cameraval.AddMember("TriggerType", rapidjson::Value(CameraTriggerTypeToString(cam.TriggerType), alloc), alloc);
 
 			thisvalue.AddMember("Camera", std::move(cameraval), alloc);
 

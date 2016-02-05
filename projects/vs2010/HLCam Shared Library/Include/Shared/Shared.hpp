@@ -39,7 +39,8 @@ namespace Cam
 		};
 
 		const char* CameraAngleTypeToString(CameraAngleType type);
-		CameraAngleType CameraAngleTypeFromStringWide(const wchar_t* string);
+		CameraAngleType CameraAngleTypeFromString(const wchar_t* string);
+		CameraAngleType CameraAngleTypeFromString(const char* string);
 
 		enum class CameraLookType
 		{
@@ -49,7 +50,8 @@ namespace Cam
 		};
 
 		const char* CameraLookTypeToString(CameraLookType type);
-		CameraLookType CameraLookTypeFromStringWide(const wchar_t* string);
+		CameraLookType CameraLookTypeFromString(const wchar_t* string);
+		CameraLookType CameraLookTypeFromString(const char* string);
 
 		enum class CameraPlaneType
 		{
@@ -59,7 +61,8 @@ namespace Cam
 		};
 
 		const char* CameraPlaneTypeToString(CameraPlaneType type);
-		CameraPlaneType CameraPlaneTypeFromStringWide(const wchar_t* string);
+		CameraPlaneType CameraPlaneTypeFromString(const wchar_t* string);
+		CameraPlaneType CameraPlaneTypeFromString(const char* string);
 
 		/*
 			Cameras fired by name are meant to
@@ -76,7 +79,8 @@ namespace Cam
 		};
 
 		const char* CameraTriggerTypeToString(CameraTriggerType type);
-		CameraTriggerType CameraTriggerTypeFromStringWide(const wchar_t* string);
+		CameraTriggerType CameraTriggerTypeFromString(const wchar_t* string);
+		CameraTriggerType CameraTriggerTypeFromString(const char* string);
 
 		namespace Messages
 		{

@@ -25,7 +25,7 @@ const char* Cam::Shared::CameraAngleTypeToString(CameraAngleType type)
 	return nullptr;
 }
 
-Cam::Shared::CameraAngleType Cam::Shared::CameraAngleTypeFromStringWide(const wchar_t* string)
+Cam::Shared::CameraAngleType Cam::Shared::CameraAngleTypeFromString(const wchar_t* string)
 {
 	if (Utility::CompareString(string, L"Linear"))
 	{
@@ -38,6 +38,26 @@ Cam::Shared::CameraAngleType Cam::Shared::CameraAngleTypeFromStringWide(const wc
 	}
 
 	else if (Utility::CompareString(string, L"Exponential"))
+	{
+		return CameraAngleType::Exponential;
+	}
+
+	return CameraAngleType::Linear;
+}
+
+Cam::Shared::CameraAngleType Cam::Shared::CameraAngleTypeFromString(const char* string)
+{
+	if (Utility::CompareString(string, "Linear"))
+	{
+		return CameraAngleType::Linear;
+	}
+
+	else if (Utility::CompareString(string, "Smooth"))
+	{
+		return CameraAngleType::Smooth;
+	}
+
+	else if (Utility::CompareString(string, "Exponential"))
 	{
 		return CameraAngleType::Exponential;
 	}
@@ -68,7 +88,7 @@ const char* Cam::Shared::CameraLookTypeToString(CameraLookType type)
 	return nullptr;
 }
 
-Cam::Shared::CameraLookType Cam::Shared::CameraLookTypeFromStringWide(const wchar_t* string)
+Cam::Shared::CameraLookType Cam::Shared::CameraLookTypeFromString(const wchar_t* string)
 {
 	if (Utility::CompareString(string, L"At player"))
 	{
@@ -81,6 +101,26 @@ Cam::Shared::CameraLookType Cam::Shared::CameraLookTypeFromStringWide(const wcha
 	}
 
 	else if (Utility::CompareString(string, L"At target"))
+	{
+		return CameraLookType::AtTarget;
+	}
+
+	return CameraLookType::AtPlayer;
+}
+
+Cam::Shared::CameraLookType Cam::Shared::CameraLookTypeFromString(const char* string)
+{
+	if (Utility::CompareString(string, "At player"))
+	{
+		return CameraLookType::AtPlayer;
+	}
+
+	else if (Utility::CompareString(string, "At angle"))
+	{
+		return CameraLookType::AtAngle;
+	}
+
+	else if (Utility::CompareString(string, "At target"))
 	{
 		return CameraLookType::AtTarget;
 	}
@@ -111,7 +151,7 @@ const char* Cam::Shared::CameraPlaneTypeToString(CameraPlaneType type)
 	return nullptr;
 }
 
-Cam::Shared::CameraPlaneType Cam::Shared::CameraPlaneTypeFromStringWide(const wchar_t* string)
+Cam::Shared::CameraPlaneType Cam::Shared::CameraPlaneTypeFromString(const wchar_t* string)
 {
 	if (Utility::CompareString(string, L"Horizontal"))
 	{
@@ -124,6 +164,26 @@ Cam::Shared::CameraPlaneType Cam::Shared::CameraPlaneTypeFromStringWide(const wc
 	}
 
 	else if (Utility::CompareString(string, L"Both"))
+	{
+		return CameraPlaneType::Both;
+	}
+
+	return CameraPlaneType::Horizontal;
+}
+
+Cam::Shared::CameraPlaneType Cam::Shared::CameraPlaneTypeFromString(const char* string)
+{
+	if (Utility::CompareString(string, "Horizontal"))
+	{
+		return CameraPlaneType::Horizontal;
+	}
+
+	else if (Utility::CompareString(string, "Vertical"))
+	{
+		return CameraPlaneType::Vertical;
+	}
+
+	else if (Utility::CompareString(string, "Both"))
 	{
 		return CameraPlaneType::Both;
 	}
@@ -149,7 +209,7 @@ const char* Cam::Shared::CameraTriggerTypeToString(CameraTriggerType type)
 	return nullptr;
 }
 
-Cam::Shared::CameraTriggerType Cam::Shared::CameraTriggerTypeFromStringWide(const wchar_t* string)
+Cam::Shared::CameraTriggerType Cam::Shared::CameraTriggerTypeFromString(const wchar_t* string)
 {
 	if (Utility::CompareString(string, L"By name"))
 	{
@@ -158,8 +218,23 @@ Cam::Shared::CameraTriggerType Cam::Shared::CameraTriggerTypeFromStringWide(cons
 
 	else if (Utility::CompareString(string, L"By user trigger"))
 	{
+		return CameraTriggerType::ByUserTrigger;
+	}
+
+	return CameraTriggerType::ByUserTrigger;
+}
+
+Cam::Shared::CameraTriggerType Cam::Shared::CameraTriggerTypeFromString(const char* string)
+{
+	if (Utility::CompareString(string, "By name"))
+	{
 		return CameraTriggerType::ByName;
 	}
 
-	return CameraTriggerType::ByName;
+	else if (Utility::CompareString(string, "By user trigger"))
+	{
+		return CameraTriggerType::ByUserTrigger;
+	}
+
+	return CameraTriggerType::ByUserTrigger;
 }
