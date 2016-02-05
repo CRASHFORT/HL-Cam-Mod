@@ -180,14 +180,14 @@ BOOL HLCamEditorDialog::OnInitDialog()
 	}
 
 	{
-		entries.LockAxis = new CMFCPropertyGridProperty("Plane type", CameraPlaneTypeToString(CameraPlaneType::Both));
-		entries.LockAxis->AddOption(CameraPlaneTypeToString(CameraPlaneType::Both));
-		entries.LockAxis->AddOption(CameraPlaneTypeToString(CameraPlaneType::Horizontal));
-		entries.LockAxis->AddOption(CameraPlaneTypeToString(CameraPlaneType::Vertical));
+		entries.PlaneType = new CMFCPropertyGridProperty("Plane type", CameraPlaneTypeToString(CameraPlaneType::Both));
+		entries.PlaneType->AddOption(CameraPlaneTypeToString(CameraPlaneType::Both));
+		entries.PlaneType->AddOption(CameraPlaneTypeToString(CameraPlaneType::Horizontal));
+		entries.PlaneType->AddOption(CameraPlaneTypeToString(CameraPlaneType::Vertical));
 
-		entries.LockAxis->AllowEdit(false);
+		entries.PlaneType->AllowEdit(false);
 
-		PropertyGrid.AddProperty(entries.LockAxis);
+		PropertyGrid.AddProperty(entries.PlaneType);
 	}
 
 	{
@@ -826,7 +826,7 @@ void HLCamEditorDialog::OnTvnSelchangedTree1(NMHDR *pNMHDR, LRESULT *pResult)
 
 			entries.ActivateType->SetValue(Cam::Shared::CameraTriggerTypeToString(camera->TriggerType));
 			entries.LookType->SetValue(Cam::Shared::CameraLookTypeToString(camera->LookType));
-			entries.LockAxis->SetValue(Cam::Shared::CameraPlaneTypeToString(camera->PlaneType));
+			entries.PlaneType->SetValue(Cam::Shared::CameraPlaneTypeToString(camera->PlaneType));
 
 			AppServer.Write
 			(

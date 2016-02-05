@@ -117,7 +117,7 @@ private:
 		CMFCPropertyGridProperty* ID;
 		CMFCPropertyGridProperty* Name;
 		CMFCPropertyGridProperty* ActivateType;
-		CMFCPropertyGridProperty* LockAxis;
+		CMFCPropertyGridProperty* PlaneType;
 		CMFCPropertyGridProperty* LookType;
 		CMFCPropertyGridProperty* PositionX;
 		CMFCPropertyGridProperty* PositionY;
