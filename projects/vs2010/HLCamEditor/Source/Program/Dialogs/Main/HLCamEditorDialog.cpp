@@ -825,6 +825,12 @@ void HLCamEditorDialog::OnTvnSelchangedTree1(NMHDR *pNMHDR, LRESULT *pResult)
 
 		if (userdata->IsCamera)
 		{
+			if (!PropertyGrid.IsWindowEnabled())
+			{
+				PropertyGrid.EnableWindow(true);
+				PropertyGrid.RedrawWindow();
+			}
+
 			auto camera = CurrentMap.FindCameraByID(userdata->CameraID);
 
 			auto& entries = PropertyGridEntries;
@@ -857,6 +863,9 @@ void HLCamEditorDialog::OnTvnSelchangedTree1(NMHDR *pNMHDR, LRESULT *pResult)
 
 		else
 		{
+			PropertyGrid.EnableWindow(false);
+			PropertyGrid.RedrawWindow();
+
 			AppServer.Write
 			(
 				Messages::Trigger_Select,
