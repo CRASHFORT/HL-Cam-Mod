@@ -604,6 +604,23 @@ LRESULT HLCamEditorDialog::OnPropertyGridItemChanged(WPARAM controlid, LPARAM pr
 			cam->FOV = newfov;
 		}
 
+		else if (prop == entries.Speed)
+		{
+			auto newspeed = prop->GetValue().lVal;
+
+			AppServer.Write
+			(
+				Messages::Camera_ChangeSpeed,
+				Utility::BinaryBufferHelp::CreatePacket
+				(
+					userdata->CameraID,
+					newspeed
+				)
+			);
+
+			cam->MaxSpeed = newspeed;
+		}
+
 		else if (prop == entries.LookType)
 		{
 			auto newvalstr = prop->GetValue().bstrVal;

@@ -893,6 +893,43 @@ namespace
 					break;
 				}
 
+				case Message::Camera_ChangeSpeed:
+				{
+					auto cameraid = data.GetValue<size_t>();
+					auto speed = data.GetValue<int>();
+
+					TheCamMap.InvokeMessageFunction([cameraid, speed]
+					{
+						if (!EnsureInactiveState())
+						{
+							return;
+						}
+
+						if (TheCamMap.CurrentSelectionCameraID != cameraid)
+						{
+							g_engfuncs.pfnAlertMessage(at_console, "HLCAM: No selected camera for app message\n");
+							return;
+						}
+
+						Cam::MapCamera* endcamera;
+
+						if (TheCamMap.ActiveCamera)
+						{
+							endcamera = TheCamMap.ActiveCamera;
+						}
+
+						else
+						{
+							endcamera = TheCamMap.FindCameraByID(cameraid);
+						}
+
+						endcamera->MaxSpeed = speed;
+						endcamera->TargetCamera->HLCam.MaxSpeed = speed;
+					});
+
+					break;
+				}
+
 				case Message::Camera_ChangeLookType:
 				{
 					auto cameraid = data.GetValue<size_t>();
