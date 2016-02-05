@@ -192,7 +192,7 @@ void CBasePlayer::Observer_CheckProperties()
 			m_iClientFOV = m_iFOV;
 			// write fov before wepon data, so zoomed crosshair is set correctly
 			MESSAGE_BEGIN( MSG_ONE, gmsgSetFOV, NULL, pev );
-				WRITE_BYTE( m_iFOV );
+				WRITE_COORD( m_iFOV );
 			MESSAGE_END();
 
 
