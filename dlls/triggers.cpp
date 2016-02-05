@@ -2141,73 +2141,27 @@ void CTriggerChangeTarget::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, U
 #include "triggers.h"
 #include "HLCam Server\Server.hpp"
 
-LINK_ENTITY_TO_CLASS( trigger_camera, CTriggerCamera );
+LINK_ENTITY_TO_CLASS(trigger_camera, CTriggerCamera);
 
 // Global Savedata for changelevel friction modifier
-TYPEDESCRIPTION	CTriggerCamera::m_SaveData[] = 
+TYPEDESCRIPTION	CTriggerCamera::m_SaveData[] =
 {
-	DEFINE_FIELD( CTriggerCamera, m_hPlayer, FIELD_EHANDLE ),
-	DEFINE_FIELD( CTriggerCamera, m_hTarget, FIELD_EHANDLE ),
-	DEFINE_FIELD( CTriggerCamera, m_pentPath, FIELD_CLASSPTR ),
-	DEFINE_FIELD( CTriggerCamera, m_sPath, FIELD_STRING ),
-	DEFINE_FIELD( CTriggerCamera, m_flWait, FIELD_FLOAT ),
-	DEFINE_FIELD( CTriggerCamera, m_flReturnTime, FIELD_TIME ),
-	DEFINE_FIELD( CTriggerCamera, m_flStopTime, FIELD_TIME ),
-	DEFINE_FIELD( CTriggerCamera, m_moveDistance, FIELD_FLOAT ),
-	DEFINE_FIELD( CTriggerCamera, m_targetSpeed, FIELD_FLOAT ),
-	DEFINE_FIELD( CTriggerCamera, m_initialSpeed, FIELD_FLOAT ),
-	DEFINE_FIELD( CTriggerCamera, m_acceleration, FIELD_FLOAT ),
-	DEFINE_FIELD( CTriggerCamera, m_deceleration, FIELD_FLOAT ),
-	DEFINE_FIELD( CTriggerCamera, m_state, FIELD_INTEGER ),
+	DEFINE_FIELD(CTriggerCamera, PlayerHandle, FIELD_EHANDLE),
+	DEFINE_FIELD(CTriggerCamera, TargetHandle, FIELD_EHANDLE),
 };
 
 IMPLEMENT_SAVERESTORE(CTriggerCamera, CBaseDelay);
 
-void CTriggerCamera::Spawn( void )
+void CTriggerCamera::Spawn(void)
 {
 	pev->movetype = MOVETYPE_NOCLIP;
 	pev->solid = SOLID_NOT;							// Remove model & collisions
 	pev->renderamt = 0;								// The engine won't draw this model if this is set to 0 and blending is on
 	pev->rendermode = kRenderTransTexture;
-
-	m_initialSpeed = pev->speed;
-	if ( m_acceleration == 0 )
-		m_acceleration = 500;
-	if ( m_deceleration == 0 )
-		m_deceleration = 500;
-}
-
-
-void CTriggerCamera :: KeyValue( KeyValueData *pkvd )
-{
-	if (FStrEq(pkvd->szKeyName, "wait"))
-	{
-		m_flWait = atof(pkvd->szValue);
-		pkvd->fHandled = TRUE;
-	}
-	else if (FStrEq(pkvd->szKeyName, "moveto"))
-	{
-		m_sPath = ALLOC_STRING( pkvd->szValue );
-		pkvd->fHandled = TRUE;
-	}
-	else if (FStrEq(pkvd->szKeyName, "acceleration"))
-	{
-		m_acceleration = atof( pkvd->szValue );
-		pkvd->fHandled = TRUE;
-	}
-	else if (FStrEq(pkvd->szKeyName, "deceleration"))
-	{
-		m_deceleration = atof( pkvd->szValue );
-		pkvd->fHandled = TRUE;
-	}
-	else
-		CBaseDelay::KeyValue( pkvd );
 }
 
 void CTriggerCamera::SetupHLCamera(const Cam::MapCamera& camera)
 {
-	IsHLCam = true;
-
 	HLCam = camera;
 }
 
@@ -2218,12 +2172,12 @@ void CTriggerCamera::SetFov(int fov)
 
 void CTriggerCamera::SetPlayerFOV(int fov)
 {
-	if (!m_hPlayer)
+	if (!PlayerHandle)
 	{
 		return;
 	}
 
-	auto playerptr = static_cast<CBasePlayer*>(Instance(m_hPlayer.Get()));
+	auto playerptr = static_cast<CBasePlayer*>(Instance(PlayerHandle.Get()));
 	playerptr->pev->fov = playerptr->m_iFOV = fov;
 
 	if (fov != 0)
@@ -2232,7 +2186,7 @@ void CTriggerCamera::SetPlayerFOV(int fov)
 	}
 }
 
-void CTriggerCamera::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
+void CTriggerCamera::Use(CBaseEntity* activator, CBaseEntity* caller, USE_TYPE usetype, float value)
 {
 	/*
 		CRASH FORT:
@@ -2240,265 +2194,127 @@ void CTriggerCamera::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 		a return time. Probably best to just remove the think function
 		overall like this so it doesn't get called when our view is elsewhere.
 	*/
-	if (IsHLCam)
+	if (usetype == USE_OFF)
 	{
-		if (useType == USE_OFF)
+		SetThink(nullptr);
+
+		g_engfuncs.pfnSetView(PlayerHandle->edict(), PlayerHandle->edict());
+
+		/*
+			Setting 0 restores fov to player preference
+		*/
+		SetPlayerFOV(0);
+		return;
+	}
+
+	if (!activator || !activator->IsPlayer())
+	{
+		activator = CBaseEntity::Instance(g_engfuncs.pfnPEntityOfEntIndex(1));
+	}
+
+	PlayerHandle = activator;
+
+	switch (HLCam.LookType)
+	{
+		case Cam::Shared::CameraLookType::AtPlayer:
 		{
-			m_state = 0;
-			SetThink(nullptr);
+			TargetHandle = PlayerHandle;
+			break;
+		}
 
-			g_engfuncs.pfnSetView(m_hPlayer->edict(), m_hPlayer->edict());
-			
-			/*
-				Setting 0 restores fov to player preference
-			*/
-			SetPlayerFOV(0);
+		case Cam::Shared::CameraLookType::AtAngle:
+		{
+			TargetHandle = nullptr;
+			break;
+		}
 
-			return;
+		case Cam::Shared::CameraLookType::AtTarget:
+		{
+			//TargetHandle = CBaseEntity::Instance(g_engfuncs.pfnFindEntityByString());
+			break;
 		}
 	}
 
-	if ( !ShouldToggle( useType, m_state ) )
-		return;
+	g_engfuncs.pfnSetView(activator->edict(), edict());
+	g_engfuncs.pfnSetModel(edict(), STRING(activator->pev->model));
 
-	// Toggle state
-	m_state = !m_state;
-	if (m_state == 0)
+	if (HLCam.LookType != Cam::Shared::CameraLookType::AtAngle)
 	{
-		m_flReturnTime = gpGlobals->time;
-		return;
-	}
-	if ( !pActivator || !pActivator->IsPlayer() )
-	{
-		pActivator = CBaseEntity::Instance(g_engfuncs.pfnPEntityOfEntIndex( 1 ));
-	}
-		
-	m_hPlayer = pActivator;
-
-	m_flReturnTime = gpGlobals->time + m_flWait;
-	pev->speed = m_initialSpeed;
-	m_targetSpeed = m_initialSpeed;
-
-	if (FBitSet (pev->spawnflags, SF_CAMERA_PLAYER_TARGET ) )
-	{
-		m_hTarget = m_hPlayer;
-	}
-	else
-	{
-		m_hTarget = GetNextTarget();
-	}
-
-	/*
-		CRASH FORT:
-		Cameras with a fixed angle do not require a target to look at.
-	*/
-	if (!IsHLCam)
-	{
-		// Nothing to look at!
-		if (m_hTarget == NULL)
-		{
-			return;
-		}
-	}
-
-
-	if (FBitSet (pev->spawnflags, SF_CAMERA_PLAYER_TAKECONTROL ) )
-	{
-		((CBasePlayer *)pActivator)->EnableControl(FALSE);
-	}
-
-	if ( m_sPath )
-	{
-		m_pentPath = Instance( FIND_ENTITY_BY_TARGETNAME ( NULL, STRING(m_sPath)) );
-	}
-	else
-	{
-		m_pentPath = NULL;
-	}
-
-	m_flStopTime = gpGlobals->time;
-	if ( m_pentPath )
-	{
-		if ( m_pentPath->pev->speed != 0 )
-			m_targetSpeed = m_pentPath->pev->speed;
-		
-		m_flStopTime += m_pentPath->GetDelay();
-	}
-
-	// copy over player information
-	if (FBitSet (pev->spawnflags, SF_CAMERA_PLAYER_POSITION ) )
-	{
-		UTIL_SetOrigin( pev, pActivator->pev->origin + pActivator->pev->view_ofs );
-		pev->angles.x = -pActivator->pev->angles.x;
-		pev->angles.y = pActivator->pev->angles.y;
-		pev->angles.z = 0;
-		pev->velocity = pActivator->pev->velocity;
-	}
-	else
-	{
-		pev->velocity = Vector( 0, 0, 0 );
-	}
-
-	SET_VIEW( pActivator->edict(), edict() );
-
-	SET_MODEL(ENT(pev), STRING(pActivator->pev->model) );
-
-	bool usedefaultthink = false;
-
-	if (!IsHLCam)
-	{
-		usedefaultthink = true;
-	}
-
-	else if (IsHLCam && HLCam.LookType == Cam::Shared::CameraLookType::AtPlayer)
-	{
-		usedefaultthink = true;
-	}
-	
-	if (usedefaultthink)
-	{
-		// follow the player down
 		SetThink(&CTriggerCamera::FollowTarget);
 		pev->nextthink = gpGlobals->time;
-
-		m_moveDistance = 0;
-		Move();
 	}
 
 	SetPlayerFOV(HLCam.FOV);
 }
 
-
-void CTriggerCamera::FollowTarget( )
+void CTriggerCamera::FollowTarget()
 {
-	if (m_hPlayer == NULL)
-		return;
-
-	if (!IsHLCam)
+	if (HLCam.LookType == Cam::Shared::CameraLookType::AtPlayer ||
+		HLCam.LookType == Cam::Shared::CameraLookType::AtTarget)
 	{
-		if (m_hTarget == NULL || m_flReturnTime < gpGlobals->time)
+		if (TargetHandle == nullptr)
 		{
-			if (m_hPlayer->IsAlive())
-			{
-				SET_VIEW(m_hPlayer->edict(), m_hPlayer->edict());
-				((CBasePlayer *)((CBaseEntity *)m_hPlayer))->EnableControl(TRUE);
-			}
-
-			SUB_UseTargets(this, USE_TOGGLE, 0);
-			pev->avelocity = Vector(0, 0, 0);
-			m_state = 0;
-			
+			g_engfuncs.pfnAlertMessage(at_console, "CTriggerCamera::FollowTarget with invalid TargetHandle\n");
+			SetThink(nullptr);
 			return;
 		}
 	}
 
-	Vector vecGoal = UTIL_VecToAngles( m_hTarget->pev->origin - pev->origin );
-	vecGoal.x = -vecGoal.x;
+	Vector goalvec = UTIL_VecToAngles(TargetHandle->pev->origin - pev->origin);
+	goalvec.x = -goalvec.x;
 
 	if (pev->angles.y > 360)
+	{
 		pev->angles.y -= 360;
+	}
 
 	if (pev->angles.y < 0)
+	{
 		pev->angles.y += 360;
-
-	float dx = vecGoal.x - pev->angles.x;
-	float dy = vecGoal.y - pev->angles.y;
-
-	if (dx < -180) 
-		dx += 360;
-	if (dx > 180) 
-		dx = dx - 360;
-	
-	if (dy < -180) 
-		dy += 360;
-	if (dy > 180) 
-		dy = dy - 360;
-
-	if (IsHLCam)
-	{
-		float endspeed = HLCam.MaxSpeed / 100.0f;
-
-		if (HLCam.PlaneType == Cam::Shared::CameraPlaneType::Both)
-		{
-			pev->avelocity.x = dx * endspeed;
-			pev->avelocity.y = dy * endspeed;
-		}
-
-		else if (HLCam.PlaneType == Cam::Shared::CameraPlaneType::Vertical)
-		{
-			pev->avelocity.x = dx * endspeed;
-			pev->avelocity.y = 0;
-		}
-
-		else if (HLCam.PlaneType == Cam::Shared::CameraPlaneType::Horizontal)
-		{
-			pev->avelocity.x = 0;
-			pev->avelocity.y = dy * endspeed;
-		}
 	}
 
-	else
+	float dirx = goalvec.x - pev->angles.x;
+	float diry = goalvec.y - pev->angles.y;
+
+	if (dirx < -180)
 	{
-		pev->avelocity.x = dx * 40 * gpGlobals->frametime;
-		pev->avelocity.y = dy * 40 * gpGlobals->frametime;
+		dirx += 360;
 	}
 
-	if (!(FBitSet (pev->spawnflags, SF_CAMERA_PLAYER_TAKECONTROL)))	
+	if (dirx > 180)
 	{
-		pev->velocity = pev->velocity * 0.8;
-		if (pev->velocity.Length( ) < 10.0)
-			pev->velocity = g_vecZero;
+		dirx = dirx - 360;
+	}
+
+	if (diry < -180)
+	{
+		diry += 360;
+	}
+
+	if (diry > 180)
+	{
+		diry = diry - 360;
+	}
+
+	float endspeed = HLCam.MaxSpeed / 100.0f;
+
+	if (HLCam.PlaneType == Cam::Shared::CameraPlaneType::Both)
+	{
+		pev->avelocity.x = dirx * endspeed;
+		pev->avelocity.y = diry * endspeed;
+	}
+
+	else if (HLCam.PlaneType == Cam::Shared::CameraPlaneType::Vertical)
+	{
+		pev->avelocity.x = dirx * endspeed;
+		pev->avelocity.y = 0;
+	}
+
+	else if (HLCam.PlaneType == Cam::Shared::CameraPlaneType::Horizontal)
+	{
+		pev->avelocity.x = 0;
+		pev->avelocity.y = diry * endspeed;
 	}
 
 	pev->nextthink = gpGlobals->time;
-
-	Move();
-}
-
-void CTriggerCamera::Move()
-{
-	// Not moving on a path, return
-	if (!m_pentPath)
-		return;
-
-	// Subtract movement from the previous frame
-	m_moveDistance -= pev->speed * gpGlobals->frametime;
-
-	// Have we moved enough to reach the target?
-	if ( m_moveDistance <= 0 )
-	{
-		// Fire the passtarget if there is one
-		if ( m_pentPath->pev->message )
-		{
-			FireTargets( STRING(m_pentPath->pev->message), this, this, USE_TOGGLE, 0 );
-			if ( FBitSet( m_pentPath->pev->spawnflags, SF_CORNER_FIREONCE ) )
-				m_pentPath->pev->message = 0;
-		}
-		// Time to go to the next target
-		m_pentPath = m_pentPath->GetNextTarget();
-
-		// Set up next corner
-		if ( !m_pentPath )
-		{
-			pev->velocity = g_vecZero;
-		}
-		else 
-		{
-			if ( m_pentPath->pev->speed != 0 )
-				m_targetSpeed = m_pentPath->pev->speed;
-
-			Vector delta = m_pentPath->pev->origin - pev->origin;
-			m_moveDistance = delta.Length();
-			pev->movedir = delta.Normalize();
-			m_flStopTime = gpGlobals->time + m_pentPath->GetDelay();
-		}
-	}
-
-	if ( m_flStopTime > gpGlobals->time )
-		pev->speed = UTIL_Approach( 0, pev->speed, m_deceleration * gpGlobals->frametime );
-	else
-		pev->speed = UTIL_Approach( m_targetSpeed, pev->speed, m_acceleration * gpGlobals->frametime );
-
-	float fraction = 2 * gpGlobals->frametime;
-	pev->velocity = ((pev->movedir * pev->speed) * fraction) + (pev->velocity * (1-fraction));
 }

@@ -8,44 +8,31 @@
 class CTriggerCamera : public CBaseDelay
 {
 public:
-	void Spawn(void);
-	void KeyValue(KeyValueData *pkvd);
-	void Use(CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value);
-	void EXPORT FollowTarget(void);
-	void Move(void);
+	virtual void Spawn() override;	
+	virtual void Use(CBaseEntity* activator, CBaseEntity* caller, USE_TYPE usetype, float value) override;
+	
+	void EXPORT FollowTarget();
 
-	virtual int		Save(CSave &save);
-	virtual int		Restore(CRestore &restore);
-	virtual int	ObjectCaps(void)
+	virtual int Save(CSave &save) override;
+	virtual int Restore(CRestore &restore) override;
+	
+	virtual int	ObjectCaps() override
 	{
 		return CBaseEntity::ObjectCaps() & ~FCAP_ACROSS_TRANSITION;
 	}
-	static	TYPEDESCRIPTION m_SaveData[];
 
-	EHANDLE m_hPlayer;
-	EHANDLE m_hTarget;
-	CBaseEntity *m_pentPath;
-	int	  m_sPath;
-	float m_flWait;
-	float m_flReturnTime;
+	static TYPEDESCRIPTION m_SaveData[];
+
+	EHANDLE PlayerHandle;
+	EHANDLE TargetHandle;
 
 	/*
 		CRASH FORT:
-	*/	
-	bool IsHLCam = false;
+	*/
 	Cam::MapCamera HLCam;
 
 	void SetupHLCamera(const Cam::MapCamera& camera);
 
 	void SetFov(int fov);
 	void SetPlayerFOV(int fov);
-
-	float m_flStopTime;
-	float m_moveDistance;
-	float m_targetSpeed;
-	float m_initialSpeed;
-	float m_acceleration;
-	float m_deceleration;
-	int	  m_state;
-
 };
