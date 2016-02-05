@@ -2204,6 +2204,9 @@ void CTriggerCamera::Use(CBaseEntity* activator, CBaseEntity* caller, USE_TYPE u
 			Setting 0 restores fov to player preference
 		*/
 		SetPlayerFOV(0);
+
+		pev->angles = HLCam.Angle;
+
 		return;
 	}
 
