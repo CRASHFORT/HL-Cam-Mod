@@ -624,7 +624,6 @@ LRESULT HLCamEditorDialog::OnPropertyGridItemChanged(WPARAM controlid, LPARAM pr
 		else if (prop == entries.LookType)
 		{
 			auto newvalstr = prop->GetValue().bstrVal;
-
 			auto newval = Cam::Shared::CameraLookTypeFromStringWide(newvalstr);
 
 			AppServer.Write
@@ -638,6 +637,24 @@ LRESULT HLCamEditorDialog::OnPropertyGridItemChanged(WPARAM controlid, LPARAM pr
 			);
 
 			cam->LookType = newval;
+		}
+
+		else if (prop == entries.PlaneType)
+		{
+			auto newvalstr = prop->GetValue().bstrVal;
+			auto newval = Cam::Shared::CameraPlaneTypeFromStringWide(newvalstr);
+
+			AppServer.Write
+			(
+				Messages::Camera_ChangePlaneType,
+				Utility::BinaryBufferHelp::CreatePacket
+				(
+					userdata->CameraID,
+					static_cast<unsigned char>(newval)
+				)
+			);
+
+			cam->PlaneType = newval;
 		}
 	}
 

@@ -967,6 +967,43 @@ namespace
 					break;
 				}
 
+				case Message::Camera_ChangePlaneType:
+				{
+					auto cameraid = data.GetValue<size_t>();
+					auto planetype = data.GetValue<unsigned char>();
+
+					TheCamMap.InvokeMessageFunction([cameraid, planetype]
+					{
+						if (!EnsureInactiveState())
+						{
+							return;
+						}
+
+						if (TheCamMap.CurrentSelectionCameraID != cameraid)
+						{
+							g_engfuncs.pfnAlertMessage(at_console, "HLCAM: No selected camera for app message\n");
+							return;
+						}
+
+						Cam::MapCamera* endcamera;
+
+						if (TheCamMap.ActiveCamera)
+						{
+							endcamera = TheCamMap.ActiveCamera;
+						}
+
+						else
+						{
+							endcamera = TheCamMap.FindCameraByID(cameraid);
+						}
+
+						endcamera->PlaneType = static_cast<decltype(endcamera->PlaneType)>(planetype);
+						endcamera->TargetCamera->HLCam.PlaneType = endcamera->PlaneType;
+					});
+
+					break;
+				}
+
 				case Message::Camera_Remove:
 				{
 					auto cameraid = data.GetValue<size_t>();

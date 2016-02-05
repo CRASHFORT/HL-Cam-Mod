@@ -90,7 +90,7 @@ namespace Cam
 					Camera_ChangeFOV,
 					Camera_ChangeSpeed,
 					Camera_ChangeName,
-					Camera_ChangeAxisType,
+					Camera_ChangePlaneType,
 					Camera_ChangeActivateType,
 					Camera_ChangeLookType,
 
