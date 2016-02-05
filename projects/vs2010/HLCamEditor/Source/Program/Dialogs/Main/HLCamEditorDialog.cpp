@@ -153,6 +153,8 @@ BOOL HLCamEditorDialog::OnInitDialog()
 
 	auto& entries = PropertyGridEntries;
 
+	using namespace Cam::Shared;
+
 	{
 		entries.ID = new CMFCPropertyGridProperty("ID", COleVariant(0l));
 		entries.ID->Enable(false);
@@ -168,9 +170,9 @@ BOOL HLCamEditorDialog::OnInitDialog()
 	}
 
 	{
-		entries.ActivateType = new CMFCPropertyGridProperty("Activate type", "By trigger");
-		entries.ActivateType->AddOption("By trigger");
-		entries.ActivateType->AddOption("By name");
+		entries.ActivateType = new CMFCPropertyGridProperty("Activate type", CameraTriggerTypeToString(CameraTriggerType::ByUserTrigger));
+		entries.ActivateType->AddOption(CameraTriggerTypeToString(CameraTriggerType::ByUserTrigger));
+		entries.ActivateType->AddOption(CameraTriggerTypeToString(CameraTriggerType::ByName));
 
 		entries.ActivateType->AllowEdit(false);
 
@@ -178,10 +180,10 @@ BOOL HLCamEditorDialog::OnInitDialog()
 	}
 
 	{
-		entries.LockAxis = new CMFCPropertyGridProperty("Lock axis", "None");
-		entries.LockAxis->AddOption("None");
-		entries.LockAxis->AddOption("Horizontal");
-		entries.LockAxis->AddOption("Vertical");
+		entries.LockAxis = new CMFCPropertyGridProperty("Plane type", CameraPlaneTypeToString(CameraPlaneType::Both));
+		entries.LockAxis->AddOption(CameraPlaneTypeToString(CameraPlaneType::Both));
+		entries.LockAxis->AddOption(CameraPlaneTypeToString(CameraPlaneType::Horizontal));
+		entries.LockAxis->AddOption(CameraPlaneTypeToString(CameraPlaneType::Vertical));
 
 		entries.LockAxis->AllowEdit(false);
 
@@ -189,12 +191,10 @@ BOOL HLCamEditorDialog::OnInitDialog()
 	}
 
 	{
-		using LookType = Cam::Shared::CameraLookType;
-
-		entries.LookType = new CMFCPropertyGridProperty("Look at", Cam::Shared::CameraLookTypeToString(LookType::AtAngle));
-		entries.LookType->AddOption(Cam::Shared::CameraLookTypeToString(LookType::AtAngle));
-		entries.LookType->AddOption(Cam::Shared::CameraLookTypeToString(LookType::AtPlayer));
-		entries.LookType->AddOption(Cam::Shared::CameraLookTypeToString(LookType::AtTarget));
+		entries.LookType = new CMFCPropertyGridProperty("Look at", CameraLookTypeToString(CameraLookType::AtAngle));
+		entries.LookType->AddOption(CameraLookTypeToString(CameraLookType::AtAngle));
+		entries.LookType->AddOption(CameraLookTypeToString(CameraLookType::AtPlayer));
+		entries.LookType->AddOption(CameraLookTypeToString(CameraLookType::AtTarget));
 
 		entries.LookType->AllowEdit(false);
 
@@ -824,62 +824,9 @@ void HLCamEditorDialog::OnTvnSelchangedTree1(NMHDR *pNMHDR, LRESULT *pResult)
 			entries.AngleY->SetValue(camera->Angles.Y);
 			entries.AngleZ->SetValue(camera->Angles.Z);
 
-			switch (camera->TriggerType)
-			{
-				case Cam::Shared::CameraTriggerType::ByName:
-				{
-					entries.ActivateType->SetValue("By name");
-					break;
-				}
-
-				case Cam::Shared::CameraTriggerType::ByUserTrigger:
-				{
-					entries.ActivateType->SetValue("By trigger");
-					break;
-				}
-			}
-
-			switch (camera->LookType)
-			{
-				case Cam::Shared::CameraLookType::AtPlayer:
-				{
-					entries.LookType->SetValue("At player");
-					break;
-				}
-
-				case Cam::Shared::CameraLookType::AtAngle:
-				{
-					entries.LookType->SetValue("At angle");
-					break;
-				}
-
-				case Cam::Shared::CameraLookType::AtTarget:
-				{
-					entries.LookType->SetValue("At target");
-					break;
-				}
-			}
-
-			switch (camera->PlaneType)
-			{
-				case Cam::Shared::CameraPlaneType::Horizontal:
-				{
-					entries.LockAxis->SetValue("Horizontal");
-					break;
-				}
-
-				case Cam::Shared::CameraPlaneType::Vertical:
-				{
-					entries.LockAxis->SetValue("Vertical");
-					break;
-				}
-
-				case Cam::Shared::CameraPlaneType::Both:
-				{
-					entries.LockAxis->SetValue("None");
-					break;
-				}
-			}
+			entries.ActivateType->SetValue(Cam::Shared::CameraTriggerTypeToString(camera->TriggerType));
+			entries.LookType->SetValue(Cam::Shared::CameraLookTypeToString(camera->LookType));
+			entries.LockAxis->SetValue(Cam::Shared::CameraPlaneTypeToString(camera->PlaneType));
 
 			AppServer.Write
 			(
