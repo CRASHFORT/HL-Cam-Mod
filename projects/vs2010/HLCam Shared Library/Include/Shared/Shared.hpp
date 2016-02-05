@@ -38,6 +38,9 @@ namespace Cam
 			Exponential,
 		};
 
+		const char* CameraAngleTypeToString(CameraAngleType type);
+		CameraAngleType CameraAngleTypeFromStringWide(const wchar_t* string);
+
 		enum class CameraLookType
 		{
 			AtPlayer,
@@ -45,12 +48,18 @@ namespace Cam
 			AtTarget,
 		};
 
+		const char* CameraLookTypeToString(CameraLookType type);
+		CameraLookType CameraLookTypeFromStringWide(const wchar_t* string);
+
 		enum class CameraPlaneType
 		{
 			Horizontal,
 			Vertical,
 			Both,
 		};
+
+		const char* CameraPlaneTypeToString(CameraPlaneType type);
+		CameraPlaneType CameraPlaneTypeFromStringWide(const wchar_t* string);
 
 		/*
 			Cameras fired by name are meant to
@@ -65,6 +74,9 @@ namespace Cam
 			ByName,
 			ByUserTrigger
 		};
+
+		const char* CameraTriggerTypeToString(CameraTriggerType type);
+		CameraTriggerType CameraTriggerTypeFromStringWide(const wchar_t* string);
 
 		namespace Messages
 		{

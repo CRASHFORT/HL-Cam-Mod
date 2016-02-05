@@ -38,5 +38,8 @@
     <ClCompile Include="Source\String\String.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Include\Shared\Shared.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

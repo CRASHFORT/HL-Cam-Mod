@@ -10,52 +10,6 @@
 #define new DEBUG_NEW
 #endif
 
-namespace
-{
-	const char* CameraLookTypeStringFromEnum(Cam::Shared::CameraLookType type)
-	{
-		switch (type)
-		{
-			case Cam::Shared::CameraLookType::AtPlayer:
-			{
-				return "At player";
-			}
-
-			case Cam::Shared::CameraLookType::AtAngle:
-			{
-				return "At angle";
-			}
-
-			case Cam::Shared::CameraLookType::AtTarget:
-			{
-				return "At target";
-			}
-		}
-
-		return nullptr;
-	}
-
-	Cam::Shared::CameraLookType CameraLookTypeEnumFromString(const wchar_t* name)
-	{
-		if (Utility::CompareString(name, L"At player"))
-		{
-			return Cam::Shared::CameraLookType::AtPlayer;
-		}
-
-		else if (Utility::CompareString(name, L"At angle"))
-		{
-			return Cam::Shared::CameraLookType::AtAngle;
-		}
-
-		else if (Utility::CompareString(name, L"At target"))
-		{
-			return Cam::Shared::CameraLookType::AtTarget;
-		}
-
-		return Cam::Shared::CameraLookType::AtPlayer;
-	}
-}
-
 namespace App
 {
 	HLCamera* HLMap::FindCameraByID(size_t id)
@@ -237,10 +191,10 @@ BOOL HLCamEditorDialog::OnInitDialog()
 	{
 		using LookType = Cam::Shared::CameraLookType;
 
-		entries.LookType = new CMFCPropertyGridProperty("Look at", CameraLookTypeStringFromEnum(LookType::AtAngle));
-		entries.LookType->AddOption(CameraLookTypeStringFromEnum(LookType::AtAngle));
-		entries.LookType->AddOption(CameraLookTypeStringFromEnum(LookType::AtPlayer));
-		entries.LookType->AddOption(CameraLookTypeStringFromEnum(LookType::AtTarget));
+		entries.LookType = new CMFCPropertyGridProperty("Look at", Cam::Shared::CameraLookTypeToString(LookType::AtAngle));
+		entries.LookType->AddOption(Cam::Shared::CameraLookTypeToString(LookType::AtAngle));
+		entries.LookType->AddOption(Cam::Shared::CameraLookTypeToString(LookType::AtPlayer));
+		entries.LookType->AddOption(Cam::Shared::CameraLookTypeToString(LookType::AtTarget));
 
 		entries.LookType->AllowEdit(false);
 
@@ -654,7 +608,7 @@ LRESULT HLCamEditorDialog::OnPropertyGridItemChanged(WPARAM controlid, LPARAM pr
 		{
 			auto newvalstr = prop->GetValue().bstrVal;
 
-			auto newval = CameraLookTypeEnumFromString(newvalstr);
+			auto newval = Cam::Shared::CameraLookTypeFromStringWide(newvalstr);
 
 			AppServer.Write
 			(

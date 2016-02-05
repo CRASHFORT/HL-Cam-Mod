@@ -25,6 +25,7 @@
     <ClInclude Include="Include\Shared\String\String.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Include\Shared\Shared.cpp" />
     <ClCompile Include="Source\Binary Buffer\BinaryBuffer.cpp" />
     <ClCompile Include="Source\Interprocess\Interprocess.cpp" />
     <ClCompile Include="Source\String\String.cpp" />
