@@ -1911,7 +1911,8 @@ void Cam::OnPlayerPostUpdate(CBasePlayer* player)
 {
 	if (IsInEditMode())
 	{
-		if (TheCamMap.CurrentState == Cam::Shared::StateType::Inactive)
+		if (TheCamMap.CurrentState == Cam::Shared::StateType::Inactive &&
+			!TheCamMap.Triggers.empty())
 		{
 			bool lookatsomething = false;
 
