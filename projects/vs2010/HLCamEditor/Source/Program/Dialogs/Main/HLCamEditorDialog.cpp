@@ -303,6 +303,7 @@ BOOL HLCamEditorDialog::OnInitDialog()
 
 	PropertyGrid.EnableWindow(false);
 	TreeControl.EnableWindow(false);
+	PropertyGrid.ShowWindow(SW_HIDE);
 
 	return 1;
 }
@@ -378,6 +379,7 @@ void HLCamEditorDialog::MessageHandler()
 			case Message::OnEditModeStarted:
 			{
 				PropertyGrid.EnableWindow(true);
+				PropertyGrid.ShowWindow(SW_SHOW);
 				TreeControl.EnableWindow(true);
 
 				auto ismapreset = data.GetValue<bool>();
@@ -850,6 +852,7 @@ void HLCamEditorDialog::OnTvnSelchangedTree1(NMHDR *pNMHDR, LRESULT *pResult)
 			if (!PropertyGrid.IsWindowEnabled())
 			{
 				PropertyGrid.EnableWindow(true);
+				PropertyGrid.ShowWindow(SW_SHOW);
 				PropertyGrid.RedrawWindow();
 			}
 
@@ -886,6 +889,7 @@ void HLCamEditorDialog::OnTvnSelchangedTree1(NMHDR *pNMHDR, LRESULT *pResult)
 		else
 		{
 			PropertyGrid.EnableWindow(false);
+			PropertyGrid.ShowWindow(SW_HIDE);
 			PropertyGrid.RedrawWindow();
 
 			AppServer.Write
