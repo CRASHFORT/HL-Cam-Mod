@@ -927,7 +927,7 @@ namespace Cam
 				Vector forward;
 				gEngfuncs.pfnAngleVectors(viewangles, forward, nullptr, nullptr);
 
-				VectorScale(forward, 2048, forward);
+				VectorScale(forward, 1024, forward);
 
 				VectorAdd(forward, position, forward);
 
@@ -951,10 +951,7 @@ namespace Cam
 						TheCamClient.AimGuide.CreateBeam(trace->endpos);
 					}
 
-					if (trace->fraction != 1.0)
-					{
-						TheCamClient.AimGuide.BeamPtr->target = trace->endpos;
-					}
+					TheCamClient.AimGuide.BeamPtr->target = trace->endpos;
 				}
 
 				else
