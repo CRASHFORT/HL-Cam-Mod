@@ -439,16 +439,6 @@ void HLCamEditorDialog::MessageHandler()
 				break;
 			}
 
-			case Message::OnShutdown:
-			{
-				ShouldCloseMessageThread = true;
-				MessageHandlerThread.join();
-
-				AppServer.Stop();
-				GameClient.Disconnect();
-				break;
-			}
-
 			case Message::OnTriggerAndCameraAdded:
 			{
 				AddCameraAndTrigger(data.GetValue<App::HLCamera>(), data.GetValue<App::HLTrigger>());

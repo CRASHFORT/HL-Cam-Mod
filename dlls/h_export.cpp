@@ -36,22 +36,29 @@ globalvars_t  *gpGlobals;
 #define DLLEXPORT __attribute__ ((visibility("default")))
 #endif
 
+/*
+	CRASH FORT:
+*/
+#include "HLCam Server\Server.hpp"
+
 #ifdef _WIN32
 
 // Required DLL entry point
-BOOL WINAPI DllMain(
-   HINSTANCE hinstDLL,
-   DWORD fdwReason,
-   LPVOID lpvReserved)
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-	if      (fdwReason == DLL_PROCESS_ATTACH)
-    {
-    }
+	if (fdwReason == DLL_PROCESS_ATTACH)
+	{
+
+	}
+
 	else if (fdwReason == DLL_PROCESS_DETACH)
-    {
-    }
+	{
+		Cam::CloseServer();
+	}
+
 	return TRUE;
 }
+
 #endif
 
 extern "C" void DLLEXPORT GiveFnptrsToDll(	enginefuncs_t* pengfuncsFromEngine, globalvars_t *pGlobals )

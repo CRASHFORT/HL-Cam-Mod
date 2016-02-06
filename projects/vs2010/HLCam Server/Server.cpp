@@ -537,7 +537,6 @@ namespace
 
 	static std::thread MessageHandlerThread;
 	static std::atomic_bool ShouldCloseMessageThread{false};
-	static std::atomic_bool MessageThreadIsDone{false};
 	static std::atomic_bool ShouldPauseMessageThread{false};
 	static MapCam TheCamMap;
 
@@ -1039,8 +1038,6 @@ namespace
 				}
 			}
 		}
-
-		MessageThreadIsDone = true;
 	}
 
 	void ResetCurrentMap()
@@ -1349,6 +1346,19 @@ void Cam::Deactivate()
 	ShouldPauseMessageThread = false;
 }
 
+void Cam::CloseServer()
+{
+	ShouldCloseMessageThread = true;
+
+	if (MessageHandlerThread.joinable())
+	{
+		MessageHandlerThread.join();
+	}
+
+	TheCamMap.GameServer.Stop();
+	TheCamMap.AppClient.Disconnect();
+}
+
 namespace
 {
 	void HLCAM_CreateCamera()
@@ -1501,9 +1511,7 @@ namespace
 			}
 
 			ShouldCloseMessageThread = false;
-			MessageThreadIsDone = false;
 			MessageHandlerThread = std::thread(&MessageHandler);
-			MessageHandlerThread.detach();
 		}
 
 		namespace Message = Cam::Shared::Messages::Game;
@@ -1560,17 +1568,7 @@ namespace
 
 	void HLCAM_Shutdown()
 	{
-		TheCamMap.GameServer.Write(Cam::Shared::Messages::Game::OnShutdown);
-
-		ShouldCloseMessageThread = true;
-
-		while (!MessageThreadIsDone)
-		{
-			std::this_thread::sleep_for(1ms);
-		}
-
-		TheCamMap.GameServer.Stop();
-		TheCamMap.AppClient.Disconnect();
+		Cam::CloseServer();
 	}
 
 	void HLCAM_SaveMap()

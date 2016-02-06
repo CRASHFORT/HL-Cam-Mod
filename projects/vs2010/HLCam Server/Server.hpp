@@ -19,6 +19,7 @@ namespace Cam
 	void OnInit();
 	void OnPlayerSpawn(CBasePlayer* player);
 	void Deactivate();
+	void CloseServer();
 
 	/*
 		Internal output functions that we answer.
