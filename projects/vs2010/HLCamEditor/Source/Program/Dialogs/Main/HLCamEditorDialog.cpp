@@ -208,16 +208,19 @@ BOOL HLCamEditorDialog::OnInitDialog()
 
 		{
 			entries.PositionX = new CMFCPropertyGridProperty("X", COleVariant(0.0f));
+			entries.PositionX->Enable(false);
 			group->AddSubItem(entries.PositionX);
 		}
 
 		{
 			entries.PositionY = new CMFCPropertyGridProperty("Y", COleVariant(0.0f));
+			entries.PositionY->Enable(false);
 			group->AddSubItem(entries.PositionY);
 		}
 
 		{
 			entries.PositionZ = new CMFCPropertyGridProperty("Z", COleVariant(0.0f));
+			entries.PositionZ->Enable(false);
 			group->AddSubItem(entries.PositionZ);
 		}
 	}
@@ -229,16 +232,19 @@ BOOL HLCamEditorDialog::OnInitDialog()
 
 		{
 			entries.AngleX = new CMFCPropertyGridProperty("X", COleVariant(0.0f));
+			entries.AngleX->Enable(false);
 			group->AddSubItem(entries.AngleX);
 		}
 
 		{
 			entries.AngleY = new CMFCPropertyGridProperty("Y", COleVariant(0.0f));
+			entries.AngleY->Enable(false);
 			group->AddSubItem(entries.AngleY);
 		}
 
 		{
 			entries.AngleZ = new CMFCPropertyGridProperty("Z", COleVariant(0.0f));
+			entries.AngleZ->Enable(false);
 			group->AddSubItem(entries.AngleZ);
 		}
 	}
