@@ -103,6 +103,14 @@ private:
 	int CurrentUserDataID = -1;
 	App::HLMap CurrentMap;
 
+	/*
+		Since we generate IPC messages when selection changes
+		in the tree control, this is needed to filter out some of the messages.
+		When the tree control is cleared it for some reason triggers "item selection changed" events.
+		This causes the game client to try use invalid data since the tree control gets cleared on a new map.
+	*/
+	bool DisableTreeSelections = false;
+
 	void AddSingleCamera(App::HLCamera&& camera);
 	void AddSingleCameraToList(App::HLCamera& camera);
 

@@ -295,6 +295,9 @@ BOOL HLCamEditorDialog::OnInitDialog()
 		}
 	}
 
+	PropertyGrid.EnableWindow(false);
+	TreeControl.EnableWindow(false);
+
 	return 1;
 }
 
@@ -375,7 +378,11 @@ void HLCamEditorDialog::MessageHandler()
 
 				if (ismapreset)
 				{
+					DisableTreeSelections = true;
+
+					TreeControl.SetRedraw(false);
 					TreeControl.DeleteAllItems();
+					
 					CurrentMap = App::HLMap();
 
 					CurrentMap.Name = data.GetNormalString();
@@ -400,6 +407,10 @@ void HLCamEditorDialog::MessageHandler()
 							AddCameraAndTriggerToList(cam);
 						}
 					}
+
+					TreeControl.SetRedraw(true);
+
+					DisableTreeSelections = false;
 				}
 
 				else
@@ -813,6 +824,11 @@ void HLCamEditorDialog::OnContextMenu(CWnd* window, CPoint point)
 
 void HLCamEditorDialog::OnTvnSelchangedTree1(NMHDR *pNMHDR, LRESULT *pResult)
 {
+	if (DisableTreeSelections)
+	{
+		return;
+	}
+
 	auto treeviewitem = reinterpret_cast<LPNMTREEVIEWW>(pNMHDR);
 
 	auto userdata = CurrentMap.FindUserDataByID(TreeControl.GetItemData(treeviewitem->itemNew.hItem));
