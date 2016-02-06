@@ -91,6 +91,8 @@ namespace Cam
 				*/
 				enum Message
 				{
+					OnAppShutdown,
+
 					Camera_ChangeFOV,
 					Camera_ChangeSpeed,
 					Camera_ChangeName,
@@ -124,6 +126,8 @@ namespace Cam
 				{
 					OnEditModeStarted,
 					OnEditModeStopped,
+
+					OnGameShutdown,
 
 					OnTriggerSelected,
 					OnCameraSelected,

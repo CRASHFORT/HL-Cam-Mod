@@ -620,6 +620,11 @@ namespace
 
 			switch (message)
 			{
+				case Message::OnAppShutdown:
+				{
+					break;
+				}
+
 				case Message::Trigger_Select:
 				{
 					auto triggerid = data.GetValue<size_t>();
@@ -1354,6 +1359,8 @@ void Cam::CloseServer()
 	{
 		MessageHandlerThread.join();
 	}
+
+	TheCamMap.GameServer.Write(Cam::Shared::Messages::Game::OnGameShutdown);
 
 	TheCamMap.GameServer.Stop();
 	TheCamMap.AppClient.Disconnect();

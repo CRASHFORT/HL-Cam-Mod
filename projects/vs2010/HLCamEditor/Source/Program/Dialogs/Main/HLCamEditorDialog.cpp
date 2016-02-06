@@ -439,6 +439,11 @@ void HLCamEditorDialog::MessageHandler()
 				break;
 			}
 
+			case Message::OnGameShutdown:
+			{
+				break;
+			}
+
 			case Message::OnTriggerAndCameraAdded:
 			{
 				AddCameraAndTrigger(data.GetValue<App::HLCamera>(), data.GetValue<App::HLTrigger>());
@@ -674,6 +679,8 @@ void HLCamEditorDialog::OnClose()
 {
 	ShouldCloseMessageThread = true;
 	MessageHandlerThread.join();
+
+	AppServer.Write(Cam::Shared::Messages::App::OnAppShutdown);
 
 	EndDialog(0);
 }
