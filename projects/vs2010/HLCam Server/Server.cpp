@@ -525,7 +525,15 @@ namespace
 
 			return ret;
 		}
+
+		float NextAutoSaveTime;
 	};
+
+	namespace Commands
+	{
+		cvar_t UseAutoSave = {"hlcam_autosave", "0", FCVAR_ARCHIVE};
+		cvar_t AutoSaveInterval = {"hlcam_autosave_interval", "30", FCVAR_ARCHIVE};
+	}
 
 	static std::mutex MessageInvokeMutex;
 
@@ -1466,6 +1474,8 @@ namespace
 
 		TheCamMap.IsEditing = true;
 
+		TheCamMap.NextAutoSaveTime = gpGlobals->time + Commands::AutoSaveInterval.value;
+
 		MESSAGE_BEGIN(MSG_ONE, HLCamMessage::MapEditStateChanged, nullptr, TheCamMap.LocalPlayer->pev);
 		WRITE_BYTE(TheCamMap.IsEditing);
 		MESSAGE_END();
@@ -1555,6 +1565,8 @@ namespace
 		TheCamMap.GoFirstPerson();
 	}
 
+	void HLCAM_SaveMap();
+
 	void HLCAM_StopEdit()
 	{
 		if (!EnsureEditMode())
@@ -1571,6 +1583,8 @@ namespace
 		TheCamMap.GameServer.Write(Cam::Shared::Messages::Game::OnEditModeStopped);
 
 		MessageThreadSleepTime = IdleSleepTime;
+
+		HLCAM_SaveMap();
 	}
 
 	void HLCAM_Shutdown()
@@ -1703,6 +1717,9 @@ void Cam::OnInit()
 
 	g_engfuncs.pfnAddServerCommand("hlcam_firstperson", HLCAM_FirstPerson);
 	g_engfuncs.pfnAddServerCommand("hlcam_savemap", HLCAM_SaveMap);
+
+	g_engfuncs.pfnCVarRegister(&Commands::UseAutoSave);
+	g_engfuncs.pfnCVarRegister(&Commands::AutoSaveInterval);
 }
 
 void Cam::OnPlayerSpawn(CBasePlayer* player)
@@ -1914,6 +1931,20 @@ void Cam::OnPlayerPostUpdate(CBasePlayer* player)
 		if (TheCamMap.CurrentState == Cam::Shared::StateType::Inactive &&
 			!TheCamMap.Triggers.empty())
 		{
+			if (Commands::UseAutoSave.value > 0)
+			{
+				if (gpGlobals->time > TheCamMap.NextAutoSaveTime)
+				{
+					if (Commands::AutoSaveInterval.value < 30)
+					{
+						Commands::AutoSaveInterval.value = 30;
+					}
+
+					TheCamMap.NextAutoSaveTime = gpGlobals->time + Commands::AutoSaveInterval.value;
+					HLCAM_SaveMap();
+				}
+			}
+
 			bool lookatsomething = false;
 
 			UTIL_MakeVectors(TheCamMap.LocalPlayer->pev->v_angle);
