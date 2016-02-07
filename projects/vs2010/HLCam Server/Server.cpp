@@ -522,6 +522,7 @@ namespace
 			ret << static_cast<unsigned char>(camera.TriggerType);
 			ret << static_cast<unsigned char>(camera.LookType);
 			ret << static_cast<unsigned char>(camera.PlaneType);
+			ret << static_cast<unsigned char>(camera.ZoomType);
 
 			return ret;
 		}
@@ -1016,6 +1017,43 @@ namespace
 					break;
 				}
 
+				case Message::Camera_ChangeZoomType:
+				{
+					auto cameraid = data.GetValue<size_t>();
+					auto zoomtype = data.GetValue<unsigned char>();
+
+					TheCamMap.InvokeMessageFunction([cameraid, zoomtype]
+					{
+						if (!EnsureInactiveState())
+						{
+							return;
+						}
+
+						if (TheCamMap.CurrentSelectionCameraID != cameraid)
+						{
+							g_engfuncs.pfnAlertMessage(at_console, "HLCAM: No selected camera for app message\n");
+							return;
+						}
+
+						Cam::MapCamera* endcamera;
+
+						if (TheCamMap.ActiveCamera)
+						{
+							endcamera = TheCamMap.ActiveCamera;
+						}
+
+						else
+						{
+							endcamera = TheCamMap.FindCameraByID(cameraid);
+						}
+
+						endcamera->ZoomType = static_cast<decltype(endcamera->ZoomType)>(zoomtype);
+						endcamera->TargetCamera->HLCam.ZoomType = endcamera->ZoomType;
+					});
+
+					break;
+				}
+
 				case Message::Camera_Remove:
 				{
 					auto cameraid = data.GetValue<size_t>();
@@ -1251,6 +1289,15 @@ namespace
 					if (looktypeitr != camval.MemberEnd())
 					{
 						curcam.TriggerType = Cam::Shared::CameraTriggerTypeFromString(looktypeitr->value.GetString());
+					}
+				}
+
+				{
+					const auto& looktypeitr = camval.FindMember("ZoomType");
+
+					if (looktypeitr != camval.MemberEnd())
+					{
+						curcam.ZoomType = Cam::Shared::CameraZoomTypeFromString(looktypeitr->value.GetString());
 					}
 				}
 
@@ -1676,6 +1723,7 @@ namespace
 			cameraval.AddMember("LookType", rapidjson::Value(CameraLookTypeToString(cam.LookType), alloc), alloc);
 			cameraval.AddMember("PlaneType", rapidjson::Value(CameraPlaneTypeToString(cam.PlaneType), alloc), alloc);
 			cameraval.AddMember("TriggerType", rapidjson::Value(CameraTriggerTypeToString(cam.TriggerType), alloc), alloc);
+			cameraval.AddMember("ZoomType", rapidjson::Value(CameraZoomTypeToString(cam.ZoomType), alloc), alloc);
 
 			thisvalue.AddMember("Camera", std::move(cameraval), alloc);
 

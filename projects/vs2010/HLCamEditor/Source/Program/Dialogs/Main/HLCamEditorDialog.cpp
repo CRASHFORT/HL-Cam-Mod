@@ -123,6 +123,7 @@ namespace App
 		camera.TriggerType = static_cast<decltype(camera.TriggerType)>(buffer.GetValue<unsigned char>());
 		camera.LookType = static_cast<decltype(camera.LookType)>(buffer.GetValue<unsigned char>());
 		camera.PlaneType = static_cast<decltype(camera.PlaneType)>(buffer.GetValue<unsigned char>());
+		camera.ZoomType = static_cast<decltype(camera.ZoomType)>(buffer.GetValue<unsigned char>());
 		
 		return camera;
 	}
@@ -199,6 +200,17 @@ BOOL HLCamEditorDialog::OnInitDialog()
 		entries.LookType->AllowEdit(false);
 
 		PropertyGrid.AddProperty(entries.LookType);
+	}
+
+	{
+		entries.ZoomType = new CMFCPropertyGridProperty("Zoom", CameraZoomTypeToString(CameraZoomType::None));
+		entries.ZoomType->AddOption(CameraZoomTypeToString(CameraZoomType::ZoomIn));
+		entries.ZoomType->AddOption(CameraZoomTypeToString(CameraZoomType::ZoomOut));
+		entries.ZoomType->AddOption(CameraZoomTypeToString(CameraZoomType::ZoomByDistance));
+
+		entries.ZoomType->AllowEdit(false);
+
+		PropertyGrid.AddProperty(entries.ZoomType);
 	}
 
 	{
@@ -670,6 +682,24 @@ LRESULT HLCamEditorDialog::OnPropertyGridItemChanged(WPARAM controlid, LPARAM pr
 
 			cam->PlaneType = newval;
 		}
+
+		else if (prop == entries.ZoomType)
+		{
+			auto newvalstr = prop->GetValue().bstrVal;
+			auto newval = Cam::Shared::CameraZoomTypeFromString(newvalstr);
+
+			AppServer.Write
+			(
+				Messages::Camera_ChangeZoomType,
+				Utility::BinaryBufferHelp::CreatePacket
+				(
+					userdata->CameraID,
+					static_cast<unsigned char>(newval)
+				)
+			);
+
+			cam->ZoomType = newval;
+		}
 	}
 
 	return 0;
@@ -872,6 +902,7 @@ void HLCamEditorDialog::OnTvnSelchangedTree1(NMHDR *pNMHDR, LRESULT *pResult)
 			entries.ActivateType->SetValue(Cam::Shared::CameraTriggerTypeToString(camera->TriggerType));
 			entries.LookType->SetValue(Cam::Shared::CameraLookTypeToString(camera->LookType));
 			entries.PlaneType->SetValue(Cam::Shared::CameraPlaneTypeToString(camera->PlaneType));
+			entries.ZoomType->SetValue(Cam::Shared::CameraZoomTypeToString(camera->ZoomType));
 
 			AppServer.Write
 			(

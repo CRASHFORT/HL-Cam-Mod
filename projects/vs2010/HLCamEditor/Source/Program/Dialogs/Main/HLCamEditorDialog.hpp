@@ -37,6 +37,7 @@ namespace App
 		Cam::Shared::CameraTriggerType TriggerType;
 		Cam::Shared::CameraLookType LookType;
 		Cam::Shared::CameraPlaneType PlaneType;
+		Cam::Shared::CameraZoomType ZoomType;
 
 		HTREEITEM TreeItem;
 	};
@@ -127,6 +128,7 @@ private:
 		CMFCPropertyGridProperty* ActivateType;
 		CMFCPropertyGridProperty* PlaneType;
 		CMFCPropertyGridProperty* LookType;
+		CMFCPropertyGridProperty* ZoomType;
 		CMFCPropertyGridProperty* PositionX;
 		CMFCPropertyGridProperty* PositionY;
 		CMFCPropertyGridProperty* PositionZ;

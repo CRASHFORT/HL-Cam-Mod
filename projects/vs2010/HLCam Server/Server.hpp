@@ -51,7 +51,7 @@ namespace Cam
 		Shared::CameraTriggerType TriggerType = Shared::CameraTriggerType::ByUserTrigger;
 		Shared::CameraLookType LookType = Shared::CameraLookType::AtAngle;
 		Shared::CameraPlaneType PlaneType = Shared::CameraPlaneType::Both;
-		Shared::CameraZoomType ZoomType = Shared::CameraZoomType::ZoomIn;
+		Shared::CameraZoomType ZoomType = Shared::CameraZoomType::None;
 
 		size_t FOV = 90;
 
