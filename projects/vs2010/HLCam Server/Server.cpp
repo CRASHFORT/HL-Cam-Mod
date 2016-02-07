@@ -896,10 +896,10 @@ namespace
 						else
 						{
 							endcamera = TheCamMap.FindCameraByID(cameraid);
-							endcamera->TargetCamera->SetFov(fov);
 						}
 
 						endcamera->FOV = fov;
+						endcamera->TargetCamera->SetFov(fov);
 					});
 
 					break;

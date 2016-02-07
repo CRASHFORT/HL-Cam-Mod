@@ -2152,6 +2152,17 @@ TYPEDESCRIPTION	CTriggerCamera::m_SaveData[] =
 
 IMPLEMENT_SAVERESTORE(CTriggerCamera, CBaseDelay);
 
+namespace
+{
+	namespace Interpolate
+	{
+		float Linear(float start, float end, float time)
+		{
+			return (1.0f - time) * start + time * end;
+		}
+	}
+}
+
 void CTriggerCamera::Spawn(void)
 {
 	pev->movetype = MOVETYPE_NOCLIP;
@@ -2165,12 +2176,12 @@ void CTriggerCamera::SetupHLCamera(const Cam::MapCamera& camera)
 	HLCam = camera;
 }
 
-void CTriggerCamera::SetFov(int fov)
+void CTriggerCamera::SetFov(float fov)
 {
 	HLCam.FOV = fov;
 }
 
-void CTriggerCamera::SetPlayerFOV(int fov)
+void CTriggerCamera::SetPlayerFOV(float fov)
 {
 	if (!PlayerHandle)
 	{
@@ -2179,11 +2190,6 @@ void CTriggerCamera::SetPlayerFOV(int fov)
 
 	auto playerptr = static_cast<CBasePlayer*>(Instance(PlayerHandle.Get()));
 	playerptr->pev->fov = playerptr->m_iFOV = fov;
-
-	if (fov != 0)
-	{
-		SetFov(fov);
-	}
 }
 
 void CTriggerCamera::Use(CBaseEntity* activator, CBaseEntity* caller, USE_TYPE usetype, float value)
@@ -2247,7 +2253,28 @@ void CTriggerCamera::Use(CBaseEntity* activator, CBaseEntity* caller, USE_TYPE u
 		pev->nextthink = gpGlobals->time;
 	}
 
-	SetPlayerFOV(HLCam.FOV);
+	if (HLCam.ZoomType != Cam::Shared::CameraZoomType::None)
+	{
+		StartZoomTime = gpGlobals->time;
+		ReachedEndZoom = false;
+
+		if (HLCam.ZoomType == Cam::Shared::CameraZoomType::ZoomIn)
+		{
+			CurrentZoomFOV = HLCam.FOV;
+			SetPlayerFOV(HLCam.FOV);
+		}
+
+		else if (HLCam.ZoomType == Cam::Shared::CameraZoomType::ZoomOut)
+		{
+			CurrentZoomFOV = HLCam.ZoomData.EndFov;
+			SetPlayerFOV(HLCam.ZoomData.EndFov);
+		}
+	}
+
+	else
+	{
+		SetPlayerFOV(HLCam.FOV);
+	}
 }
 
 void CTriggerCamera::FollowTarget()
@@ -2317,6 +2344,44 @@ void CTriggerCamera::FollowTarget()
 	{
 		pev->avelocity.x = 0;
 		pev->avelocity.y = diry * endspeed;
+	}
+
+	if (!ReachedEndZoom)
+	{
+		const auto endtime = StartZoomTime + HLCam.ZoomData.ZoomTime;
+		const auto ratio = (gpGlobals->time - StartZoomTime) / (endtime - StartZoomTime);
+
+		if (HLCam.ZoomType == Cam::Shared::CameraZoomType::ZoomIn)
+		{
+			if (HLCam.AngleType == Cam::Shared::CameraAngleType::Linear)
+			{
+				CurrentZoomFOV = Interpolate::Linear(HLCam.FOV, HLCam.ZoomData.EndFov, ratio);
+			}
+
+			if (CurrentZoomFOV < HLCam.ZoomData.EndFov)
+			{
+				CurrentZoomFOV = HLCam.ZoomData.EndFov;
+				ReachedEndZoom = true;
+			}
+
+			SetPlayerFOV(CurrentZoomFOV);
+		}
+
+		else if (HLCam.ZoomType == Cam::Shared::CameraZoomType::ZoomOut)
+		{
+			if (HLCam.AngleType == Cam::Shared::CameraAngleType::Linear)
+			{
+				CurrentZoomFOV = Interpolate::Linear(HLCam.ZoomData.EndFov, HLCam.FOV, ratio);
+			}
+
+			if (CurrentZoomFOV > HLCam.FOV)
+			{
+				CurrentZoomFOV = HLCam.FOV;
+				ReachedEndZoom = true;
+			}
+
+			SetPlayerFOV(CurrentZoomFOV);
+		}
 	}
 
 	pev->nextthink = gpGlobals->time;

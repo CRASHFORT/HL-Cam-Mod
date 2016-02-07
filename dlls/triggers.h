@@ -33,6 +33,10 @@ public:
 
 	void SetupHLCamera(const Cam::MapCamera& camera);
 
-	void SetFov(int fov);
-	void SetPlayerFOV(int fov);
+	void SetFov(float fov);
+	void SetPlayerFOV(float fov);
+
+	float CurrentZoomFOV;
+	float StartZoomTime;
+	bool ReachedEndZoom;
 };

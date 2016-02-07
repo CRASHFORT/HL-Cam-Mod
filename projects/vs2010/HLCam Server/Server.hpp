@@ -51,10 +51,21 @@ namespace Cam
 		Shared::CameraTriggerType TriggerType = Shared::CameraTriggerType::ByUserTrigger;
 		Shared::CameraLookType LookType = Shared::CameraLookType::AtAngle;
 		Shared::CameraPlaneType PlaneType = Shared::CameraPlaneType::Both;
+		Shared::CameraZoomType ZoomType = Shared::CameraZoomType::ZoomIn;
 
 		size_t FOV = 90;
 
 		float MaxSpeed = 200;
+
+		struct
+		{
+			/*
+				Time it takes for in / out transitions.
+			*/
+			float ZoomTime = 0.5f;
+
+			float EndFov = 20.0f;
+		} ZoomData;
 
 		CTriggerCamera* TargetCamera;
 	};

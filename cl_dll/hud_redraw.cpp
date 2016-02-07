@@ -43,7 +43,7 @@ void CHud::Think(void)
 	m_scrinfo.iSize = sizeof(m_scrinfo);
 	GetScreenInfo(&m_scrinfo);
 
-	int newfov;
+	float newfov;
 	HUDLIST *pList = m_pHudList;
 
 	while (pList)

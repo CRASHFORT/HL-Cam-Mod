@@ -238,3 +238,81 @@ Cam::Shared::CameraTriggerType Cam::Shared::CameraTriggerTypeFromString(const ch
 
 	return CameraTriggerType::ByUserTrigger;
 }
+
+const char* Cam::Shared::CameraZoomTypeToString(CameraZoomType type)
+{
+	switch (type)
+	{
+		case Cam::Shared::CameraZoomType::None:
+		{
+			return "None";
+		}
+
+		case Cam::Shared::CameraZoomType::ZoomIn:
+		{
+			return "Zoom in";
+		}
+
+		case Cam::Shared::CameraZoomType::ZoomOut:
+		{
+			return "Zoom out";
+		}
+
+		case Cam::Shared::CameraZoomType::ZoomByDistance:
+		{
+			return "Zoom by distance";
+		}
+	}
+
+	return nullptr;
+}
+
+Cam::Shared::CameraZoomType Cam::Shared::CameraZoomTypeFromString(const wchar_t* string)
+{
+	if (Utility::CompareString(string, L"None"))
+	{
+		return CameraZoomType::None;
+	}
+
+	else if (Utility::CompareString(string, L"Zoom in"))
+	{
+		return CameraZoomType::ZoomIn;
+	}
+
+	else if (Utility::CompareString(string, L"Zoom out"))
+	{
+		return CameraZoomType::ZoomOut;
+	}
+
+	else if (Utility::CompareString(string, L"Zoom by distance"))
+	{
+		return CameraZoomType::ZoomByDistance;
+	}
+
+	return CameraZoomType::None;
+}
+
+Cam::Shared::CameraZoomType Cam::Shared::CameraZoomTypeFromString(const char* string)
+{
+	if (Utility::CompareString(string, "None"))
+	{
+		return CameraZoomType::None;
+	}
+
+	if (Utility::CompareString(string, "Zoom in"))
+	{
+		return CameraZoomType::ZoomIn;
+	}
+
+	else if (Utility::CompareString(string, "Zoom out"))
+	{
+		return CameraZoomType::ZoomOut;
+	}
+
+	else if (Utility::CompareString(string, "Zoom by distance"))
+	{
+		return CameraZoomType::ZoomByDistance;
+	}
+
+	return CameraZoomType::None;
+}

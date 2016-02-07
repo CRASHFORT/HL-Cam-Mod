@@ -82,6 +82,18 @@ namespace Cam
 		CameraTriggerType CameraTriggerTypeFromString(const wchar_t* string);
 		CameraTriggerType CameraTriggerTypeFromString(const char* string);
 
+		enum class CameraZoomType
+		{
+			None,
+			ZoomIn,
+			ZoomOut,
+			ZoomByDistance
+		};
+
+		const char* CameraZoomTypeToString(CameraZoomType type);
+		CameraZoomType CameraZoomTypeFromString(const wchar_t* string);
+		CameraZoomType CameraZoomTypeFromString(const char* string);
+
 		namespace Messages
 		{
 			namespace App

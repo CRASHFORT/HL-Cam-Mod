@@ -245,7 +245,7 @@ void LinkUserMessages( void )
 	gmsgWeapPickup = REG_USER_MSG( "WeapPickup", 1 );
 	gmsgItemPickup = REG_USER_MSG( "ItemPickup", -1 );
 	gmsgHideWeapon = REG_USER_MSG( "HideWeapon", 1 );
-	gmsgSetFOV = REG_USER_MSG( "SetFOV", 2 );
+	gmsgSetFOV = REG_USER_MSG( "SetFOV", 4 );
 	gmsgShowMenu = REG_USER_MSG( "ShowMenu", -1 );
 	gmsgShake = REG_USER_MSG("ScreenShake", sizeof(ScreenShake));
 	gmsgFade = REG_USER_MSG("ScreenFade", sizeof(ScreenFade));
@@ -940,7 +940,7 @@ void CBasePlayer::Killed( entvars_t *pevAttacker, int iGib )
 	pev->fov = m_iFOV = m_iClientFOV = 0;
 
 	MESSAGE_BEGIN( MSG_ONE, gmsgSetFOV, NULL, pev );
-		WRITE_COORD(0);
+		WRITE_LONG(0);
 	MESSAGE_END();
 
 
@@ -1465,7 +1465,7 @@ void CBasePlayer::StartObserver( Vector vecPosition, Vector vecViewAngle )
 	m_iFOV = m_iClientFOV = 0;
 	pev->fov = m_iFOV;
 	MESSAGE_BEGIN( MSG_ONE, gmsgSetFOV, NULL, pev );
-		WRITE_COORD(0);
+		WRITE_LONG(0);
 	MESSAGE_END();
 
 	// Setup flags
@@ -4014,7 +4014,7 @@ void CBasePlayer :: UpdateClientData( void )
 	if ( m_iFOV != m_iClientFOV )
 	{
 		MESSAGE_BEGIN( MSG_ONE, gmsgSetFOV, NULL, pev );
-			WRITE_COORD( m_iFOV );
+			WRITE_LONG(*reinterpret_cast<int*>(&m_iFOV));
 		MESSAGE_END();
 
 		// cache FOV change at end of function, so weapon updates can see that FOV has changed

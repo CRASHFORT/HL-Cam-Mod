@@ -645,12 +645,8 @@ int CHud::MsgFunc_SetFOV(const char *pszName,  int iSize, void *pbuf)
 {
 	BEGIN_READ( pbuf, iSize );
 
-	int newfov = READ_BYTE();
+	float newfov = READ_FLOAT();
 	float def_fov = CVAR_GET_FLOAT( "default_fov" );
-
-	//Weapon prediction already takes care of changing the fog. ( g_lastFOV ).
-	if ( cl_lw && cl_lw->value )
-		return 1;
 
 	g_lastFOV = newfov;
 
@@ -674,7 +670,7 @@ int CHud::MsgFunc_SetFOV(const char *pszName,  int iSize, void *pbuf)
 	else
 	{  
 		// set a new sensitivity that is proportional to the change from the FOV default
-		m_flMouseSensitivity = sensitivity->value * ((float)newfov / (float)def_fov) * CVAR_GET_FLOAT("zoom_sensitivity_ratio");
+		//m_flMouseSensitivity = sensitivity->value * ((float)newfov / (float)def_fov) * CVAR_GET_FLOAT("zoom_sensitivity_ratio");
 	}
 
 	return 1;
