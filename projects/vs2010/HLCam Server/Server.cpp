@@ -1375,7 +1375,10 @@ namespace
 						Previous camera has to be told to be disabled to allow us
 						to change to a new one.
 					*/
-					linkedcam->TargetCamera->Use(nullptr, nullptr, USE_OFF, 0.0f);
+					if (!TheCamMap.ActiveCamera || linkedcam->TargetCamera != TheCamMap.ActiveCamera->TargetCamera)
+					{
+						linkedcam->TargetCamera->Use(nullptr, nullptr, USE_OFF, 0.0f);
+					}
 				}
 			}
 
