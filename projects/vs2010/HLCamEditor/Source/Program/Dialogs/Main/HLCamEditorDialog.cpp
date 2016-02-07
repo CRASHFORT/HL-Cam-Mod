@@ -708,7 +708,11 @@ LRESULT HLCamEditorDialog::OnPropertyGridItemChanged(WPARAM controlid, LPARAM pr
 void HLCamEditorDialog::OnClose()
 {
 	ShouldCloseMessageThread = true;
-	MessageHandlerThread.join();
+
+	if (MessageHandlerThread.joinable())
+	{
+		MessageHandlerThread.join();
+	}
 
 	AppServer.Write(Cam::Shared::Messages::App::OnAppShutdown);
 
