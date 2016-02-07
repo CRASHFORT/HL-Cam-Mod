@@ -2204,12 +2204,18 @@ void CTriggerCamera::Use(CBaseEntity* activator, CBaseEntity* caller, USE_TYPE u
 	{
 		SetThink(nullptr);
 
-		g_engfuncs.pfnSetView(PlayerHandle->edict(), PlayerHandle->edict());
-
 		/*
-			Setting 0 restores fov to player preference
+			Full restore.
 		*/
-		SetPlayerFOV(0);
+		if (value == 0)
+		{
+			g_engfuncs.pfnSetView(PlayerHandle->edict(), PlayerHandle->edict());
+
+			/*
+				Setting 0 restores fov to player preference
+			*/
+			SetPlayerFOV(0);
+		}
 
 		pev->angles = HLCam.Angle;
 

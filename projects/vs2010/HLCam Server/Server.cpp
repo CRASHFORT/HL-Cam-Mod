@@ -336,7 +336,7 @@ namespace
 					MESSAGE_END();
 				}
 
-				ActiveCamera->TargetCamera->Use(nullptr, nullptr, USE_OFF, 0.0f);
+				ActiveCamera->TargetCamera->Use(nullptr, nullptr, USE_OFF, 0);
 				ActiveCamera = nullptr;
 			}
 		}
@@ -788,7 +788,7 @@ namespace
 									MESSAGE_END();
 								}
 
-								TheCamMap.ActiveCamera->TargetCamera->Use(nullptr, nullptr, USE_OFF, 0.0f);
+								TheCamMap.ActiveCamera->TargetCamera->Use(nullptr, nullptr, USE_OFF, 0);
 							}
 
 							TheCamMap.ActiveCamera = camera;
@@ -1478,9 +1478,13 @@ namespace
 						Previous camera has to be told to be disabled to allow us
 						to change to a new one.
 					*/
-					if (!TheCamMap.ActiveCamera || linkedcam->TargetCamera != TheCamMap.ActiveCamera->TargetCamera)
+					if (trig.LinkedCameraID != TheCamMap.ActiveTrigger->LinkedCameraID)
 					{
-						linkedcam->TargetCamera->Use(nullptr, nullptr, USE_OFF, 0.0f);
+						static size_t count = 0;
+						count++;
+
+						g_engfuncs.pfnAlertMessage(at_console, "trig.LinkedCameraID != TheCamMap.ActiveTrigger->LinkedCameraID %d\n", count);
+						linkedcam->TargetCamera->Use(nullptr, nullptr, USE_OFF, 1);
 					}
 				}
 			}
