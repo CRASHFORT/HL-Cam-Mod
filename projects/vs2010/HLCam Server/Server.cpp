@@ -1480,10 +1480,6 @@ namespace
 					*/
 					if (trig.LinkedCameraID != TheCamMap.ActiveTrigger->LinkedCameraID)
 					{
-						static size_t count = 0;
-						count++;
-
-						g_engfuncs.pfnAlertMessage(at_console, "trig.LinkedCameraID != TheCamMap.ActiveTrigger->LinkedCameraID %d\n", count);
 						linkedcam->TargetCamera->Use(nullptr, nullptr, USE_OFF, 1);
 					}
 				}
@@ -2213,6 +2209,7 @@ void Cam::OnPlayerPostUpdate(CBasePlayer* player)
 		if (LocalUtility::IsBoxIntersectingBox(playerposmin, playerposmax, trig.MinPos, trig.MaxPos))
 		{
 			PlayerEnterTrigger(trig);
+			break;
 		}
 	}
 }
