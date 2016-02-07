@@ -39,6 +39,9 @@ namespace App
 		Cam::Shared::CameraPlaneType PlaneType;
 		Cam::Shared::CameraZoomType ZoomType;
 
+		float ZoomTime;
+		float ZoomEndFOV;
+
 		HTREEITEM TreeItem;
 	};
 
@@ -128,7 +131,11 @@ private:
 		CMFCPropertyGridProperty* ActivateType;
 		CMFCPropertyGridProperty* PlaneType;
 		CMFCPropertyGridProperty* LookType;
+		
 		CMFCPropertyGridProperty* ZoomType;
+		CMFCPropertyGridProperty* ZoomTime;
+		CMFCPropertyGridProperty* ZoomEndFOV;
+
 		CMFCPropertyGridProperty* PositionX;
 		CMFCPropertyGridProperty* PositionY;
 		CMFCPropertyGridProperty* PositionZ;

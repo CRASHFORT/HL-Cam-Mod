@@ -124,6 +124,13 @@ namespace App
 		camera.LookType = static_cast<decltype(camera.LookType)>(buffer.GetValue<unsigned char>());
 		camera.PlaneType = static_cast<decltype(camera.PlaneType)>(buffer.GetValue<unsigned char>());
 		camera.ZoomType = static_cast<decltype(camera.ZoomType)>(buffer.GetValue<unsigned char>());
+
+		if (camera.ZoomType != Cam::Shared::CameraZoomType::None &&
+			camera.ZoomType != Cam::Shared::CameraZoomType::ZoomByDistance)
+		{
+			buffer >> camera.ZoomEndFOV;
+			buffer >> camera.ZoomTime;
+		}
 		
 		return camera;
 	}
@@ -203,14 +210,30 @@ BOOL HLCamEditorDialog::OnInitDialog()
 	}
 
 	{
-		entries.ZoomType = new CMFCPropertyGridProperty("Zoom", CameraZoomTypeToString(CameraZoomType::None));
-		entries.ZoomType->AddOption(CameraZoomTypeToString(CameraZoomType::ZoomIn));
-		entries.ZoomType->AddOption(CameraZoomTypeToString(CameraZoomType::ZoomOut));
-		entries.ZoomType->AddOption(CameraZoomTypeToString(CameraZoomType::ZoomByDistance));
+		auto group = new CMFCPropertyGridProperty("Zoom", 0, true);
+		PropertyGrid.AddProperty(group);
 
-		entries.ZoomType->AllowEdit(false);
+		{
+			entries.ZoomType = new CMFCPropertyGridProperty("Type", CameraZoomTypeToString(CameraZoomType::None));
+			entries.ZoomType->AddOption(CameraZoomTypeToString(CameraZoomType::None));
+			entries.ZoomType->AddOption(CameraZoomTypeToString(CameraZoomType::ZoomIn));
+			entries.ZoomType->AddOption(CameraZoomTypeToString(CameraZoomType::ZoomOut));
+			entries.ZoomType->AddOption(CameraZoomTypeToString(CameraZoomType::ZoomByDistance));
 
-		PropertyGrid.AddProperty(entries.ZoomType);
+			entries.ZoomType->AllowEdit(false);
+
+			group->AddSubItem(entries.ZoomType);
+		}
+
+		{
+			entries.ZoomTime = new CMFCPropertyGridProperty("Duration", COleVariant(0.5f));
+			group->AddSubItem(entries.ZoomTime);
+		}
+
+		{
+			entries.ZoomEndFOV = new CMFCPropertyGridProperty("End FOV", COleVariant(30.0f));
+			group->AddSubItem(entries.ZoomEndFOV);
+		}
 	}
 
 	{
@@ -700,6 +723,40 @@ LRESULT HLCamEditorDialog::OnPropertyGridItemChanged(WPARAM controlid, LPARAM pr
 
 			cam->ZoomType = newval;
 		}
+
+		else if (prop == entries.ZoomTime)
+		{
+			auto newval = prop->GetValue().fltVal;
+
+			AppServer.Write
+			(
+				Messages::Camera_ChangeZoomTime,
+				Utility::BinaryBufferHelp::CreatePacket
+				(
+					userdata->CameraID,
+					newval
+				)
+			);
+
+			cam->ZoomTime = newval;
+		}
+
+		else if (prop == entries.ZoomEndFOV)
+		{
+			auto newval = prop->GetValue().fltVal;
+
+			AppServer.Write
+			(
+				Messages::Camera_ChangeZoomEndFOV,
+				Utility::BinaryBufferHelp::CreatePacket
+				(
+					userdata->CameraID,
+					newval
+				)
+			);
+
+			cam->ZoomEndFOV = newval;
+		}
 	}
 
 	return 0;
@@ -907,6 +964,13 @@ void HLCamEditorDialog::OnTvnSelchangedTree1(NMHDR *pNMHDR, LRESULT *pResult)
 			entries.LookType->SetValue(Cam::Shared::CameraLookTypeToString(camera->LookType));
 			entries.PlaneType->SetValue(Cam::Shared::CameraPlaneTypeToString(camera->PlaneType));
 			entries.ZoomType->SetValue(Cam::Shared::CameraZoomTypeToString(camera->ZoomType));
+
+			if (camera->ZoomType != Cam::Shared::CameraZoomType::None &&
+				camera->ZoomType != Cam::Shared::CameraZoomType::ZoomByDistance)
+			{
+				entries.ZoomEndFOV->SetValue(camera->ZoomEndFOV);
+				entries.ZoomTime->SetValue(camera->ZoomTime);
+			}
 
 			AppServer.Write
 			(

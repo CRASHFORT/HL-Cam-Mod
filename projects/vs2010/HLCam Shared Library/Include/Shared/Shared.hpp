@@ -111,7 +111,10 @@ namespace Cam
 					Camera_ChangePlaneType,
 					Camera_ChangeActivateType,
 					Camera_ChangeLookType,
+					
 					Camera_ChangeZoomType,
+					Camera_ChangeZoomTime,
+					Camera_ChangeZoomEndFOV,
 
 					Camera_StartMoveSequence,
 					Camera_AddTriggerToCamera,

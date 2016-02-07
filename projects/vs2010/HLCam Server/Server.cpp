@@ -524,6 +524,13 @@ namespace
 			ret << static_cast<unsigned char>(camera.PlaneType);
 			ret << static_cast<unsigned char>(camera.ZoomType);
 
+			if (camera.ZoomType != Cam::Shared::CameraZoomType::None &&
+				camera.ZoomType != Cam::Shared::CameraZoomType::ZoomByDistance)
+			{
+				ret << camera.ZoomData.EndFov;
+				ret << camera.ZoomData.ZoomTime;
+			}
+
 			return ret;
 		}
 
@@ -1054,6 +1061,80 @@ namespace
 					break;
 				}
 
+				case Message::Camera_ChangeZoomTime:
+				{
+					auto cameraid = data.GetValue<size_t>();
+					auto time = data.GetValue<float>();
+
+					TheCamMap.InvokeMessageFunction([cameraid, time]
+					{
+						if (!EnsureInactiveState())
+						{
+							return;
+						}
+
+						if (TheCamMap.CurrentSelectionCameraID != cameraid)
+						{
+							g_engfuncs.pfnAlertMessage(at_console, "HLCAM: No selected camera for app message\n");
+							return;
+						}
+
+						Cam::MapCamera* endcamera;
+
+						if (TheCamMap.ActiveCamera)
+						{
+							endcamera = TheCamMap.ActiveCamera;
+						}
+
+						else
+						{
+							endcamera = TheCamMap.FindCameraByID(cameraid);
+						}
+
+						endcamera->ZoomData.ZoomTime = time;
+						endcamera->TargetCamera->HLCam.ZoomData.ZoomTime = time;
+					});
+
+					break;
+				}
+
+				case Message::Camera_ChangeZoomEndFOV:
+				{
+					auto cameraid = data.GetValue<size_t>();
+					auto fov = data.GetValue<float>();
+
+					TheCamMap.InvokeMessageFunction([cameraid, fov]
+					{
+						if (!EnsureInactiveState())
+						{
+							return;
+						}
+
+						if (TheCamMap.CurrentSelectionCameraID != cameraid)
+						{
+							g_engfuncs.pfnAlertMessage(at_console, "HLCAM: No selected camera for app message\n");
+							return;
+						}
+
+						Cam::MapCamera* endcamera;
+
+						if (TheCamMap.ActiveCamera)
+						{
+							endcamera = TheCamMap.ActiveCamera;
+						}
+
+						else
+						{
+							endcamera = TheCamMap.FindCameraByID(cameraid);
+						}
+
+						endcamera->ZoomData.EndFov = fov;
+						endcamera->TargetCamera->HLCam.ZoomData.EndFov = fov;
+					});
+
+					break;
+				}
+
 				case Message::Camera_Remove:
 				{
 					auto cameraid = data.GetValue<size_t>();
@@ -1298,6 +1379,28 @@ namespace
 					if (looktypeitr != camval.MemberEnd())
 					{
 						curcam.ZoomType = Cam::Shared::CameraZoomTypeFromString(looktypeitr->value.GetString());
+
+						if (curcam.ZoomType != Cam::Shared::CameraZoomType::None &&
+							curcam.ZoomType != Cam::Shared::CameraZoomType::ZoomByDistance)
+						{
+							{
+								const auto& zoomtimeitr = camval.FindMember("ZoomTime");
+
+								if (zoomtimeitr != camval.MemberEnd())
+								{
+									curcam.ZoomData.ZoomTime = zoomtimeitr->value.GetDouble();
+								}
+							}
+
+							{
+								const auto& endfovitr = camval.FindMember("ZoomEndFOV");
+
+								if (endfovitr != camval.MemberEnd())
+								{
+									curcam.ZoomData.EndFov = endfovitr->value.GetDouble();
+								}
+							}
+						}
 					}
 				}
 
@@ -1721,12 +1824,19 @@ namespace
 
 			cameraval.AddMember("Position", std::move(camposval), alloc);
 			cameraval.AddMember("Angle", std::move(camangval), alloc);
-			cameraval.AddMember("FOV", rapidjson::Value(cam.FOV), alloc);
-			cameraval.AddMember("Speed", rapidjson::Value(cam.MaxSpeed), alloc);
-			cameraval.AddMember("LookType", rapidjson::Value(CameraLookTypeToString(cam.LookType), alloc), alloc);
-			cameraval.AddMember("PlaneType", rapidjson::Value(CameraPlaneTypeToString(cam.PlaneType), alloc), alloc);
-			cameraval.AddMember("TriggerType", rapidjson::Value(CameraTriggerTypeToString(cam.TriggerType), alloc), alloc);
-			cameraval.AddMember("ZoomType", rapidjson::Value(CameraZoomTypeToString(cam.ZoomType), alloc), alloc);
+			cameraval.AddMember("FOV", cam.FOV, alloc);
+			cameraval.AddMember("Speed", cam.MaxSpeed, alloc);
+			cameraval.AddMember("LookType", {CameraLookTypeToString(cam.LookType), alloc}, alloc);
+			cameraval.AddMember("PlaneType", {CameraPlaneTypeToString(cam.PlaneType), alloc}, alloc);
+			cameraval.AddMember("TriggerType", {CameraTriggerTypeToString(cam.TriggerType), alloc}, alloc);
+			cameraval.AddMember("ZoomType", {CameraZoomTypeToString(cam.ZoomType), alloc}, alloc);
+
+			if (cam.ZoomType != Cam::Shared::CameraZoomType::None &&
+				cam.ZoomType != Cam::Shared::CameraZoomType::ZoomByDistance)
+			{
+				cameraval.AddMember("ZoomTime", cam.ZoomData.ZoomTime, alloc);
+				cameraval.AddMember("ZoomEndFOV", cam.ZoomData.EndFov, alloc);
+			}
 
 			thisvalue.AddMember("Camera", std::move(cameraval), alloc);
 
