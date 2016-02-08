@@ -119,7 +119,6 @@ namespace App
 		buffer >> camera.Angles.Y;
 		buffer >> camera.Angles.Z;
 
-		camera.AngleType = static_cast<decltype(camera.AngleType)>(buffer.GetValue<unsigned char>());
 		camera.TriggerType = static_cast<decltype(camera.TriggerType)>(buffer.GetValue<unsigned char>());
 		camera.LookType = static_cast<decltype(camera.LookType)>(buffer.GetValue<unsigned char>());
 		camera.PlaneType = static_cast<decltype(camera.PlaneType)>(buffer.GetValue<unsigned char>());
@@ -128,6 +127,7 @@ namespace App
 		if (camera.ZoomType != Cam::Shared::CameraZoomType::None &&
 			camera.ZoomType != Cam::Shared::CameraZoomType::ZoomByDistance)
 		{
+			camera.ZoomInterpMethod = static_cast<decltype(camera.ZoomInterpMethod)>(buffer.GetValue<unsigned char>());
 			buffer >> camera.ZoomEndFOV;
 			buffer >> camera.ZoomTime;
 		}
@@ -233,6 +233,15 @@ BOOL HLCamEditorDialog::OnInitDialog()
 		{
 			entries.ZoomEndFOV = new CMFCPropertyGridProperty("End FOV", COleVariant(20.0f));
 			group->AddSubItem(entries.ZoomEndFOV);
+		}
+
+		{
+			entries.ZoomInterpMethod = new CMFCPropertyGridProperty("Interp method", CameraAngleTypeToString(CameraAngleType::Linear));
+			entries.ZoomInterpMethod->AddOption(CameraAngleTypeToString(CameraAngleType::Linear));
+			entries.ZoomInterpMethod->AddOption(CameraAngleTypeToString(CameraAngleType::Smooth));
+			entries.ZoomInterpMethod->AddOption(CameraAngleTypeToString(CameraAngleType::Exponential));
+
+			group->AddSubItem(entries.ZoomInterpMethod);
 		}
 	}
 
@@ -343,6 +352,7 @@ BOOL HLCamEditorDialog::OnInitDialog()
 	entries.Name->Show(false);
 	entries.ZoomEndFOV->Show(false);
 	entries.ZoomTime->Show(false);
+	entries.ZoomInterpMethod->Show(false);
 
 	return 1;
 }
@@ -765,6 +775,7 @@ LRESULT HLCamEditorDialog::OnPropertyGridItemChanged(WPARAM controlid, LPARAM pr
 				{
 					entries.ZoomEndFOV->Show(false);
 					entries.ZoomTime->Show(false);
+					entries.ZoomInterpMethod->Show(false);
 					break;
 				}
 
@@ -773,6 +784,7 @@ LRESULT HLCamEditorDialog::OnPropertyGridItemChanged(WPARAM controlid, LPARAM pr
 				{
 					entries.ZoomEndFOV->Show();
 					entries.ZoomTime->Show();
+					entries.ZoomInterpMethod->Show();
 					break;
 				}
 			}
@@ -812,6 +824,24 @@ LRESULT HLCamEditorDialog::OnPropertyGridItemChanged(WPARAM controlid, LPARAM pr
 			);
 
 			cam->ZoomEndFOV = newval;
+		}
+
+		else if (prop == entries.ZoomInterpMethod)
+		{
+			auto newvalstr = prop->GetValue().bstrVal;
+			auto newval = Cam::Shared::CameraAngleTypeFromString(newvalstr);
+
+			AppServer.Write
+			(
+				Messages::Camera_ChangeZoomInterpMethod,
+				Utility::BinaryBufferHelp::CreatePacket
+				(
+					userdata->CameraID,
+					static_cast<unsigned char>(newval)
+				)
+			);
+
+			cam->ZoomInterpMethod = newval;
 		}
 	}
 
@@ -1026,6 +1056,7 @@ void HLCamEditorDialog::OnTvnSelchangedTree1(NMHDR *pNMHDR, LRESULT *pResult)
 			{
 				entries.ZoomEndFOV->SetValue(camera->ZoomEndFOV);
 				entries.ZoomTime->SetValue(camera->ZoomTime);
+				entries.ZoomInterpMethod->SetValue(Cam::Shared::CameraAngleTypeToString(camera->ZoomInterpMethod));
 			}
 
 			AppServer.Write

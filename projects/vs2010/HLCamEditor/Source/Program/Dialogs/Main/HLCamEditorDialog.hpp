@@ -33,7 +33,6 @@ namespace App
 		float MaxSpeed;
 		size_t FOV;
 
-		Cam::Shared::CameraAngleType AngleType;
 		Cam::Shared::CameraTriggerType TriggerType;
 		Cam::Shared::CameraLookType LookType;
 		Cam::Shared::CameraPlaneType PlaneType;
@@ -41,6 +40,7 @@ namespace App
 
 		float ZoomTime;
 		float ZoomEndFOV;
+		Cam::Shared::CameraAngleType ZoomInterpMethod;
 
 		HTREEITEM TreeItem;
 	};
@@ -135,6 +135,7 @@ private:
 		CMFCPropertyGridProperty* ZoomType;
 		CMFCPropertyGridProperty* ZoomTime;
 		CMFCPropertyGridProperty* ZoomEndFOV;
+		CMFCPropertyGridProperty* ZoomInterpMethod;
 
 		CMFCPropertyGridProperty* PositionX;
 		CMFCPropertyGridProperty* PositionY;

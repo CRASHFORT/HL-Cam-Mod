@@ -2160,6 +2160,12 @@ namespace
 		{
 			return (1.0f - time) * start + time * end;
 		}
+
+		float Smooth(float start, float end, float time)
+		{
+			float time2 = (1.0f - std::cos(time * M_PI)) / 2.0f;
+			return (start * (1.0f - time2) + end * time2);
+		}
 	}
 }
 
@@ -2359,34 +2365,48 @@ void CTriggerCamera::FollowTarget()
 
 		if (HLCam.ZoomType == Cam::Shared::CameraZoomType::ZoomIn)
 		{
-			if (HLCam.AngleType == Cam::Shared::CameraAngleType::Linear)
+			if (HLCam.ZoomData.InterpMethod == Cam::Shared::CameraAngleType::Linear)
 			{
 				CurrentZoomFOV = Interpolate::Linear(HLCam.FOV, HLCam.ZoomData.EndFov, ratio);
 			}
 
-			if (CurrentZoomFOV < HLCam.ZoomData.EndFov)
+			else if (HLCam.ZoomData.InterpMethod == Cam::Shared::CameraAngleType::Smooth)
 			{
-				CurrentZoomFOV = HLCam.ZoomData.EndFov;
+				CurrentZoomFOV = Interpolate::Smooth(HLCam.FOV, HLCam.ZoomData.EndFov, ratio);
+			}
+
+			if (ratio > 1.0f)
+			{
 				ReachedEndZoom = true;
 			}
 
-			SetPlayerFOV(CurrentZoomFOV);
+			else
+			{
+				SetPlayerFOV(CurrentZoomFOV);
+			}
 		}
 
 		else if (HLCam.ZoomType == Cam::Shared::CameraZoomType::ZoomOut)
 		{
-			if (HLCam.AngleType == Cam::Shared::CameraAngleType::Linear)
+			if (HLCam.ZoomData.InterpMethod == Cam::Shared::CameraAngleType::Linear)
 			{
 				CurrentZoomFOV = Interpolate::Linear(HLCam.ZoomData.EndFov, HLCam.FOV, ratio);
 			}
 
-			if (CurrentZoomFOV > HLCam.FOV)
+			else if (HLCam.ZoomData.InterpMethod == Cam::Shared::CameraAngleType::Smooth)
 			{
-				CurrentZoomFOV = HLCam.FOV;
+				CurrentZoomFOV = Interpolate::Smooth(HLCam.ZoomData.EndFov, HLCam.FOV, ratio);
+			}
+
+			if (ratio > 1.0f)
+			{
 				ReachedEndZoom = true;
 			}
 
-			SetPlayerFOV(CurrentZoomFOV);
+			else
+			{
+				SetPlayerFOV(CurrentZoomFOV);
+			}
 		}
 	}
 

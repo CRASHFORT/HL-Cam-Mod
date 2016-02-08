@@ -518,7 +518,6 @@ namespace
 			ret << camera.Angle.y;
 			ret << camera.Angle.z;
 
-			ret << static_cast<unsigned char>(camera.AngleType);
 			ret << static_cast<unsigned char>(camera.TriggerType);
 			ret << static_cast<unsigned char>(camera.LookType);
 			ret << static_cast<unsigned char>(camera.PlaneType);
@@ -527,6 +526,7 @@ namespace
 			if (camera.ZoomType != Cam::Shared::CameraZoomType::None &&
 				camera.ZoomType != Cam::Shared::CameraZoomType::ZoomByDistance)
 			{
+				ret << static_cast<unsigned char>(camera.ZoomData.InterpMethod);
 				ret << camera.ZoomData.EndFov;
 				ret << camera.ZoomData.ZoomTime;
 			}
@@ -1135,6 +1135,43 @@ namespace
 					break;
 				}
 
+				case Message::Camera_ChangeZoomInterpMethod:
+				{
+					auto cameraid = data.GetValue<size_t>();
+					auto interptype = data.GetValue<unsigned char>();
+
+					TheCamMap.InvokeMessageFunction([cameraid, interptype]
+					{
+						if (!EnsureInactiveState())
+						{
+							return;
+						}
+
+						if (TheCamMap.CurrentSelectionCameraID != cameraid)
+						{
+							g_engfuncs.pfnAlertMessage(at_console, "HLCAM: No selected camera for app message\n");
+							return;
+						}
+
+						Cam::MapCamera* endcamera;
+
+						if (TheCamMap.ActiveCamera)
+						{
+							endcamera = TheCamMap.ActiveCamera;
+						}
+
+						else
+						{
+							endcamera = TheCamMap.FindCameraByID(cameraid);
+						}
+
+						endcamera->ZoomData.InterpMethod = static_cast<decltype(endcamera->ZoomData.InterpMethod)>(interptype);
+						endcamera->TargetCamera->HLCam.ZoomData.InterpMethod = endcamera->ZoomData.InterpMethod;
+					});
+
+					break;
+				}
+
 				case Message::Camera_Remove:
 				{
 					auto cameraid = data.GetValue<size_t>();
@@ -1398,6 +1435,15 @@ namespace
 								if (endfovitr != camval.MemberEnd())
 								{
 									curcam.ZoomData.EndFov = endfovitr->value.GetDouble();
+								}
+							}
+
+							{
+								const auto& interpitr = camval.FindMember("InterpMethod");
+
+								if (interpitr != camval.MemberEnd())
+								{
+									curcam.ZoomData.InterpMethod = Cam::Shared::CameraAngleTypeFromString(interpitr->value.GetString());
 								}
 							}
 						}
@@ -1814,12 +1860,6 @@ namespace
 			camangval.PushBack(cam.Angle.y, alloc);
 			camangval.PushBack(cam.Angle.z, alloc);
 
-			/*
-				For now these are all settings that can be saved.
-				Eventually you can hopefully set FOV and camera follow type etc
-				in game through vgui or something.
-			*/
-
 			using namespace Cam::Shared;
 
 			cameraval.AddMember("Position", std::move(camposval), alloc);
@@ -1836,6 +1876,7 @@ namespace
 			{
 				cameraval.AddMember("ZoomTime", cam.ZoomData.ZoomTime, alloc);
 				cameraval.AddMember("ZoomEndFOV", cam.ZoomData.EndFov, alloc);
+				cameraval.AddMember("InterpMethod", {CameraAngleTypeToString(cam.ZoomData.InterpMethod), alloc}, alloc);
 			}
 
 			thisvalue.AddMember("Camera", std::move(cameraval), alloc);

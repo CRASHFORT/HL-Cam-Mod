@@ -115,6 +115,7 @@ namespace Cam
 					Camera_ChangeZoomType,
 					Camera_ChangeZoomTime,
 					Camera_ChangeZoomEndFOV,
+					Camera_ChangeZoomInterpMethod,
 
 					Camera_StartMoveSequence,
 					Camera_AddTriggerToCamera,

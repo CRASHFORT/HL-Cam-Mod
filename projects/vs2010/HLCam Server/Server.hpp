@@ -47,7 +47,6 @@ namespace Cam
 		*/
 		char Name[64];
 
-		Shared::CameraAngleType AngleType = Shared::CameraAngleType::Linear;
 		Shared::CameraTriggerType TriggerType = Shared::CameraTriggerType::ByUserTrigger;
 		Shared::CameraLookType LookType = Shared::CameraLookType::AtAngle;
 		Shared::CameraPlaneType PlaneType = Shared::CameraPlaneType::Both;
@@ -65,6 +64,8 @@ namespace Cam
 			float ZoomTime = 0.5f;
 
 			float EndFov = 20.0f;
+
+			Shared::CameraAngleType InterpMethod = Shared::CameraAngleType::Linear;
 		} ZoomData;
 
 		CTriggerCamera* TargetCamera;
