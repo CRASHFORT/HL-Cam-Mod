@@ -231,7 +231,7 @@ BOOL HLCamEditorDialog::OnInitDialog()
 		}
 
 		{
-			entries.ZoomEndFOV = new CMFCPropertyGridProperty("End FOV", COleVariant(30.0f));
+			entries.ZoomEndFOV = new CMFCPropertyGridProperty("End FOV", COleVariant(20.0f));
 			group->AddSubItem(entries.ZoomEndFOV);
 		}
 	}
