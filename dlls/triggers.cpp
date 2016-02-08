@@ -2283,10 +2283,7 @@ void CTriggerCamera::Use(CBaseEntity* activator, CBaseEntity* caller, USE_TYPE u
 		}
 	}
 
-	else
-	{
-		SetPlayerFOV(HLCam.FOV);
-	}
+	SetPlayerFOV(HLCam.FOV);
 }
 
 void CTriggerCamera::FollowTarget()
@@ -2358,12 +2355,13 @@ void CTriggerCamera::FollowTarget()
 		pev->avelocity.y = diry * endspeed;
 	}
 
-	if (!ReachedEndZoom)
+	if (!ReachedEndZoom && HLCam.ZoomType != Cam::Shared::CameraZoomType::None)
 	{
 		const auto endtime = StartZoomTime + HLCam.ZoomData.ZoomTime;
 		const auto ratio = (gpGlobals->time - StartZoomTime) / (endtime - StartZoomTime);
 
-		if (HLCam.ZoomType == Cam::Shared::CameraZoomType::ZoomIn)
+		if (HLCam.ZoomType == Cam::Shared::CameraZoomType::ZoomIn ||
+			HLCam.ZoomType == Cam::Shared::CameraZoomType::ZoomOut)
 		{
 			if (HLCam.ZoomData.InterpMethod == Cam::Shared::CameraAngleType::Linear)
 			{
@@ -2374,39 +2372,17 @@ void CTriggerCamera::FollowTarget()
 			{
 				CurrentZoomFOV = Interpolate::Smooth(HLCam.FOV, HLCam.ZoomData.EndFov, ratio);
 			}
-
-			if (ratio > 1.0f)
-			{
-				ReachedEndZoom = true;
-			}
-
-			else
-			{
-				SetPlayerFOV(CurrentZoomFOV);
-			}
 		}
 
-		else if (HLCam.ZoomType == Cam::Shared::CameraZoomType::ZoomOut)
+		if (ratio > 1.0f)
 		{
-			if (HLCam.ZoomData.InterpMethod == Cam::Shared::CameraAngleType::Linear)
-			{
-				CurrentZoomFOV = Interpolate::Linear(HLCam.ZoomData.EndFov, HLCam.FOV, ratio);
-			}
+			SetPlayerFOV(HLCam.ZoomData.EndFov);
+			ReachedEndZoom = true;
+		}
 
-			else if (HLCam.ZoomData.InterpMethod == Cam::Shared::CameraAngleType::Smooth)
-			{
-				CurrentZoomFOV = Interpolate::Smooth(HLCam.ZoomData.EndFov, HLCam.FOV, ratio);
-			}
-
-			if (ratio > 1.0f)
-			{
-				ReachedEndZoom = true;
-			}
-
-			else
-			{
-				SetPlayerFOV(CurrentZoomFOV);
-			}
+		else
+		{
+			SetPlayerFOV(CurrentZoomFOV);
 		}
 	}
 
