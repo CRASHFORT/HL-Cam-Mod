@@ -340,6 +340,10 @@ BOOL HLCamEditorDialog::OnInitDialog()
 	TreeControl.EnableWindow(false);
 	PropertyGrid.ShowWindow(SW_HIDE);
 
+	entries.Name->Show(false);
+	entries.ZoomEndFOV->Show(false);
+	entries.ZoomTime->Show(false);
+
 	return 1;
 }
 
@@ -670,6 +674,39 @@ LRESULT HLCamEditorDialog::OnPropertyGridItemChanged(WPARAM controlid, LPARAM pr
 			cam->MaxSpeed = newspeed;
 		}
 
+		else if (prop == entries.ActivateType)
+		{
+			auto newvalstr = prop->GetValue().bstrVal;
+			auto newval = Cam::Shared::CameraTriggerTypeFromString(newvalstr);
+
+			AppServer.Write
+			(
+				Messages::Camera_ChangeActivateType,
+				Utility::BinaryBufferHelp::CreatePacket
+				(
+					userdata->CameraID,
+					static_cast<unsigned char>(newval)
+				)
+			);
+
+			cam->TriggerType = newval;
+
+			switch (newval)
+			{
+				case Cam::Shared::CameraTriggerType::ByName:
+				{
+					entries.Name->Show();
+					break;
+				}
+
+				case Cam::Shared::CameraTriggerType::ByUserTrigger:
+				{
+					entries.Name->Show(false);
+					break;
+				}
+			}
+		}
+
 		else if (prop == entries.LookType)
 		{
 			auto newvalstr = prop->GetValue().bstrVal;
@@ -720,6 +757,25 @@ LRESULT HLCamEditorDialog::OnPropertyGridItemChanged(WPARAM controlid, LPARAM pr
 					static_cast<unsigned char>(newval)
 				)
 			);
+
+			switch (newval)
+			{
+				case Cam::Shared::CameraZoomType::ZoomByDistance:
+				case Cam::Shared::CameraZoomType::None:
+				{
+					entries.ZoomEndFOV->Show(false);
+					entries.ZoomTime->Show(false);
+					break;
+				}
+
+				case Cam::Shared::CameraZoomType::ZoomIn:
+				case Cam::Shared::CameraZoomType::ZoomOut:
+				{
+					entries.ZoomEndFOV->Show();
+					entries.ZoomTime->Show();
+					break;
+				}
+			}
 
 			cam->ZoomType = newval;
 		}
