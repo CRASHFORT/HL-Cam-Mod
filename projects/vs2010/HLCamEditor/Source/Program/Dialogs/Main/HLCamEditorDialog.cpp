@@ -1059,6 +1059,13 @@ void HLCamEditorDialog::OnTvnSelchangedTree1(NMHDR *pNMHDR, LRESULT *pResult)
 				entries.ZoomInterpMethod->Show();
 			}
 
+			else
+			{
+				entries.ZoomEndFOV->Show(false);
+				entries.ZoomTime->Show(false);
+				entries.ZoomInterpMethod->Show(false);
+			}
+
 			AppServer.Write
 			(
 				Messages::Camera_Select,
