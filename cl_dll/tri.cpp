@@ -25,6 +25,7 @@ extern IParticleMan *g_pParticleMan;
 /*
 	CRASH FORT:
 */
+#include <string>
 #include "HLCam Client\Client.hpp"
 
 namespace
@@ -35,6 +36,16 @@ namespace
 
 namespace Tri
 {
+	namespace Commands
+	{
+		cvar_t* RenderCameraText;
+	}
+
+	void Init()
+	{
+		Commands::RenderCameraText = gEngfuncs.pfnRegisterVariable("hlcam_render_cameratext", "0", FCVAR_ARCHIVE);
+	}
+
 	void VidInit()
 	{
 		WhiteSprite = gEngfuncs.pfnSPR_Load("sprites\\white.spr");
@@ -424,6 +435,47 @@ void CL_DLLEXPORT HUD_DrawTransparentTriangles( void )
 				End point wire box
 			*/
 			DrawWireframeBox(maxpos, minpos);
+		}
+	}
+}
+
+/*
+=================
+HUD_DrawOrthoTriangles
+Orthogonal Triangles -- (relative to resolution,
+smackdab on the screen) add them here
+=================
+*/
+void HUD_DrawOrthoTriangles()
+{
+	if (Tri::Commands::RenderCameraText->value > 0)
+	{
+		const auto& cameras = Cam::GetAllCameras();
+
+		for (auto& cam : cameras)
+		{
+			if (cam.InPreview)
+			{
+				continue;
+			}
+
+			Vector screen;
+			Vector pos;
+			pos.x = cam.Position[0];
+			pos.y = cam.Position[1];
+			pos.z = cam.Position[2];
+
+			if (!gEngfuncs.pTriAPI->WorldToScreen(pos, screen))
+			{
+				screen[0] = XPROJECT(screen[0]);
+				screen[1] = YPROJECT(screen[1]);
+				screen[2] = 0.0f;
+
+				std::string endstr = "Camera_";
+				endstr += std::to_string(cam.ID);
+
+				gEngfuncs.pfnDrawString(screen.x, screen.y, endstr.c_str(), 255, 255, 255);
+			}
 		}
 	}
 }

@@ -845,6 +845,7 @@ namespace
 
 namespace Tri
 {
+	void Init();
 	void VidInit();
 }
 
@@ -878,6 +879,8 @@ namespace Cam
 		gEngfuncs.pfnAddCommand("hlcam_aimbeam_toggle", Commands::AimBeamToggle);
 
 		Commands::UseAimSpot = gEngfuncs.pfnRegisterVariable("hlcam_aimspot", "1", FCVAR_ARCHIVE);
+
+		Tri::Init();
 	}
 
 	void VidInit()

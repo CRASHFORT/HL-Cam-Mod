@@ -85,6 +85,8 @@ void CHud::Think(void)
 	Bench_CheckStart();
 }
 
+void HUD_DrawOrthoTriangles();
+
 // Redraw
 // step through the local data,  placing the appropriate graphics & text as appropriate
 // returns 1 if they've changed, 0 otherwise
@@ -168,6 +170,8 @@ int CHud :: Redraw( float flTime, int intermission )
 			pList = pList->pNext;
 		}
 	}
+
+	HUD_DrawOrthoTriangles();
 
 	// are we in demo mode? do we need to draw the logo in the top corner?
 	if (m_iLogo)
