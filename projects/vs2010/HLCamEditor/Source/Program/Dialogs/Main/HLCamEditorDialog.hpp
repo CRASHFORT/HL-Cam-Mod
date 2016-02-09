@@ -157,4 +157,5 @@ public:
 	afx_msg void OnContextMenu(CWnd* window, CPoint point);
 	afx_msg void OnTvnSelchangedTree1(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnBnClickedButton1();
+	afx_msg void OnTimer(UINT_PTR eventid);
 };

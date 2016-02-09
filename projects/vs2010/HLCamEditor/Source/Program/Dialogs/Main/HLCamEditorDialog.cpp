@@ -10,6 +10,17 @@
 #define new DEBUG_NEW
 #endif
 
+namespace
+{
+	namespace AppMessages
+	{
+		enum
+		{
+			TryConnectToGame,
+		};
+	}
+}
+
 namespace App
 {
 	HLCamera* HLMap::FindCameraByID(size_t id)
@@ -146,6 +157,7 @@ BEGIN_MESSAGE_MAP(HLCamEditorDialog, CDialogEx)
 	ON_WM_CONTEXTMENU()
 	ON_NOTIFY(TVN_SELCHANGED, IDC_TREE1, &HLCamEditorDialog::OnTvnSelchangedTree1)
 	ON_BN_CLICKED(IDC_BUTTON1, &HLCamEditorDialog::OnBnClickedButton1)
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 BOOL HLCamEditorDialog::OnInitDialog()
@@ -342,6 +354,8 @@ BOOL HLCamEditorDialog::OnInitDialog()
 	entries.ZoomEndFOV->Show(false);
 	entries.ZoomTime->Show(false);
 	entries.ZoomInterpMethod->Show(false);
+
+	SetTimer(AppMessages::TryConnectToGame, 1000, nullptr);
 
 	return 1;
 }
@@ -1100,19 +1114,30 @@ void HLCamEditorDialog::OnTvnSelchangedTree1(NMHDR *pNMHDR, LRESULT *pResult)
 
 void HLCamEditorDialog::OnBnClickedButton1()
 {
-	try
+	
+}
+
+void HLCamEditorDialog::OnTimer(UINT_PTR eventid)
+{
+	if (eventid == AppMessages::TryConnectToGame)
 	{
-		GameClient.Connect("HLCAM_GAME");
+		try
+		{
+			GameClient.Connect("HLCAM_GAME");
+		}
+
+		catch (const boost::interprocess::interprocess_exception& error)
+		{
+			GameClient.Disconnect();
+
+			auto code = error.get_error_code();
+
+			return;
+		}
+
+		MessageHandlerThread = std::thread(&HLCamEditorDialog::MessageHandler, this);
+		KillTimer(eventid);
 	}
 
-	catch (const boost::interprocess::interprocess_exception& error)
-	{
-		GameClient.Disconnect();
-
-		auto code = error.get_error_code();
-
-		return;
-	}
-
-	MessageHandlerThread = std::thread(&HLCamEditorDialog::MessageHandler, this);
+	__super::OnTimer(eventid);
 }
