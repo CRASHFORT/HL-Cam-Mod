@@ -2265,6 +2265,15 @@ void CTriggerCamera::Use(CBaseEntity* activator, CBaseEntity* caller, USE_TYPE u
 		pev->nextthink = gpGlobals->time;
 	}
 
+	else
+	{
+		if (HLCam.ZoomType != Cam::Shared::CameraZoomType::None)
+		{
+			SetThink(&CTriggerCamera::ZoomThink);
+			pev->nextthink = gpGlobals->time;
+		}
+	}
+
 	if (HLCam.ZoomType != Cam::Shared::CameraZoomType::None)
 	{
 		StartZoomTime = gpGlobals->time;
@@ -2355,6 +2364,13 @@ void CTriggerCamera::FollowTarget()
 		pev->avelocity.y = diry * endspeed;
 	}
 
+	ZoomThink();
+
+	pev->nextthink = gpGlobals->time;
+}
+
+void EXPORT CTriggerCamera::ZoomThink()
+{
 	if (!ReachedEndZoom && HLCam.ZoomType != Cam::Shared::CameraZoomType::None)
 	{
 		const auto endtime = StartZoomTime + HLCam.ZoomData.ZoomTime;
@@ -2384,7 +2400,7 @@ void CTriggerCamera::FollowTarget()
 		{
 			SetPlayerFOV(CurrentZoomFOV);
 		}
-	}
 
-	pev->nextthink = gpGlobals->time;
+		pev->nextthink = gpGlobals->time;
+	}
 }

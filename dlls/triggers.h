@@ -12,6 +12,7 @@ public:
 	virtual void Use(CBaseEntity* activator, CBaseEntity* caller, USE_TYPE usetype, float value) override;
 	
 	void EXPORT FollowTarget();
+	void EXPORT ZoomThink();
 
 	virtual int Save(CSave &save) override;
 	virtual int Restore(CRestore &restore) override;
