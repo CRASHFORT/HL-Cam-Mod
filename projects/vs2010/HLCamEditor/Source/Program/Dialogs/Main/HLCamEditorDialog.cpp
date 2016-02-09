@@ -1058,6 +1058,16 @@ void HLCamEditorDialog::OnTvnSelchangedTree1(NMHDR *pNMHDR, LRESULT *pResult)
 				entries.ZoomInterpMethod->Show(false);
 			}
 
+			if (camera->TriggerType == Cam::Shared::CameraTriggerType::ByName)
+			{
+				entries.Name->Show();
+			}
+
+			else
+			{
+				entries.Name->Show(false);
+			}
+
 			AppServer.Write
 			(
 				Messages::Camera_Select,
