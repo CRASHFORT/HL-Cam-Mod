@@ -1498,7 +1498,10 @@ namespace
 
 		if (linkedcam->TargetCamera)
 		{
-			linkedcam->TargetCamera->Use(nullptr, nullptr, USE_ON, 1);
+			if (TheCamMap.ActiveCamera != linkedcam)
+			{
+				linkedcam->TargetCamera->Use(nullptr, nullptr, USE_ON, 1);
+			}
 		}
 	}
 
@@ -1532,10 +1535,10 @@ namespace
 			}
 
 			trig.Active = true;
+			ActivateNewCamera(trig);
+
 			TheCamMap.ActiveTrigger = &trig;
 			TheCamMap.ActiveCamera = TheCamMap.GetLinkedCamera(trig);
-
-			ActivateNewCamera(trig);
 		}
 	}
 }
