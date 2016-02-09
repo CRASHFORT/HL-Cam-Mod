@@ -11,8 +11,9 @@ public:
 	virtual void Spawn() override;	
 	virtual void Use(CBaseEntity* activator, CBaseEntity* caller, USE_TYPE usetype, float value) override;
 	
-	void EXPORT FollowTarget();
-	void EXPORT ZoomThink();
+	void EXPORT CameraThink();
+	
+	void ZoomAddon();
 
 	virtual int Save(CSave &save) override;
 	virtual int Restore(CRestore &restore) override;

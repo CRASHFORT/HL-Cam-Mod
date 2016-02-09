@@ -2259,20 +2259,8 @@ void CTriggerCamera::Use(CBaseEntity* activator, CBaseEntity* caller, USE_TYPE u
 	g_engfuncs.pfnSetView(activator->edict(), edict());
 	g_engfuncs.pfnSetModel(edict(), STRING(activator->pev->model));
 
-	if (HLCam.LookType != Cam::Shared::CameraLookType::AtAngle)
-	{
-		SetThink(&CTriggerCamera::FollowTarget);
-		pev->nextthink = gpGlobals->time;
-	}
-
-	else
-	{
-		if (HLCam.ZoomType != Cam::Shared::CameraZoomType::None)
-		{
-			SetThink(&CTriggerCamera::ZoomThink);
-			pev->nextthink = gpGlobals->time;
-		}
-	}
+	SetThink(&CTriggerCamera::CameraThink);
+	pev->nextthink = gpGlobals->time;
 
 	if (HLCam.ZoomType != Cam::Shared::CameraZoomType::None)
 	{
@@ -2295,8 +2283,16 @@ void CTriggerCamera::Use(CBaseEntity* activator, CBaseEntity* caller, USE_TYPE u
 	SetPlayerFOV(HLCam.FOV);
 }
 
-void CTriggerCamera::FollowTarget()
+void CTriggerCamera::CameraThink()
 {
+	if (HLCam.LookType == Cam::Shared::CameraLookType::AtAngle)
+	{
+		ZoomAddon();
+		
+		pev->nextthink = gpGlobals->time;
+		return;
+	}
+
 	if (HLCam.LookType == Cam::Shared::CameraLookType::AtPlayer ||
 		HLCam.LookType == Cam::Shared::CameraLookType::AtTarget)
 	{
@@ -2364,12 +2360,12 @@ void CTriggerCamera::FollowTarget()
 		pev->avelocity.y = diry * endspeed;
 	}
 
-	ZoomThink();
+	ZoomAddon();
 
 	pev->nextthink = gpGlobals->time;
 }
 
-void EXPORT CTriggerCamera::ZoomThink()
+void CTriggerCamera::ZoomAddon()
 {
 	if (!ReachedEndZoom && HLCam.ZoomType != Cam::Shared::CameraZoomType::None)
 	{
@@ -2400,7 +2396,5 @@ void EXPORT CTriggerCamera::ZoomThink()
 		{
 			SetPlayerFOV(CurrentZoomFOV);
 		}
-
-		pev->nextthink = gpGlobals->time;
 	}
 }
