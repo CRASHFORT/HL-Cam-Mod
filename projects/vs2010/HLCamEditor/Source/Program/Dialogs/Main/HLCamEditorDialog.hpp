@@ -126,7 +126,6 @@ private:
 
 	struct
 	{
-		CMFCPropertyGridProperty* ID;
 		CMFCPropertyGridProperty* Name;
 		CMFCPropertyGridProperty* ActivateType;
 		CMFCPropertyGridProperty* PlaneType;

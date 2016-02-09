@@ -160,13 +160,6 @@ BOOL HLCamEditorDialog::OnInitDialog()
 	using namespace Cam::Shared;
 
 	{
-		entries.ID = new CMFCPropertyGridProperty("ID", COleVariant(0l));
-		entries.ID->Enable(false);
-
-		PropertyGrid.AddProperty(entries.ID);
-	}
-
-	{
 		entries.Name = new CMFCPropertyGridProperty("Name", "");
 		entries.Name->AllowEdit(true);
 
@@ -1030,7 +1023,6 @@ void HLCamEditorDialog::OnTvnSelchangedTree1(NMHDR *pNMHDR, LRESULT *pResult)
 
 			auto& entries = PropertyGridEntries;
 
-			entries.ID->SetValue(static_cast<long>(camera->ID));
 			entries.Speed->SetValue(static_cast<long>(camera->MaxSpeed));
 			entries.FOV->SetValue(static_cast<long>(camera->FOV));
 
