@@ -1057,6 +1057,10 @@ void HLCamEditorDialog::OnTvnSelchangedTree1(NMHDR *pNMHDR, LRESULT *pResult)
 				entries.ZoomEndFOV->SetValue(camera->ZoomEndFOV);
 				entries.ZoomTime->SetValue(camera->ZoomTime);
 				entries.ZoomInterpMethod->SetValue(Cam::Shared::CameraAngleTypeToString(camera->ZoomInterpMethod));
+
+				entries.ZoomEndFOV->Show();
+				entries.ZoomTime->Show();
+				entries.ZoomInterpMethod->Show();
 			}
 
 			AppServer.Write
