@@ -123,14 +123,10 @@ namespace App
 		camera.LookType = static_cast<decltype(camera.LookType)>(buffer.GetValue<unsigned char>());
 		camera.PlaneType = static_cast<decltype(camera.PlaneType)>(buffer.GetValue<unsigned char>());
 		camera.ZoomType = static_cast<decltype(camera.ZoomType)>(buffer.GetValue<unsigned char>());
-
-		if (camera.ZoomType != Cam::Shared::CameraZoomType::None &&
-			camera.ZoomType != Cam::Shared::CameraZoomType::ZoomByDistance)
-		{
-			camera.ZoomInterpMethod = static_cast<decltype(camera.ZoomInterpMethod)>(buffer.GetValue<unsigned char>());
-			buffer >> camera.ZoomEndFOV;
-			buffer >> camera.ZoomTime;
-		}
+		
+		camera.ZoomInterpMethod = static_cast<decltype(camera.ZoomInterpMethod)>(buffer.GetValue<unsigned char>());
+		buffer >> camera.ZoomEndFOV;
+		buffer >> camera.ZoomTime;
 		
 		return camera;
 	}

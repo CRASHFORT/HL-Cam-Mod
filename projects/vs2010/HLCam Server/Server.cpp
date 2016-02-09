@@ -523,13 +523,9 @@ namespace
 			ret << static_cast<unsigned char>(camera.PlaneType);
 			ret << static_cast<unsigned char>(camera.ZoomType);
 
-			if (camera.ZoomType != Cam::Shared::CameraZoomType::None &&
-				camera.ZoomType != Cam::Shared::CameraZoomType::ZoomByDistance)
-			{
-				ret << static_cast<unsigned char>(camera.ZoomData.InterpMethod);
-				ret << camera.ZoomData.EndFov;
-				ret << camera.ZoomData.ZoomTime;
-			}
+			ret << static_cast<unsigned char>(camera.ZoomData.InterpMethod);
+			ret << camera.ZoomData.EndFov;
+			ret << camera.ZoomData.ZoomTime;
 
 			return ret;
 		}
@@ -1439,7 +1435,7 @@ namespace
 							}
 
 							{
-								const auto& interpitr = camval.FindMember("InterpMethod");
+								const auto& interpitr = camval.FindMember("ZoomInterpMethod");
 
 								if (interpitr != camval.MemberEnd())
 								{
@@ -1872,15 +1868,11 @@ namespace
 			cameraval.AddMember("LookType", {CameraLookTypeToString(cam.LookType), alloc}, alloc);
 			cameraval.AddMember("PlaneType", {CameraPlaneTypeToString(cam.PlaneType), alloc}, alloc);
 			cameraval.AddMember("TriggerType", {CameraTriggerTypeToString(cam.TriggerType), alloc}, alloc);
+			
 			cameraval.AddMember("ZoomType", {CameraZoomTypeToString(cam.ZoomType), alloc}, alloc);
-
-			if (cam.ZoomType != Cam::Shared::CameraZoomType::None &&
-				cam.ZoomType != Cam::Shared::CameraZoomType::ZoomByDistance)
-			{
-				cameraval.AddMember("ZoomTime", cam.ZoomData.ZoomTime, alloc);
-				cameraval.AddMember("ZoomEndFOV", cam.ZoomData.EndFov, alloc);
-				cameraval.AddMember("InterpMethod", {CameraAngleTypeToString(cam.ZoomData.InterpMethod), alloc}, alloc);
-			}
+			cameraval.AddMember("ZoomTime", cam.ZoomData.ZoomTime, alloc);
+			cameraval.AddMember("ZoomEndFOV", cam.ZoomData.EndFov, alloc);
+			cameraval.AddMember("ZoomInterpMethod", {CameraAngleTypeToString(cam.ZoomData.InterpMethod), alloc}, alloc);
 
 			thisvalue.AddMember("Camera", std::move(cameraval), alloc);
 
