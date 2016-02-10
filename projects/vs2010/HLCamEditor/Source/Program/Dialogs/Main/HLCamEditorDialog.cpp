@@ -499,16 +499,16 @@ void HLCamEditorDialog::MessageHandler()
 
 			case Message::OnTriggerAndCameraAdded:
 			{
-				AddCameraAndTrigger(data.GetValue<App::HLCamera>(), data.GetValue<App::HLTrigger>());
+				auto&& cam = data.GetValue<App::HLCamera>();
+				auto&& trig = data.GetValue<App::HLTrigger>();
+				AddCameraAndTrigger(std::move(cam), std::move(trig));
 				break;
 			}
 
 			case Message::OnTriggerAddedToCamera:
 			{
 				auto trig = data.GetValue<App::HLTrigger>();
-
-				auto cameraid = data.GetValue<size_t>();
-				auto camera = CurrentMap.FindCameraByID(cameraid);
+				auto camera = CurrentMap.FindCameraByID(trig.LinkedCameraID);
 
 				AddTriggerToCamera(*camera, std::move(trig));
 				break;

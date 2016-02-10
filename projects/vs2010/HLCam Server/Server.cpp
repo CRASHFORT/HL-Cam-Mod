@@ -2060,11 +2060,12 @@ void Cam::OnPlayerPreUpdate(CBasePlayer* player)
 
 				creationtrig->SetupPositions();
 
-				auto fullpack = TheCamMap.GetInterprocessTriggerInfo(*creationtrig);
+				Utility::BinaryBuffer fullpack;
 
 				if (!TheCamMap.AddingTriggerToCamera)
 				{
 					fullpack.Append(TheCamMap.GetInterprocessCameraInfo(*linkedcam));
+					fullpack.Append(TheCamMap.GetInterprocessTriggerInfo(*creationtrig));
 
 					TheCamMap.GameServer.Write
 					(
@@ -2075,7 +2076,7 @@ void Cam::OnPlayerPreUpdate(CBasePlayer* player)
 				
 				else
 				{
-					fullpack << linkedcam->ID;
+					fullpack.Append(TheCamMap.GetInterprocessTriggerInfo(*creationtrig));
 
 					TheCamMap.GameServer.Write
 					(
