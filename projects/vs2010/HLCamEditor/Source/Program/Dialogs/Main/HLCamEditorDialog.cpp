@@ -736,6 +736,16 @@ LRESULT HLCamEditorDialog::OnPropertyGridItemChanged(WPARAM controlid, LPARAM pr
 				)
 			);
 
+			if (newval != Cam::Shared::CameraLookType::AtAngle)
+			{
+				entries.PlaneType->Show();
+			}
+
+			else
+			{
+				entries.PlaneType->Show(false);
+			}
+
 			cam->LookType = newval;
 		}
 
