@@ -354,6 +354,7 @@ BOOL HLCamEditorDialog::OnInitDialog()
 	entries.ZoomEndFOV->Show(false);
 	entries.ZoomTime->Show(false);
 	entries.ZoomInterpMethod->Show(false);
+	entries.PlaneType->Show(false);
 
 	SetTimer(AppMessages::TryConnectToGame, 1000, nullptr);
 
@@ -1080,6 +1081,16 @@ void HLCamEditorDialog::OnTvnSelchangedTree1(NMHDR *pNMHDR, LRESULT *pResult)
 			else
 			{
 				entries.Name->Show(false);
+			}
+
+			if (camera->LookType != Cam::Shared::CameraLookType::AtAngle)
+			{
+				entries.PlaneType->Show();
+			}
+
+			else
+			{
+				entries.PlaneType->Show(false);
 			}
 
 			AppServer.Write
