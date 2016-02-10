@@ -32,6 +32,8 @@ namespace
 {
 	HSPRITE WhiteSprite = 0;
 	model_s* WhiteSpriteModel;
+
+	HSPRITE PlayerPingSprite = 0;
 }
 
 namespace Tri
@@ -39,17 +41,21 @@ namespace Tri
 	namespace Commands
 	{
 		cvar_t* RenderCameraText;
+		cvar_t* RenderPlayerPing;
 	}
 
 	void Init()
 	{
 		Commands::RenderCameraText = gEngfuncs.pfnRegisterVariable("hlcam_render_cameratext", "0", FCVAR_ARCHIVE);
+		Commands::RenderPlayerPing = gEngfuncs.pfnRegisterVariable("hlcam_render_playerping", "0", FCVAR_ARCHIVE);
 	}
 
 	void VidInit()
 	{
 		WhiteSprite = gEngfuncs.pfnSPR_Load("sprites\\white.spr");
 		WhiteSpriteModel = const_cast<model_s*>(gEngfuncs.GetSpritePointer(WhiteSprite));
+
+		PlayerPingSprite = gEngfuncs.pfnSPR_Load("sprites\\640_train.spr");
 	}
 }
 
@@ -448,7 +454,7 @@ smackdab on the screen) add them here
 */
 void HUD_DrawOrthoTriangles()
 {
-	if (Tri::Commands::RenderCameraText->value > 0)
+	if (Cam::InEditMode() && Tri::Commands::RenderCameraText->value > 0)
 	{
 		const auto& cameras = Cam::GetAllCameras();
 
@@ -476,6 +482,36 @@ void HUD_DrawOrthoTriangles()
 
 				gEngfuncs.pfnDrawString(screen.x, screen.y, endstr.c_str(), 255, 255, 255);
 			}
+		}
+	}
+
+	else if (!Cam::InEditMode() && Tri::Commands::RenderPlayerPing->value > 0)
+	{
+		auto player = gEngfuncs.GetLocalPlayer();
+		auto pos = player->origin;
+		pos.z += 56;
+
+		Vector screen;
+
+		if (!gEngfuncs.pTriAPI->WorldToScreen(pos, screen))
+		{
+			screen[0] = XPROJECT(screen[0]);
+			screen[1] = YPROJECT(screen[1]);
+			screen[2] = 0.0f;
+
+			int r;
+			int g;
+			int b;
+			UnpackRGB(r, g, b, RGB_YELLOWISH);
+			gEngfuncs.pfnSPR_Set(PlayerPingSprite, r, g, b);
+
+			wrect_t region;
+			region.left = 0;
+			region.top = 77;
+			region.bottom = 96;
+			region.right = 96;
+
+			gEngfuncs.pfnSPR_DrawAdditive(2, screen.x - (region.right / 2), screen.y, &region);
 		}
 	}
 }
