@@ -218,6 +218,8 @@ void LinkUserMessages( void )
 	HLCamMessage::CameraAdjust = REG_USER_MSG("CamCA", -1);
 	HLCamMessage::CameraPreview = REG_USER_MSG("CamPW", 3);
 
+	HLCamMessage::CameraSwitch = REG_USER_MSG("CamSwitch", 6);
+
 	gmsgCurWeapon = REG_USER_MSG("CurWeapon", 3);
 	gmsgGeigerRange = REG_USER_MSG("Geiger", 1);
 	gmsgFlashlight = REG_USER_MSG("Flashlight", 2);

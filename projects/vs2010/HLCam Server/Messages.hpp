@@ -105,6 +105,11 @@ namespace HLCamMessage
 		BYTE: On or off
 	*/
 	AddMessage(CameraPreview);
+
+	/*
+		COORD x 3: New camera position
+	*/
+	AddMessage(CameraSwitch);
 }
 
 #undef AddMessage

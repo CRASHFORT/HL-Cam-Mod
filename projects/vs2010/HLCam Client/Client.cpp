@@ -121,6 +121,11 @@ namespace
 
 		size_t CurrentTriggerID;
 
+		/*
+			Current view the server is at.
+		*/
+		Vector ActiveCameraPosition{0, 0, 0};
+
 		struct AimGuideData
 		{
 			~AimGuideData()
@@ -793,6 +798,17 @@ int HLCamClient_CameraPreview(const char* name, int size, void* buffer)
 	return 1;
 }
 
+int HLCamClient_CameraSwitch(const char* name, int size, void* buffer)
+{
+	BEGIN_READ(buffer, size);
+
+	TheCamClient.ActiveCameraPosition.x = READ_COORD();
+	TheCamClient.ActiveCameraPosition.y = READ_COORD();
+	TheCamClient.ActiveCameraPosition.z = READ_COORD();
+
+	return 1;
+}
+
 namespace
 {
 	namespace Commands
@@ -872,6 +888,8 @@ namespace Cam
 
 		gEngfuncs.pfnHookUserMsg("CamCA", HLCamClient_CameraAdjust);
 		gEngfuncs.pfnHookUserMsg("CamPW", HLCamClient_CameraPreview);
+
+		gEngfuncs.pfnHookUserMsg("CamSwitch", HLCamClient_CameraSwitch);
 
 		gEngfuncs.pfnAddCommand("+hlcam_aimbeam", Commands::AimBeamOn);
 		gEngfuncs.pfnAddCommand("-hlcam_aimbeam", Commands::AimBeamOff);
@@ -999,5 +1017,12 @@ namespace Cam
 	const std::vector<ClientCamera>& GetAllCameras()
 	{
 		return TheCamClient.Cameras;
+	}
+
+	void GetActiveCameraPosition(float* outpos)
+	{
+		outpos[0] = TheCamClient.ActiveCameraPosition.x;
+		outpos[1] = TheCamClient.ActiveCameraPosition.y;
+		outpos[2] = TheCamClient.ActiveCameraPosition.z;
 	}
 }

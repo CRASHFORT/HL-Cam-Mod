@@ -1497,6 +1497,12 @@ namespace
 			if (TheCamMap.ActiveCamera != linkedcam)
 			{
 				linkedcam->TargetCamera->Use(nullptr, nullptr, USE_ON, 1);
+
+				MESSAGE_BEGIN(MSG_ONE, HLCamMessage::CameraSwitch, nullptr, TheCamMap.LocalPlayer->pev);
+				WRITE_COORD(linkedcam->Position.x);
+				WRITE_COORD(linkedcam->Position.y);
+				WRITE_COORD(linkedcam->Position.z);
+				MESSAGE_END();
 			}
 		}
 	}

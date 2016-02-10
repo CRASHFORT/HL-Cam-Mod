@@ -27,6 +27,7 @@ extern IParticleMan *g_pParticleMan;
 */
 #include <string>
 #include "HLCam Client\Client.hpp"
+#include "pm_defs.h"
 
 namespace
 {
@@ -42,12 +43,15 @@ namespace Tri
 	{
 		cvar_t* RenderCameraText;
 		cvar_t* RenderPlayerPing;
+		cvar_t* RenderPlayerPingWhenHidden;
 	}
 
 	void Init()
 	{
-		Commands::RenderCameraText = gEngfuncs.pfnRegisterVariable("hlcam_render_cameratext", "0", FCVAR_ARCHIVE);
-		Commands::RenderPlayerPing = gEngfuncs.pfnRegisterVariable("hlcam_render_playerping", "0", FCVAR_ARCHIVE);
+		auto regvar = gEngfuncs.pfnRegisterVariable;
+		Commands::RenderCameraText = regvar("hlcam_render_cameratext", "0", FCVAR_ARCHIVE);
+		Commands::RenderPlayerPing = regvar("hlcam_render_playerping", "0", FCVAR_ARCHIVE);
+		Commands::RenderPlayerPingWhenHidden = regvar("hlcam_render_playerping_hidden", "0", FCVAR_ARCHIVE);
 	}
 
 	void VidInit()
@@ -488,30 +492,51 @@ void HUD_DrawOrthoTriangles()
 	else if (!Cam::InEditMode() && Tri::Commands::RenderPlayerPing->value > 0)
 	{
 		auto player = gEngfuncs.GetLocalPlayer();
-		auto pos = player->origin;
-		pos.z += 56;
+		auto renderpos = player->origin;
+		renderpos.z += 56;
 
-		Vector screen;
+		bool shoulddraw = true;
 
-		if (!gEngfuncs.pTriAPI->WorldToScreen(pos, screen))
+		if (Tri::Commands::RenderPlayerPingWhenHidden->value > 0)
 		{
-			screen[0] = XPROJECT(screen[0]);
-			screen[1] = YPROJECT(screen[1]);
-			screen[2] = 0.0f;
+			Vector campos;
+			Cam::GetActiveCameraPosition(campos);
 
-			int r;
-			int g;
-			int b;
-			UnpackRGB(r, g, b, RGB_YELLOWISH);
-			gEngfuncs.pfnSPR_Set(PlayerPingSprite, r, g, b);
+			/*
+				28 is what the server uses for client "eye" view offset.
+			*/
+			auto testpos = renderpos;
+			testpos.z -= 28;
 
-			wrect_t region;
-			region.left = 0;
-			region.top = 77;
-			region.bottom = 96;
-			region.right = 96;
+			auto trace = gEngfuncs.PM_TraceLine(campos, testpos, PM_TRACELINE_PHYSENTSONLY, 2, -1);
 
-			gEngfuncs.pfnSPR_DrawAdditive(2, screen.x - (region.right / 2), screen.y, &region);
+			shoulddraw = trace->fraction != 1;
+		}
+
+		if (shoulddraw)
+		{
+			Vector screen;
+
+			if (!gEngfuncs.pTriAPI->WorldToScreen(renderpos, screen))
+			{
+				screen[0] = XPROJECT(screen[0]);
+				screen[1] = YPROJECT(screen[1]);
+				screen[2] = 0.0f;
+
+				int r;
+				int g;
+				int b;
+				UnpackRGB(r, g, b, RGB_YELLOWISH);
+				gEngfuncs.pfnSPR_Set(PlayerPingSprite, r, g, b);
+
+				wrect_t region;
+				region.left = 0;
+				region.top = 77;
+				region.bottom = 96;
+				region.right = 96;
+
+				gEngfuncs.pfnSPR_DrawAdditive(2, screen.x - (region.right / 2), screen.y, &region);
+			}
 		}
 	}
 }

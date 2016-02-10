@@ -52,4 +52,6 @@ namespace Cam
 
 	const std::vector<ClientTrigger>& GetAllTriggers();
 	const std::vector<ClientCamera>& GetAllCameras();
+
+	void GetActiveCameraPosition(float* outpos);
 }
