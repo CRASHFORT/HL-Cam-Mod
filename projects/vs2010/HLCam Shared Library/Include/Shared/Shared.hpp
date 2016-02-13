@@ -112,6 +112,10 @@ namespace Cam
 					Camera_ChangeLookType,
 
 					Camera_ChangeLookTargetName,
+
+					Camera_AttachmentToggle,
+					Camera_AttachmentChangeTargetName,
+					Camera_AttachmentChangeOffset,
 					
 					Camera_ChangeZoomType,
 					Camera_ChangeZoomTime,

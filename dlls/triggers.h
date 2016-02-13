@@ -41,4 +41,6 @@ public:
 	float CurrentZoomFOV;
 	float StartZoomTime;
 	bool ReachedEndZoom;
+
+	EHANDLE AttachmentEntity;
 };

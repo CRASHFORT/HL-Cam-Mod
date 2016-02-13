@@ -148,6 +148,16 @@ namespace App
 		{
 			camera.LookTargetName = buffer.GetNormalString();
 		}
+
+		buffer >> camera.UseAttachment;
+
+		if (camera.UseAttachment)
+		{
+			camera.AttachmentTargetName = buffer.GetNormalString();
+			buffer >> camera.AttachmentOffset.X;
+			buffer >> camera.AttachmentOffset.Y;
+			buffer >> camera.AttachmentOffset.Z;
+		}
 		
 		return camera;
 	}
@@ -225,13 +235,56 @@ BOOL HLCamEditorDialog::OnInitDialog()
 	{
 		entries.LookAtTargetGroup = new CMFCPropertyGridProperty("Look target options", 0, true);
 		{
-			entries.LookAtTargetName = new CMFCPropertyGridProperty("Look target name", "");
+			entries.LookAtTargetName = new CMFCPropertyGridProperty("Target name", "");
 			entries.LookAtTargetGroup->AddSubItem(entries.LookAtTargetName);
 		}
 
 		PropertyGrid.AddProperty(entries.LookAtTargetGroup);
 
 		entries.LookAtTargetGroup->Show(false);
+	}
+
+	{
+		entries.AttachToTargetToggle = new CMFCPropertyGridProperty("Attach to target", "No");
+		entries.AttachToTargetToggle->AddOption("No");
+		entries.AttachToTargetToggle->AddOption("Yes");
+
+		entries.AttachToTargetToggle->AllowEdit(false);
+
+		PropertyGrid.AddProperty(entries.AttachToTargetToggle);
+	}
+
+	{
+		entries.AttachToTargetGroup = new CMFCPropertyGridProperty("Attachment options", 0, true);
+		{
+			entries.AttachToTargetName = new CMFCPropertyGridProperty("Target name", "");
+			entries.AttachToTargetGroup->AddSubItem(entries.AttachToTargetName);
+
+			{
+				auto group = new CMFCPropertyGridProperty("Offset", 0, true);
+				group->Enable(false);
+				entries.AttachToTargetGroup->AddSubItem(group);
+
+				{
+					entries.AttachToTargetOffsetX = new CMFCPropertyGridProperty("X", COleVariant(0.0f));
+					group->AddSubItem(entries.AttachToTargetOffsetX);
+				}
+
+				{
+					entries.AttachToTargetOffsetY = new CMFCPropertyGridProperty("Y", COleVariant(0.0f));
+					group->AddSubItem(entries.AttachToTargetOffsetY);
+				}
+
+				{
+					entries.AttachToTargetOffsetZ = new CMFCPropertyGridProperty("Z", COleVariant(0.0f));
+					group->AddSubItem(entries.AttachToTargetOffsetZ);
+				}
+			}
+		}
+
+		PropertyGrid.AddProperty(entries.AttachToTargetGroup);
+
+		entries.AttachToTargetGroup->Show(false);
 	}
 
 	{
@@ -893,6 +946,74 @@ LRESULT HLCamEditorDialog::OnPropertyGridItemChanged(WPARAM controlid, LPARAM pr
 
 			cam->LookTargetName = std::move(newvalstr);
 		}
+
+		else if (prop == entries.AttachToTargetToggle)
+		{
+			auto newvalstr = prop->GetValue().bstrVal;
+
+			Utility::BinaryBuffer pack;
+			pack << userdata->CameraID;
+
+			if (Utility::CompareString(newvalstr, L"No"))
+			{
+				entries.AttachToTargetGroup->Show(false);
+				pack << false;
+
+				cam->UseAttachment = false;
+			}
+
+			else
+			{
+				entries.AttachToTargetGroup->Show();
+				pack << true;
+
+				cam->UseAttachment = true;
+			}
+
+			AppServer.Write
+			(
+				Messages::Camera_AttachmentToggle,
+				std::move(pack)
+			);
+		}
+
+		else if (prop == entries.AttachToTargetName)
+		{
+			auto newvalstr = Utility::WStringToUTF8(prop->GetValue().bstrVal);
+
+			AppServer.Write
+			(
+				Messages::Camera_AttachmentChangeTargetName,
+				Utility::BinaryBufferHelp::CreatePacket
+				(
+					userdata->CameraID,
+					newvalstr
+				)
+			);
+
+			cam->AttachmentTargetName = std::move(newvalstr);
+		}
+
+		else if (prop == entries.AttachToTargetOffsetX ||
+				 prop == entries.AttachToTargetOffsetY ||
+				 prop == entries.AttachToTargetOffsetZ)
+		{
+			auto newvalx = entries.AttachToTargetOffsetX->GetValue().fltVal;
+			auto newvaly = entries.AttachToTargetOffsetY->GetValue().fltVal;
+			auto newvalz = entries.AttachToTargetOffsetZ->GetValue().fltVal;
+
+			AppServer.Write
+			(
+				Messages::Camera_AttachmentChangeOffset,
+				Utility::BinaryBufferHelp::CreatePacket
+				(
+					userdata->CameraID,
+					newvalx, newvaly, newvalz
+				)
+			);
+
+			cam->AttachmentOffset = {newvalx, newvaly, newvalz};
+		}
 	}
 
 	return 0;
@@ -1133,18 +1254,35 @@ void HLCamEditorDialog::OnTvnSelchangedTree1(NMHDR *pNMHDR, LRESULT *pResult)
 			if (camera->LookType != Cam::Shared::CameraLookType::AtAngle)
 			{
 				entries.PlaneType->Show();
-				entries.LookAtTargetGroup->Show(false);
-			}
-
-			else
-			{
-				entries.PlaneType->Show(false);
 
 				if (camera->LookType == Cam::Shared::CameraLookType::AtTarget)
 				{
 					entries.LookAtTargetName->SetValue(camera->LookTargetName.c_str());
 					entries.LookAtTargetGroup->Show();
 				}
+			}
+
+			else
+			{
+				entries.PlaneType->Show(false);
+				entries.LookAtTargetGroup->Show(false);
+			}
+
+			if (camera->UseAttachment)
+			{
+				entries.AttachToTargetToggle->SetValue("Yes");
+				
+				entries.AttachToTargetName->SetValue(camera->AttachmentTargetName.c_str());
+				entries.AttachToTargetOffsetX->SetValue(camera->AttachmentOffset.X);
+				entries.AttachToTargetOffsetY->SetValue(camera->AttachmentOffset.Y);
+				entries.AttachToTargetOffsetZ->SetValue(camera->AttachmentOffset.Z);
+				entries.AttachToTargetGroup->Show();
+			}
+
+			else
+			{
+				entries.AttachToTargetToggle->SetValue("No");
+				entries.AttachToTargetGroup->Show(false);
 			}
 
 			AppServer.Write

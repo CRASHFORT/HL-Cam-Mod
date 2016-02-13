@@ -567,7 +567,17 @@ namespace
 
 			if (camera.LookType == Cam::Shared::CameraLookType::AtTarget)
 			{
-				ret << camera.LookTarget.Name;
+				ret << camera.LookTargetData.Name;
+			}
+
+			ret << camera.UseAttachment;
+
+			if (camera.UseAttachment)
+			{
+				ret << camera.AttachmentData.Name;
+				ret << camera.AttachmentData.Offset.x;
+				ret << camera.AttachmentData.Offset.y;
+				ret << camera.AttachmentData.Offset.z;
 			}
 
 			return ret;
@@ -1321,9 +1331,130 @@ namespace
 
 						if (endcamera->LookType == Cam::Shared::CameraLookType::AtTarget)
 						{
-							endcamera->LookTarget.Name = namestr;
-							endcamera->TargetCamera->HLCam.LookTarget.Name = namestr;
+							endcamera->LookTargetData.Name = namestr;
+							endcamera->TargetCamera->HLCam.LookTargetData.Name = namestr;
 						}
+					});
+
+					break;
+				}
+
+				case Message::Camera_AttachmentToggle:
+				{
+					auto cameraid = data.GetValue<size_t>();
+					auto useattachment = data.GetValue<bool>();
+
+					auto cameraindex = TheCamMap.GetCameraIndexFromID(cameraid);
+
+					TheCamMap.InvokeMessageFunction([cameraid, cameraindex, useattachment]
+					{
+						if (!EnsureInactiveState())
+						{
+							return;
+						}
+
+						if (TheCamMap.CurrentSelectionCameraID != cameraid)
+						{
+							g_engfuncs.pfnAlertMessage(at_console, "HLCAM: No selected camera for app message\n");
+							return;
+						}
+
+						Cam::MapCamera* endcamera;
+
+						if (TheCamMap.ActiveCamera)
+						{
+							endcamera = TheCamMap.ActiveCamera;
+						}
+
+						else
+						{
+							endcamera = &TheCamMap.Cameras[cameraindex];
+						}
+
+						endcamera->UseAttachment = useattachment;
+						endcamera->TargetCamera->HLCam.UseAttachment = useattachment;
+					});
+
+					break;
+				}
+
+				case Message::Camera_AttachmentChangeTargetName:
+				{
+					auto cameraid = data.GetValue<size_t>();
+					auto&& namestr = data.GetNormalString();
+
+					auto cameraindex = TheCamMap.GetCameraIndexFromID(cameraid);
+
+					TheCamMap.InvokeMessageFunction([cameraid, cameraindex, namestr]
+					{
+						if (!EnsureInactiveState())
+						{
+							return;
+						}
+
+						if (TheCamMap.CurrentSelectionCameraID != cameraid)
+						{
+							g_engfuncs.pfnAlertMessage(at_console, "HLCAM: No selected camera for app message\n");
+							return;
+						}
+
+						Cam::MapCamera* endcamera;
+
+						if (TheCamMap.ActiveCamera)
+						{
+							endcamera = TheCamMap.ActiveCamera;
+						}
+
+						else
+						{
+							endcamera = &TheCamMap.Cameras[cameraindex];
+						}
+
+						endcamera->AttachmentData.Name = namestr;
+						endcamera->TargetCamera->HLCam.AttachmentData.Name = namestr;
+					});
+
+					break;
+				}
+
+				case Message::Camera_AttachmentChangeOffset:
+				{
+					auto cameraid = data.GetValue<size_t>();
+					Vector offset;
+
+					data >> offset.x;
+					data >> offset.y;
+					data >> offset.z;
+
+					auto cameraindex = TheCamMap.GetCameraIndexFromID(cameraid);
+
+					TheCamMap.InvokeMessageFunction([cameraid, cameraindex, offset]
+					{
+						if (!EnsureInactiveState())
+						{
+							return;
+						}
+
+						if (TheCamMap.CurrentSelectionCameraID != cameraid)
+						{
+							g_engfuncs.pfnAlertMessage(at_console, "HLCAM: No selected camera for app message\n");
+							return;
+						}
+
+						Cam::MapCamera* endcamera;
+
+						if (TheCamMap.ActiveCamera)
+						{
+							endcamera = TheCamMap.ActiveCamera;
+						}
+
+						else
+						{
+							endcamera = &TheCamMap.Cameras[cameraindex];
+						}
+
+						endcamera->AttachmentData.Offset = offset;
+						endcamera->TargetCamera->HLCam.AttachmentData.Offset = offset;
 					});
 
 					break;
@@ -1557,7 +1688,7 @@ namespace
 
 							if (looktargetitr != camval.MemberEnd())
 							{
-								curcam.LookTarget.Name = looktargetitr->value.GetString();
+								curcam.LookTargetData.Name = looktargetitr->value.GetString();
 							}
 						}
 					}
@@ -1578,6 +1709,25 @@ namespace
 					if (looktypeitr != camval.MemberEnd())
 					{
 						curcam.TriggerType = Cam::Shared::CameraTriggerTypeFromString(looktypeitr->value.GetString());
+					}
+				}
+
+				{
+					const auto& useattachitr = camval.FindMember("UseAttachment");
+
+					if (useattachitr != camval.MemberEnd())
+					{
+						curcam.UseAttachment = useattachitr->value.GetBool();
+					}
+
+					if (curcam.UseAttachment)
+					{
+						curcam.AttachmentData.Name = camval["AttachmentTargetName"].GetString();
+
+						const auto& posval = camval["AttachmentOffset"];
+						curcam.AttachmentData.Offset.x = posval[0].GetDouble();
+						curcam.AttachmentData.Offset.y = posval[1].GetDouble();
+						curcam.AttachmentData.Offset.z = posval[2].GetDouble();
 					}
 				}
 
@@ -2066,7 +2216,22 @@ namespace
 
 			if (cam.LookType == Cam::Shared::CameraLookType::AtTarget)
 			{
-				cameraval.AddMember("LookTargetName", {cam.LookTarget.Name.c_str(), alloc}, alloc);
+				cameraval.AddMember("LookTargetName", {cam.LookTargetData.Name.c_str(), alloc}, alloc);
+			}
+
+			cameraval.AddMember("UseAttachment", cam.UseAttachment, alloc);
+
+			if (cam.UseAttachment)
+			{
+				cameraval.AddMember("AttachmentTargetName", {cam.AttachmentData.Name.c_str(), alloc}, alloc);
+
+				rapidjson::Value attachpos(rapidjson::kArrayType);
+
+				attachpos.PushBack(cam.AttachmentData.Offset.x, alloc);
+				attachpos.PushBack(cam.AttachmentData.Offset.y, alloc);
+				attachpos.PushBack(cam.AttachmentData.Offset.z, alloc);
+
+				cameraval.AddMember("AttachmentOffset", std::move(attachpos), alloc);
 			}
 
 			cameraval.AddMember("PlaneType", {CameraPlaneTypeToString(cam.PlaneType), alloc}, alloc);

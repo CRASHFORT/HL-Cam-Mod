@@ -46,6 +46,10 @@ namespace App
 
 		std::string LookTargetName;
 
+		bool UseAttachment;
+		std::string AttachmentTargetName;
+		Vector AttachmentOffset;
+
 		HTREEITEM TreeItem;
 	};
 
@@ -137,6 +141,13 @@ private:
 
 		CMFCPropertyGridProperty* LookAtTargetGroup;
 		CMFCPropertyGridProperty* LookAtTargetName;
+
+		CMFCPropertyGridProperty* AttachToTargetToggle;
+		CMFCPropertyGridProperty* AttachToTargetGroup;
+		CMFCPropertyGridProperty* AttachToTargetName;
+		CMFCPropertyGridProperty* AttachToTargetOffsetX;
+		CMFCPropertyGridProperty* AttachToTargetOffsetY;
+		CMFCPropertyGridProperty* AttachToTargetOffsetZ;
 		
 		CMFCPropertyGridProperty* ZoomType;
 		CMFCPropertyGridProperty* ZoomTime;

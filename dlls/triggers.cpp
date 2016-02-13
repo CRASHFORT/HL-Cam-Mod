@@ -2237,6 +2237,7 @@ void CTriggerCamera::Use(CBaseEntity* activator, CBaseEntity* caller, USE_TYPE u
 		}
 
 		pev->angles = HLCam.Angle;
+		pev->origin = HLCam.Position;
 
 		return;
 	}
@@ -2247,6 +2248,11 @@ void CTriggerCamera::Use(CBaseEntity* activator, CBaseEntity* caller, USE_TYPE u
 	}
 
 	PlayerHandle = activator;
+
+	/*
+		Skip worldspawn and all players.
+	*/
+	const auto startedict = g_engfuncs.pfnPEntityOfEntIndex(32);
 
 	switch (HLCam.LookType)
 	{
@@ -2264,12 +2270,7 @@ void CTriggerCamera::Use(CBaseEntity* activator, CBaseEntity* caller, USE_TYPE u
 
 		case Cam::Shared::CameraLookType::AtTarget:
 		{
-			/*
-				Skip worldspawn and all players.
-			*/
-			const auto startedict = g_engfuncs.pfnPEntityOfEntIndex(32);
-
-			edict_t* targetedict = FIND_ENTITY_BY_TARGETNAME(startedict, HLCam.LookTarget.Name.c_str());
+			edict_t* targetedict = FIND_ENTITY_BY_TARGETNAME(startedict, HLCam.LookTargetData.Name.c_str());
 
 			if (targetedict)
 			{
@@ -2283,6 +2284,22 @@ void CTriggerCamera::Use(CBaseEntity* activator, CBaseEntity* caller, USE_TYPE u
 			}
 
 			break;
+		}
+	}
+
+	if (HLCam.UseAttachment)
+	{
+		edict_t* targetedict = FIND_ENTITY_BY_TARGETNAME(startedict, HLCam.AttachmentData.Name.c_str());
+
+		if (targetedict)
+		{
+			AttachmentEntity = CBaseEntity::Instance(targetedict);
+		}
+
+		else
+		{
+			g_engfuncs.pfnAlertMessage(at_console, "Camera with ID \"%d\" has invalid attachment target\n", HLCam.ID);
+			AttachmentEntity = nullptr;
 		}
 	}
 
@@ -2328,9 +2345,25 @@ void CTriggerCamera::CameraThink()
 	{
 		if (TargetHandle == nullptr)
 		{
-			g_engfuncs.pfnAlertMessage(at_console, "CTriggerCamera::FollowTarget with invalid TargetHandle\n");
+			g_engfuncs.pfnAlertMessage(at_console, "CTriggerCamera::CameraThink with invalid TargetHandle\n");
 			SetThink(nullptr);
 			return;
+		}
+	}
+
+	if (HLCam.UseAttachment)
+	{
+		if (AttachmentEntity == nullptr)
+		{
+			g_engfuncs.pfnAlertMessage(at_console, "CTriggerCamera::CameraThink with invalid AttachmentEntity\n");
+		}
+
+		else
+		{
+			pev->origin = AttachmentEntity->pev->origin;
+			pev->origin.x += HLCam.AttachmentData.Offset.x;
+			pev->origin.y += HLCam.AttachmentData.Offset.y;
+			pev->origin.z += HLCam.AttachmentData.Offset.z;
 		}
 	}
 

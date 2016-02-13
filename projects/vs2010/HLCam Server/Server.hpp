@@ -75,7 +75,15 @@ namespace Cam
 		struct
 		{
 			std::string Name;
-		} LookTarget;
+		} LookTargetData;
+
+		bool UseAttachment = false;
+
+		struct
+		{
+			std::string Name;
+			Vector Offset{0, 0, 0};
+		} AttachmentData;
 
 		CTriggerCamera* TargetCamera;
 	};
