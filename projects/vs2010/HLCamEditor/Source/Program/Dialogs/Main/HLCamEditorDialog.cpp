@@ -184,11 +184,10 @@ BOOL HLCamEditorDialog::OnInitDialog()
 	}
 
 	{
-		entries.ActivateType = new CMFCPropertyGridProperty("Activate type", CameraTriggerTypeToString(CameraTriggerType::ByUserTrigger));
-		entries.ActivateType->AddOption(CameraTriggerTypeToString(CameraTriggerType::ByUserTrigger));
-		entries.ActivateType->AddOption(CameraTriggerTypeToString(CameraTriggerType::ByName));
+		entries.ActivateType = new CMFCPropertyGridProperty("Activate type", "");
 
 		entries.ActivateType->AllowEdit(false);
+		entries.ActivateType->Enable(false);
 
 		PropertyGrid.AddProperty(entries.ActivateType);
 	}
@@ -699,39 +698,6 @@ LRESULT HLCamEditorDialog::OnPropertyGridItemChanged(WPARAM controlid, LPARAM pr
 			);
 
 			cam->MaxSpeed = newspeed;
-		}
-
-		else if (prop == entries.ActivateType)
-		{
-			auto newvalstr = prop->GetValue().bstrVal;
-			auto newval = Cam::Shared::CameraTriggerTypeFromString(newvalstr);
-
-			AppServer.Write
-			(
-				Messages::Camera_ChangeActivateType,
-				Utility::BinaryBufferHelp::CreatePacket
-				(
-					userdata->CameraID,
-					static_cast<unsigned char>(newval)
-				)
-			);
-
-			cam->TriggerType = newval;
-
-			switch (newval)
-			{
-				case Cam::Shared::CameraTriggerType::ByName:
-				{
-					entries.Name->Show();
-					break;
-				}
-
-				case Cam::Shared::CameraTriggerType::ByUserTrigger:
-				{
-					entries.Name->Show(false);
-					break;
-				}
-			}
 		}
 
 		else if (prop == entries.LookType)

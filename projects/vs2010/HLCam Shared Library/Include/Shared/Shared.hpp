@@ -109,7 +109,6 @@ namespace Cam
 					Camera_ChangeSpeed,
 					Camera_ChangeName,
 					Camera_ChangePlaneType,
-					Camera_ChangeActivateType,
 					Camera_ChangeLookType,
 					
 					Camera_ChangeZoomType,
