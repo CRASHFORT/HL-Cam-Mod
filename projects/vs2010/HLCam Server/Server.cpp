@@ -257,7 +257,7 @@ namespace
 
 					if (isnamed)
 					{
-						WRITE_STRING(cam.Name);
+						WRITE_STRING(cam.Name.c_str());
 					}
 
 					MESSAGE_END();
@@ -476,15 +476,14 @@ namespace
 			WRITE_SHORT(camera->ID);
 			MESSAGE_END();
 
+			if (camera->TargetCamera)
+			{
+				camera->TargetCamera->Use(nullptr, nullptr, USE_OFF, 0);
+				UTIL_Remove(camera->TargetCamera);
+			}
+
 			if (camera == ActiveCamera)
 			{
-				if (camera->TargetCamera)
-				{
-					camera->TargetCamera->Use(nullptr, nullptr, USE_OFF, 0);
-
-					UTIL_Remove(camera->TargetCamera);
-				}
-
 				ActiveCamera = nullptr;
 			}
 
@@ -560,6 +559,11 @@ namespace
 			ret << static_cast<unsigned char>(camera.ZoomData.InterpMethod);
 			ret << camera.ZoomData.EndFov;
 			ret << camera.ZoomData.ZoomTime;
+
+			if (camera.TriggerType == Cam::Shared::CameraTriggerType::ByName)
+			{
+				ret << std::string(camera.Name);
+			}
 
 			return ret;
 		}
@@ -824,7 +828,20 @@ namespace
 							}
 
 							TheCamMap.ActiveCamera = &camera;
-							TheCamMap.ActiveCamera->TargetCamera->Use(nullptr, nullptr, USE_ON, 1);
+
+							auto usevalue = 1;
+							
+							/*
+								Named cams need a special control value that only allows us to "use" it when
+								in edit mode, otherwise it could be used at any time and reset the player view
+								any time.
+							*/
+							if (TheCamMap.ActiveCamera->TriggerType == Cam::Shared::CameraTriggerType::ByName)
+							{
+								usevalue = 100;
+							}
+
+							TheCamMap.ActiveCamera->TargetCamera->Use(nullptr, nullptr, USE_ON, usevalue);
 
 							TheCamMap.InCameraPreview = true;
 
@@ -1221,6 +1238,50 @@ namespace
 					break;
 				}
 
+				case Message::Camera_ChangeName:
+				{
+					auto cameraid = data.GetValue<size_t>();
+					auto&& namestr = data.GetNormalString();
+
+					auto cameraindex = TheCamMap.GetCameraIndexFromID(cameraid);
+
+					TheCamMap.InvokeMessageFunction([cameraid, cameraindex, namestr]
+					{
+						if (!EnsureInactiveState())
+						{
+							return;
+						}
+
+						if (TheCamMap.CurrentSelectionCameraID != cameraid)
+						{
+							g_engfuncs.pfnAlertMessage(at_console, "HLCAM: No selected camera for app message\n");
+							return;
+						}
+
+						Cam::MapCamera* endcamera;
+
+						if (TheCamMap.ActiveCamera)
+						{
+							endcamera = TheCamMap.ActiveCamera;
+						}
+
+						else
+						{
+							endcamera = &TheCamMap.Cameras[cameraindex];
+						}
+
+						if (endcamera->TriggerType == Cam::Shared::CameraTriggerType::ByName)
+						{
+							endcamera->Name = namestr;
+							endcamera->TargetCamera->HLCam.Name = namestr;
+
+							endcamera->TargetCamera->pev->targetname = g_engfuncs.pfnAllocString(namestr.c_str());
+						}
+					});
+
+					break;
+				}
+
 				case Message::Camera_Remove:
 				{
 					auto cameraid = data.GetValue<size_t>();
@@ -1513,9 +1574,9 @@ namespace
 						return;
 					}
 
-					strcpy_s(curcam.Name, nameit->value.GetString());
+					curcam.Name = nameit->value.GetString();
 					
-					curcam.TargetCamera->pev->targetname = g_engfuncs.pfnAllocString(curcam.Name);
+					curcam.TargetCamera->pev->targetname = g_engfuncs.pfnAllocString(curcam.Name.c_str());
 				}
 
 				curcam.TargetCamera->SetupHLCamera(curcam);
@@ -1717,10 +1778,26 @@ namespace
 			TheCamMap.Triggers.push_back(newtrig);
 		}
 
+		else
+		{
+			newcam.TriggerType = Cam::Shared::CameraTriggerType::ByName;
+			newcam.Name = name;
+
+			auto newent = CBaseEntity::Create("trigger_camera", newcam.Position, newcam.Angle);
+			newcam.TargetCamera = static_cast<CTriggerCamera*>(newent);
+			newcam.TargetCamera->SetupHLCamera(newcam);
+
+			TheCamMap.GameServer.Write
+			(
+				Cam::Shared::Messages::Game::OnNamedCameraAdded,
+				TheCamMap.GetInterprocessCameraInfo(newcam)
+			);
+		}
+
 		g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Created camera with ID \"%u\"\n", TheCamMap.NextCameraID);
 
 		TheCamMap.NextCameraID++;
-		TheCamMap.Cameras.push_back(newcam);
+		TheCamMap.Cameras.push_back(std::move(newcam));
 	}
 
 	void HLCAM_StartEdit()
@@ -1929,6 +2006,11 @@ namespace
 			cameraval.AddMember("LookType", {CameraLookTypeToString(cam.LookType), alloc}, alloc);
 			cameraval.AddMember("PlaneType", {CameraPlaneTypeToString(cam.PlaneType), alloc}, alloc);
 			cameraval.AddMember("TriggerType", {CameraTriggerTypeToString(cam.TriggerType), alloc}, alloc);
+
+			if (cam.TriggerType == Cam::Shared::CameraTriggerType::ByName)
+			{
+				cameraval.AddMember("Name", {cam.Name.c_str(), alloc}, alloc);
+			}
 			
 			cameraval.AddMember("ZoomType", {CameraZoomTypeToString(cam.ZoomType), alloc}, alloc);
 			cameraval.AddMember("ZoomTime", cam.ZoomData.ZoomTime, alloc);

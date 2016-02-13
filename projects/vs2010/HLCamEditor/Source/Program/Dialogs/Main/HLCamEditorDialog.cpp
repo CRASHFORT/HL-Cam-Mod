@@ -138,6 +138,11 @@ namespace App
 		camera.ZoomInterpMethod = static_cast<decltype(camera.ZoomInterpMethod)>(buffer.GetValue<unsigned char>());
 		buffer >> camera.ZoomEndFOV;
 		buffer >> camera.ZoomTime;
+
+		if (camera.TriggerType == Cam::Shared::CameraTriggerType::ByName)
+		{
+			camera.Name = buffer.GetNormalString();
+		}
 		
 		return camera;
 	}
@@ -514,6 +519,14 @@ void HLCamEditorDialog::MessageHandler()
 				break;
 			}
 
+			case Message::OnNamedCameraAdded:
+			{
+				auto&& cam = data.GetValue<App::HLCamera>();
+				AddSingleCamera(std::move(cam));
+
+				break;
+			}
+
 			case Message::OnTriggerSelected:
 			{
 				auto triggerid = data.GetValue<size_t>();				
@@ -857,6 +870,23 @@ LRESULT HLCamEditorDialog::OnPropertyGridItemChanged(WPARAM controlid, LPARAM pr
 
 			cam->ZoomInterpMethod = newval;
 		}
+
+		else if (prop == entries.Name)
+		{
+			std::string newvalstr = Utility::WStringToUTF8(prop->GetValue().bstrVal);
+
+			AppServer.Write
+			(
+				Messages::Camera_ChangeName,
+				Utility::BinaryBufferHelp::CreatePacket
+				(
+					userdata->CameraID,
+					newvalstr
+				)
+			);
+
+			cam->Name = newvalstr;
+		}
 	}
 
 	return 0;
@@ -1085,6 +1115,7 @@ void HLCamEditorDialog::OnTvnSelchangedTree1(NMHDR *pNMHDR, LRESULT *pResult)
 
 			if (camera->TriggerType == Cam::Shared::CameraTriggerType::ByName)
 			{
+				entries.Name->SetValue(camera->Name.c_str());
 				entries.Name->Show();
 			}
 

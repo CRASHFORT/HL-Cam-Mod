@@ -2201,6 +2201,19 @@ void CTriggerCamera::SetPlayerFOV(float fov)
 void CTriggerCamera::Use(CBaseEntity* activator, CBaseEntity* caller, USE_TYPE usetype, float value)
 {
 	/*
+		Named cams need a special control value that only allows us to "use" it when
+		in edit mode, otherwise it could be used at any time and reset the player view
+		any time.
+	*/
+	if (HLCam.TriggerType == Cam::Shared::CameraTriggerType::ByName &&
+		Cam::IsInEditMode() &&
+		usetype != USE_OFF &&
+		value != 100)
+	{
+		return;
+	}
+
+	/*
 		CRASH FORT:
 		Our cameras have special behaviour in which they do not have
 		a return time. Probably best to just remove the think function

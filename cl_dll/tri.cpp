@@ -484,6 +484,13 @@ void HUD_DrawOrthoTriangles()
 				std::string endstr = "Camera_";
 				endstr += std::to_string(cam.ID);
 
+				if (cam.IsNamed)
+				{
+					endstr += " (";
+					endstr += cam.Name;
+					endstr += ")";
+				}
+
 				gEngfuncs.pfnDrawString(screen.x, screen.y, endstr.c_str(), 255, 255, 255);
 			}
 		}

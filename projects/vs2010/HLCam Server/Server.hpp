@@ -2,6 +2,7 @@
 #include "extdll.h"
 #include "Shared\Shared.hpp"
 #include <vector>
+#include <string>
 
 class CTriggerCamera;
 class CBasePlayer;
@@ -45,7 +46,7 @@ namespace Cam
 			Cameras with names are not associated with any triggers.
 			They are meant to be triggered from other map entities.
 		*/
-		char Name[64];
+		std::string Name;
 
 		Shared::CameraTriggerType TriggerType = Shared::CameraTriggerType::ByUserTrigger;
 		Shared::CameraLookType LookType = Shared::CameraLookType::AtAngle;

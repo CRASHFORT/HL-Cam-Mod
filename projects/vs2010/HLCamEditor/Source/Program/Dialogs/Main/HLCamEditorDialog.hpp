@@ -27,6 +27,8 @@ namespace App
 		bool IsSingle;
 		std::vector<HLTrigger> LinkedTriggers;
 
+		std::string Name;
+
 		Vector Position;
 		Vector Angles;
 
