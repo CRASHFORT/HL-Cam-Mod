@@ -562,7 +562,12 @@ namespace
 
 			if (camera.TriggerType == Cam::Shared::CameraTriggerType::ByName)
 			{
-				ret << std::string(camera.Name);
+				ret << camera.Name;
+			}
+
+			if (camera.LookType == Cam::Shared::CameraLookType::AtTarget)
+			{
+				ret << camera.LookTarget.Name;
 			}
 
 			return ret;
@@ -1282,6 +1287,48 @@ namespace
 					break;
 				}
 
+				case Message::Camera_ChangeLookTargetName:
+				{
+					auto cameraid = data.GetValue<size_t>();
+					auto&& namestr = data.GetNormalString();
+
+					auto cameraindex = TheCamMap.GetCameraIndexFromID(cameraid);
+
+					TheCamMap.InvokeMessageFunction([cameraid, cameraindex, namestr]
+					{
+						if (!EnsureInactiveState())
+						{
+							return;
+						}
+
+						if (TheCamMap.CurrentSelectionCameraID != cameraid)
+						{
+							g_engfuncs.pfnAlertMessage(at_console, "HLCAM: No selected camera for app message\n");
+							return;
+						}
+
+						Cam::MapCamera* endcamera;
+
+						if (TheCamMap.ActiveCamera)
+						{
+							endcamera = TheCamMap.ActiveCamera;
+						}
+
+						else
+						{
+							endcamera = &TheCamMap.Cameras[cameraindex];
+						}
+
+						if (endcamera->LookType == Cam::Shared::CameraLookType::AtTarget)
+						{
+							endcamera->LookTarget.Name = namestr;
+							endcamera->TargetCamera->HLCam.LookTarget.Name = namestr;
+						}
+					});
+
+					break;
+				}
+
 				case Message::Camera_Remove:
 				{
 					auto cameraid = data.GetValue<size_t>();
@@ -1501,6 +1548,18 @@ namespace
 					if (looktypeitr != camval.MemberEnd())
 					{
 						curcam.LookType = Cam::Shared::CameraLookTypeFromString(looktypeitr->value.GetString());
+					}
+
+					{
+						if (curcam.LookType == Cam::Shared::CameraLookType::AtTarget)
+						{
+							const auto& looktargetitr = camval.FindMember("LookTargetName");
+
+							if (looktargetitr != camval.MemberEnd())
+							{
+								curcam.LookTarget.Name = looktargetitr->value.GetString();
+							}
+						}
 					}
 				}
 
@@ -2004,6 +2063,12 @@ namespace
 			cameraval.AddMember("FOV", cam.FOV, alloc);
 			cameraval.AddMember("Speed", cam.MaxSpeed, alloc);
 			cameraval.AddMember("LookType", {CameraLookTypeToString(cam.LookType), alloc}, alloc);
+
+			if (cam.LookType == Cam::Shared::CameraLookType::AtTarget)
+			{
+				cameraval.AddMember("LookTargetName", {cam.LookTarget.Name.c_str(), alloc}, alloc);
+			}
+
 			cameraval.AddMember("PlaneType", {CameraPlaneTypeToString(cam.PlaneType), alloc}, alloc);
 			cameraval.AddMember("TriggerType", {CameraTriggerTypeToString(cam.TriggerType), alloc}, alloc);
 

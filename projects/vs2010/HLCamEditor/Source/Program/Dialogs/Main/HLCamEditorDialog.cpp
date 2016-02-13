@@ -143,6 +143,11 @@ namespace App
 		{
 			camera.Name = buffer.GetNormalString();
 		}
+
+		if (camera.LookType == Cam::Shared::CameraLookType::AtTarget)
+		{
+			camera.LookTargetName = buffer.GetNormalString();
+		}
 		
 		return camera;
 	}
@@ -180,6 +185,8 @@ BOOL HLCamEditorDialog::OnInitDialog()
 		entries.Name = new CMFCPropertyGridProperty("Name", "");
 		entries.Name->AllowEdit(true);
 
+		entries.Name->Show(false);
+
 		PropertyGrid.AddProperty(entries.Name);
 	}
 
@@ -199,6 +206,7 @@ BOOL HLCamEditorDialog::OnInitDialog()
 		entries.PlaneType->AddOption(CameraPlaneTypeToString(CameraPlaneType::Vertical));
 
 		entries.PlaneType->AllowEdit(false);
+		entries.PlaneType->Show(false);
 
 		PropertyGrid.AddProperty(entries.PlaneType);
 	}
@@ -212,6 +220,18 @@ BOOL HLCamEditorDialog::OnInitDialog()
 		entries.LookType->AllowEdit(false);
 
 		PropertyGrid.AddProperty(entries.LookType);
+	}
+
+	{
+		entries.LookAtTargetGroup = new CMFCPropertyGridProperty("Look target options", 0, true);
+		{
+			entries.LookAtTargetName = new CMFCPropertyGridProperty("Look target name", "");
+			entries.LookAtTargetGroup->AddSubItem(entries.LookAtTargetName);
+		}
+
+		PropertyGrid.AddProperty(entries.LookAtTargetGroup);
+
+		entries.LookAtTargetGroup->Show(false);
 	}
 
 	{
@@ -232,11 +252,13 @@ BOOL HLCamEditorDialog::OnInitDialog()
 
 		{
 			entries.ZoomTime = new CMFCPropertyGridProperty("Duration", COleVariant(0.5f));
+			entries.ZoomTime->Show(false);
 			group->AddSubItem(entries.ZoomTime);
 		}
 
 		{
 			entries.ZoomEndFOV = new CMFCPropertyGridProperty("End FOV", COleVariant(20.0f));
+			entries.ZoomEndFOV->Show(false);
 			group->AddSubItem(entries.ZoomEndFOV);
 		}
 
@@ -245,6 +267,7 @@ BOOL HLCamEditorDialog::OnInitDialog()
 			entries.ZoomInterpMethod->AddOption(CameraAngleTypeToString(CameraAngleType::Linear));
 			entries.ZoomInterpMethod->AddOption(CameraAngleTypeToString(CameraAngleType::Smooth));
 			entries.ZoomInterpMethod->AddOption(CameraAngleTypeToString(CameraAngleType::Exponential));
+			entries.ZoomInterpMethod->Show(false);
 
 			group->AddSubItem(entries.ZoomInterpMethod);
 		}
@@ -354,12 +377,6 @@ BOOL HLCamEditorDialog::OnInitDialog()
 	TreeControl.EnableWindow(false);
 	PropertyGrid.ShowWindow(SW_HIDE);
 
-	entries.Name->Show(false);
-	entries.ZoomEndFOV->Show(false);
-	entries.ZoomTime->Show(false);
-	entries.ZoomInterpMethod->Show(false);
-	entries.PlaneType->Show(false);
-
 	SetTimer(AppMessages::TryConnectToGame, 1000, nullptr);
 
 	return 1;
@@ -390,7 +407,7 @@ void HLCamEditorDialog::RebuildPropertyGrid()
 
 void HLCamEditorDialog::MessageHandler()
 {
-	constexpr auto deepidlesleeptime = 1000ms;
+	constexpr auto deepidlesleeptime = 100ms;
 	constexpr auto idlesleeptime = 100ms;
 	constexpr auto worksleeptime = 1ms;
 
@@ -718,11 +735,17 @@ LRESULT HLCamEditorDialog::OnPropertyGridItemChanged(WPARAM controlid, LPARAM pr
 			if (newval != Cam::Shared::CameraLookType::AtAngle)
 			{
 				entries.PlaneType->Show();
+
+				if (newval == Cam::Shared::CameraLookType::AtTarget)
+				{
+					entries.LookAtTargetGroup->Show();
+				}
 			}
 
 			else
 			{
 				entries.PlaneType->Show(false);
+				entries.LookAtTargetGroup->Show(false);
 			}
 
 			cam->LookType = newval;
@@ -839,7 +862,7 @@ LRESULT HLCamEditorDialog::OnPropertyGridItemChanged(WPARAM controlid, LPARAM pr
 
 		else if (prop == entries.Name)
 		{
-			std::string newvalstr = Utility::WStringToUTF8(prop->GetValue().bstrVal);
+			auto newvalstr = Utility::WStringToUTF8(prop->GetValue().bstrVal);
 
 			AppServer.Write
 			(
@@ -851,7 +874,24 @@ LRESULT HLCamEditorDialog::OnPropertyGridItemChanged(WPARAM controlid, LPARAM pr
 				)
 			);
 
-			cam->Name = newvalstr;
+			cam->Name = std::move(newvalstr);
+		}
+
+		else if (prop == entries.LookAtTargetName)
+		{
+			auto newvalstr = Utility::WStringToUTF8(prop->GetValue().bstrVal);
+
+			AppServer.Write
+			(
+				Messages::Camera_ChangeLookTargetName,
+				Utility::BinaryBufferHelp::CreatePacket
+				(
+					userdata->CameraID,
+					newvalstr
+				)
+			);
+
+			cam->LookTargetName = std::move(newvalstr);
 		}
 	}
 
@@ -1093,11 +1133,18 @@ void HLCamEditorDialog::OnTvnSelchangedTree1(NMHDR *pNMHDR, LRESULT *pResult)
 			if (camera->LookType != Cam::Shared::CameraLookType::AtAngle)
 			{
 				entries.PlaneType->Show();
+				entries.LookAtTargetGroup->Show(false);
 			}
 
 			else
 			{
 				entries.PlaneType->Show(false);
+
+				if (camera->LookType == Cam::Shared::CameraLookType::AtTarget)
+				{
+					entries.LookAtTargetName->SetValue(camera->LookTargetName.c_str());
+					entries.LookAtTargetGroup->Show();
+				}
 			}
 
 			AppServer.Write

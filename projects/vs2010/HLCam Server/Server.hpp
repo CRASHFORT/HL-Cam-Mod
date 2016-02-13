@@ -69,6 +69,14 @@ namespace Cam
 			Shared::CameraAngleType InterpMethod = Shared::CameraAngleType::Linear;
 		} ZoomData;
 
+		/*
+			Used if LookType is "AtTarget"
+		*/
+		struct
+		{
+			std::string Name;
+		} LookTarget;
+
 		CTriggerCamera* TargetCamera;
 	};
 

@@ -44,6 +44,8 @@ namespace App
 		float ZoomEndFOV;
 		Cam::Shared::CameraAngleType ZoomInterpMethod;
 
+		std::string LookTargetName;
+
 		HTREEITEM TreeItem;
 	};
 
@@ -132,6 +134,9 @@ private:
 		CMFCPropertyGridProperty* ActivateType;
 		CMFCPropertyGridProperty* PlaneType;
 		CMFCPropertyGridProperty* LookType;
+
+		CMFCPropertyGridProperty* LookAtTargetGroup;
+		CMFCPropertyGridProperty* LookAtTargetName;
 		
 		CMFCPropertyGridProperty* ZoomType;
 		CMFCPropertyGridProperty* ZoomTime;

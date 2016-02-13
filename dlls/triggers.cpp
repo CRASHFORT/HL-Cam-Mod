@@ -2264,7 +2264,24 @@ void CTriggerCamera::Use(CBaseEntity* activator, CBaseEntity* caller, USE_TYPE u
 
 		case Cam::Shared::CameraLookType::AtTarget:
 		{
-			//TargetHandle = CBaseEntity::Instance(g_engfuncs.pfnFindEntityByString());
+			/*
+				Skip worldspawn and all players.
+			*/
+			const auto startedict = g_engfuncs.pfnPEntityOfEntIndex(32);
+
+			edict_t* targetedict = FIND_ENTITY_BY_TARGETNAME(startedict, HLCam.LookTarget.Name.c_str());
+
+			if (targetedict)
+			{
+				TargetHandle = CBaseEntity::Instance(targetedict);
+			}
+
+			else
+			{
+				g_engfuncs.pfnAlertMessage(at_console, "Camera with ID \"%d\" has invalid look target\n", HLCam.ID);
+				TargetHandle = nullptr;
+			}
+
 			break;
 		}
 	}
