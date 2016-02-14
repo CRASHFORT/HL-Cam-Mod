@@ -28,13 +28,11 @@ namespace Cam
 		bool IsNamed;
 		char Name[64];
 
-		float Position[3] = {0};
-		float Angle[3] = {0};
+		float Position[3];
+		float Angle[3];
 
 		bool Selected = false;
-
 		bool Adjusting = false;
-
 		bool InPreview = false;
 	};
 
@@ -43,8 +41,8 @@ namespace Cam
 		size_t ID;
 		size_t LinkedCameraID;
 
-		float Corner1[3] = {0};
-		float Corner2[3] = {0};
+		float Corner1[3];
+		float Corner2[3];
 
 		bool Highlighted = false;
 		bool Selected = false;

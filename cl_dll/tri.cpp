@@ -236,6 +236,18 @@ namespace
 		gEngfuncs.pTriAPI->Vertex3f(pos2.x, pos2.y, pos2.z);
 		gEngfuncs.pTriAPI->End();
 	}
+
+	inline Vector VectorFromArray(const float* ptr)
+	{
+		return {ptr[0], ptr[1], ptr[2]};
+	}
+
+	inline void VectorShift(Vector& vec, float amount)
+	{
+		vec.x += amount;
+		vec.y += amount;
+		vec.z += amount;
+	}
 }
 
 /*
@@ -283,15 +295,8 @@ void CL_DLLEXPORT HUD_DrawTransparentTriangles( void )
 
 		for (const auto& trig : triggers)
 		{
-			Vector corner1;
-			corner1.x = trig.Corner1[0];
-			corner1.y = trig.Corner1[1];
-			corner1.z = trig.Corner1[2];
-
-			Vector corner2;
-			corner2.x = trig.Corner2[0];
-			corner2.y = trig.Corner2[1];
-			corner2.z = trig.Corner2[2];
+			auto corner1 = VectorFromArray(trig.Corner1);
+			auto corner2 = VectorFromArray(trig.Corner2);
 
 			gEngfuncs.pTriAPI->CullFace(TRICULLSTYLE::TRI_NONE);
 
@@ -351,28 +356,16 @@ void CL_DLLEXPORT HUD_DrawTransparentTriangles( void )
 				continue;
 			}
 
-			Vector pos;
-			pos.x = cam.Position[0];
-			pos.y = cam.Position[1];
-			pos.z = cam.Position[2];
-		
-			Vector angles;
-			angles.x = cam.Angle[0];
-			angles.y = cam.Angle[1];
-			angles.z = cam.Angle[2];
+			auto pos = VectorFromArray(cam.Position);		
+			auto angles = VectorFromArray(cam.Angle);
 
 			Vector minpos = pos;
 			Vector maxpos = pos;
 
 			const auto camboxsize = 4;
 
-			minpos.x -= camboxsize;
-			minpos.y -= camboxsize;
-			minpos.z -= camboxsize;
-
-			maxpos.x += camboxsize;
-			maxpos.y += camboxsize;
-			maxpos.z += camboxsize;
+			VectorShift(minpos, -camboxsize);
+			VectorShift(maxpos, camboxsize);
 
 			/*
 				Selection box
@@ -384,26 +377,16 @@ void CL_DLLEXPORT HUD_DrawTransparentTriangles( void )
 
 				for (size_t i = 0; i < 2; i++)
 				{
-					minsel.x -= camboxsize;
-					minsel.y -= camboxsize;
-					minsel.z -= camboxsize;
-
-					maxsel.x += camboxsize;
-					maxsel.y += camboxsize;
-					maxsel.z += camboxsize;
+					VectorShift(minsel, -camboxsize);
+					VectorShift(maxsel, camboxsize);
 
 					DrawWireframeBox(maxsel, minsel);
 				}
 
 				if (cam.Adjusting)
 				{
-					minsel.x -= camboxsize;
-					minsel.y -= camboxsize;
-					minsel.z -= camboxsize;
-
-					maxsel.x += camboxsize;
-					maxsel.y += camboxsize;
-					maxsel.z += camboxsize;
+					VectorShift(minsel, -camboxsize);
+					VectorShift(maxsel, camboxsize);
 
 					gEngfuncs.pTriAPI->RenderMode(kRenderTransAlpha);
 					gEngfuncs.pTriAPI->Color4f(0, 0, 1, 0.6);
@@ -433,13 +416,8 @@ void CL_DLLEXPORT HUD_DrawTransparentTriangles( void )
 			minpos = forward;
 			maxpos = forward;
 
-			minpos.x -= camboxsize;
-			minpos.y -= camboxsize;
-			minpos.z -= camboxsize;
-
-			maxpos.x += camboxsize;
-			maxpos.y += camboxsize;
-			maxpos.z += camboxsize;
+			VectorShift(minpos, -camboxsize);
+			VectorShift(maxpos, camboxsize);
 
 			/*
 				End point wire box
@@ -469,17 +447,14 @@ void HUD_DrawOrthoTriangles()
 				continue;
 			}
 
+			auto pos = VectorFromArray(cam.Position);
 			Vector screen;
-			Vector pos;
-			pos.x = cam.Position[0];
-			pos.y = cam.Position[1];
-			pos.z = cam.Position[2];
 
 			if (!gEngfuncs.pTriAPI->WorldToScreen(pos, screen))
 			{
-				screen[0] = XPROJECT(screen[0]);
-				screen[1] = YPROJECT(screen[1]);
-				screen[2] = 0.0f;
+				screen.x = XPROJECT(screen[0]);
+				screen.y = YPROJECT(screen[1]);
+				screen.z = 0.0f;
 
 				std::string endstr = "Camera_";
 				endstr += std::to_string(cam.ID);
@@ -526,9 +501,9 @@ void HUD_DrawOrthoTriangles()
 
 			if (!gEngfuncs.pTriAPI->WorldToScreen(renderpos, screen))
 			{
-				screen[0] = XPROJECT(screen[0]);
-				screen[1] = YPROJECT(screen[1]);
-				screen[2] = 0.0f;
+				screen.x = XPROJECT(screen[0]);
+				screen.y = YPROJECT(screen[1]);
+				screen.z = 0.0f;
 
 				int r;
 				int g;
