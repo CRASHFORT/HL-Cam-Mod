@@ -465,6 +465,7 @@ namespace Cam
 					builder.AddItem(std::move(item));
 				}
 
+				if (!curcam->IsNamed)
 				{
 					Menu::MenuQueueItem item;
 					item.Text = "Linked Triggers: " + std::to_string(curcam->LinkedTriggerIDs.size());
