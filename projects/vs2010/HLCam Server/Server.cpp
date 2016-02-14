@@ -2370,6 +2370,9 @@ void Cam::OnPlayerPreUpdate(CBasePlayer* player)
 				targetcam->TargetCamera->pev->origin = playerpos;
 				targetcam->TargetCamera->pev->angles = playerang;
 
+				targetcam->TargetCamera->HLCam.Position = playerpos;
+				targetcam->TargetCamera->HLCam.Angle = playerang;
+
 				MESSAGE_BEGIN(MSG_ONE, HLCamMessage::CameraAdjust, nullptr, TheCamMap.LocalPlayer->pev);
 				
 				WRITE_BYTE(1);
