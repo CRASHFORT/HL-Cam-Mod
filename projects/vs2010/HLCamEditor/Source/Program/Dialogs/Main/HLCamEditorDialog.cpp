@@ -1059,6 +1059,7 @@ void HLCamEditorDialog::OnContextMenu(CWnd* window, CPoint point)
 			App::Help::ContextMenuHelper menu;
 
 			auto cameraid = userdata->CameraID;
+			auto camera = CurrentMap.FindCameraByID(cameraid);
 
 			menu.AddEntry("Set view to this camera", [this, cameraid]
 			{
@@ -1096,17 +1097,20 @@ void HLCamEditorDialog::OnContextMenu(CWnd* window, CPoint point)
 				);
 			});
 
-			menu.AddEntry("Add trigger this camera", [this, cameraid]
+			if (camera->TriggerType == Cam::Shared::CameraTriggerType::ByUserTrigger)
 			{
-				AppServer.Write
-				(
-					Messages::Camera_AddTriggerToCamera,
-					Utility::BinaryBufferHelp::CreatePacket
+				menu.AddEntry("Add trigger this camera", [this, cameraid]
+				{
+					AppServer.Write
 					(
-						cameraid
-					)
-				);
-			});
+						Messages::Camera_AddTriggerToCamera,
+						Utility::BinaryBufferHelp::CreatePacket
+						(
+							cameraid
+						)
+					);
+				});
+			}
 
 			menu.AddSeparator();
 
