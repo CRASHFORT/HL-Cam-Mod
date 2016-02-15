@@ -384,6 +384,7 @@ BOOL HLCamEditorDialog::OnInitDialog()
 	{
 		entries.Speed = new CMFCPropertyGridProperty("Speed", COleVariant(200l));
 		entries.Speed->EnableSpinControl(true, 1, 1000);
+		entries.Speed->Show(false);
 
 		PropertyGrid.AddProperty(entries.Speed);
 	}
@@ -1264,12 +1265,15 @@ void HLCamEditorDialog::OnTvnSelchangedTree1(NMHDR *pNMHDR, LRESULT *pResult)
 					entries.LookAtTargetName->SetValue(camera->LookTargetName.c_str());
 					entries.LookAtTargetGroup->Show();
 				}
+
+				entries.Speed->Show();
 			}
 
 			else
 			{
 				entries.PlaneType->Show(false);
 				entries.LookAtTargetGroup->Show(false);
+				entries.Speed->Show(false);
 			}
 
 			if (camera->UseAttachment)
