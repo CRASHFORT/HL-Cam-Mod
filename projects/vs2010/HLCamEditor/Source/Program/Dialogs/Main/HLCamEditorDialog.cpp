@@ -25,12 +25,11 @@ namespace App
 {
 	HLCamera* HLMap::FindCameraByID(size_t id)
 	{
-		for (auto& cam : Cameras)
+		auto it = Cameras.find(id);
+
+		if (it != Cameras.end())
 		{
-			if (cam.ID == id)
-			{
-				return &cam;
-			}
+			return &it->second;
 		}
 
 		return nullptr;
@@ -38,15 +37,11 @@ namespace App
 
 	HLTrigger* HLMap::FindTriggerByID(size_t id)
 	{
-		for (auto& cam : Cameras)
+		auto it = Triggers.find(id);
+
+		if (it != Triggers.end())
 		{
-			for (auto& trig : cam.LinkedTriggers)
-			{
-				if (trig.ID == id)
-				{
-					return &trig;
-				}
-			}
+			return &it->second;
 		}
 
 		return nullptr;
@@ -55,18 +50,17 @@ namespace App
 	void HLMap::AddUserData(HLUserData& userdata)
 	{
 		userdata.ID = NextUserDataID;
-		AllUserData.push_back(std::move(userdata));
+		AllUserData[NextUserDataID] = std::move(userdata);
 		NextUserDataID++;
 	}
 
 	HLUserData* HLMap::FindUserDataByID(size_t id)
 	{
-		for (auto& data : AllUserData)
+		auto it = AllUserData.find(id);
+
+		if (it != AllUserData.end())
 		{
-			if (data.ID == id)
-			{
-				return &data;
-			}
+			return &it->second;
 		}
 
 		return nullptr;
@@ -79,13 +73,7 @@ namespace App
 			return;
 		}
 
-		AllUserData.erase
-		(
-			std::remove_if(AllUserData.begin(), AllUserData.end(), [userdata](const HLUserData& other)
-			{
-				return other.ID == userdata->ID;
-			})
-		);
+		AllUserData.erase(userdata->ID);
 	}
 
 	HLTrigger& operator>>(Utility::BinaryBuffer& buffer, HLTrigger& trigger)
@@ -104,11 +92,11 @@ namespace App
 
 		if (linkedtriggerscount > 0)
 		{
-			camera.LinkedTriggers.reserve(linkedtriggerscount);
+			camera.LinkedTriggerIDs.reserve(linkedtriggerscount);
 
 			for (size_t i = 0; i < linkedtriggerscount; i++)
 			{
-				camera.LinkedTriggers.emplace_back(buffer.GetValue<HLTrigger>());
+				camera.LinkedTriggerIDs.push_back(buffer.GetValue<size_t>());
 			}
 
 			camera.IsSingle = false;
@@ -454,11 +442,6 @@ void HLCamEditorDialog::DoDataExchange(CDataExchange* exchange)
 	DDX_Control(exchange, IDC_TREE1, TreeControl);
 }
 
-void HLCamEditorDialog::RebuildPropertyGrid()
-{
-
-}
-
 void HLCamEditorDialog::MessageHandler()
 {
 	constexpr auto deepidlesleeptime = 100ms;
@@ -528,11 +511,23 @@ void HLCamEditorDialog::MessageHandler()
 					for (size_t i = 0; i < camcount; i++)
 					{
 						auto curcam = data.GetValue<App::HLCamera>();
-						CurrentMap.Cameras.emplace_back(curcam);
+
+						for (const auto& trigid : curcam.LinkedTriggerIDs)
+						{
+							App::HLTrigger newtrig;
+							newtrig.ID = trigid;
+							newtrig.LinkedCameraID = curcam.ID;
+
+							CurrentMap.Triggers[trigid] = std::move(newtrig);
+						}
+
+						CurrentMap.Cameras[curcam.ID] = std::move(curcam);
 					}
 
-					for (auto& cam : CurrentMap.Cameras)
+					for (auto& camitr : CurrentMap.Cameras)
 					{
+						auto& cam = camitr.second;
+
 						if (cam.IsSingle)
 						{
 							AddSingleCameraToList(cam);
@@ -636,7 +631,7 @@ void HLCamEditorDialog::AddSingleCamera(App::HLCamera&& camera)
 {
 	camera.IsSingle = true;
 	AddSingleCameraToList(camera);
-	CurrentMap.Cameras.emplace_back(std::move(camera));
+	CurrentMap.Cameras[camera.ID] = std::move(camera);
 }
 
 void HLCamEditorDialog::AddSingleCameraToList(App::HLCamera& camera)
@@ -660,9 +655,11 @@ void HLCamEditorDialog::AddSingleCameraToList(App::HLCamera& camera)
 void HLCamEditorDialog::AddCameraAndTrigger(App::HLCamera&& camera, App::HLTrigger&& trigger)
 {
 	AddCameraAndTriggerToList(camera);
+
+	camera.LinkedTriggerIDs.push_back(trigger.ID);
 	
-	camera.LinkedTriggers.emplace_back(std::move(trigger));
-	CurrentMap.Cameras.emplace_back(std::move(camera));
+	CurrentMap.Triggers[trigger.ID] = std::move(trigger);
+	CurrentMap.Cameras[camera.ID] = std::move(camera);
 }
 
 void HLCamEditorDialog::AddCameraAndTriggerToList(App::HLCamera& camera)
@@ -682,32 +679,34 @@ void HLCamEditorDialog::AddCameraAndTriggerToList(App::HLCamera& camera)
 		CurrentMap.AddUserData(camuserdata);
 	}
 
-	AddCamerasTriggersToList(camera, camera.LinkedTriggers);
+	AddCamerasTriggersToList(camera, camera.LinkedTriggerIDs);
 }
 
 void HLCamEditorDialog::AddTriggerToCamera(App::HLCamera& camera, App::HLTrigger&& trigger)
 {
-	std::vector<App::HLTrigger> entry{trigger};
+	std::vector<size_t> entry{trigger.ID};
 	AddCamerasTriggersToList(camera, entry);
-	camera.LinkedTriggers.emplace_back(std::move(trigger));
+	camera.LinkedTriggerIDs.push_back(trigger.ID);
 }
 
-void HLCamEditorDialog::AddCamerasTriggersToList(App::HLCamera& camera, std::vector<App::HLTrigger>& triggers)
+void HLCamEditorDialog::AddCamerasTriggersToList(App::HLCamera& camera, std::vector<size_t>& triggers)
 {
 	CStringA format;
 
-	for (auto& trig : triggers)
+	for (auto& trigid : triggers)
 	{
-		format.Format("Trigger_%d", trig.ID);
-		trig.TreeItem = TreeControl.InsertItem(format, camera.TreeItem);
+		auto trig = CurrentMap.FindTriggerByID(trigid);
+
+		format.Format("Trigger_%d", trig->ID);
+		trig->TreeItem = TreeControl.InsertItem(format, camera.TreeItem);
 
 		{
 			App::HLUserData triguserdata;
 			triguserdata.IsCamera = false;
-			triguserdata.TriggerID = trig.ID;
-			triguserdata.TreeItem = trig.TreeItem;
+			triguserdata.TriggerID = trig->ID;
+			triguserdata.TreeItem = trig->TreeItem;
 
-			TreeControl.SetItemData(trig.TreeItem, CurrentMap.NextUserDataID);
+			TreeControl.SetItemData(trig->TreeItem, CurrentMap.NextUserDataID);
 			CurrentMap.AddUserData(triguserdata);
 		}
 	}
@@ -1135,6 +1134,7 @@ void HLCamEditorDialog::OnContextMenu(CWnd* window, CPoint point)
 
 				TreeControl.DeleteItem(userdata->TreeItem);
 				CurrentMap.RemoveUserData(userdata);
+				CurrentMap.Cameras.erase(userdata->CameraID);
 			});
 
 			menu.Open(screenpos, window);
@@ -1173,6 +1173,7 @@ void HLCamEditorDialog::OnContextMenu(CWnd* window, CPoint point)
 
 				TreeControl.DeleteItem(userdata->TreeItem);
 				CurrentMap.RemoveUserData(userdata);
+				CurrentMap.Triggers.erase(userdata->TriggerID);
 			});
 
 			menu.Open(screenpos, window);

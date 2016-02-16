@@ -163,8 +163,8 @@ namespace
 	*/
 	struct MapCam
 	{
-		std::vector<Cam::MapTrigger> Triggers;
-		std::vector<Cam::MapCamera> Cameras;
+		std::unordered_map<size_t, Cam::MapTrigger> Triggers;
+		std::unordered_map<size_t, Cam::MapCamera> Cameras;
 
 		std::string CurrentMapName;
 
@@ -238,8 +238,10 @@ namespace
 		{
 			if (!Cameras.empty())
 			{
-				for (const auto& cam : Cameras)
+				for (const auto& camitr : Cameras)
 				{
+					const auto& cam = camitr.second;
+
 					MESSAGE_BEGIN(MSG_ONE, HLCamMessage::CreateCamera, nullptr, LocalPlayer->pev);
 
 					bool isnamed = cam.TriggerType == Cam::Shared::CameraTriggerType::ByName;
@@ -266,8 +268,10 @@ namespace
 
 			if (!Triggers.empty())
 			{
-				for (const auto& trig : Triggers)
+				for (const auto& trigitr : Triggers)
 				{
+					const auto& trig = trigitr.second;
+
 					/*
 						Part 0
 					*/
@@ -343,62 +347,26 @@ namespace
 
 		Cam::MapTrigger* FindTriggerByID(size_t id)
 		{
-			for (auto& trig : Triggers)
+			auto it = Triggers.find(id);
+
+			if (it != Triggers.end())
 			{
-				if (trig.ID == id)
-				{
-					return &trig;
-				}
+				return &it->second;
 			}
-			
+		
 			return nullptr;
-		}
-
-		int GetTriggerIndexFromID(size_t id)
-		{
-			int index = 0;
-
-			for (const auto& trig : Triggers)
-			{
-				if (trig.ID == id)
-				{
-					return index;
-				}
-
-				index++;
-			}
-
-			return -1;
 		}
 
 		Cam::MapCamera* FindCameraByID(size_t id)
 		{
-			for (auto& cam : Cameras)
+			auto it = Cameras.find(id);
+
+			if (it != Cameras.end())
 			{
-				if (cam.ID == id)
-				{
-					return &cam;
-				}
+				return &it->second;
 			}
 
 			return nullptr;
-		}
-
-		int GetCameraIndexFromID(size_t id)
-		{
-			int index = 0;
-
-			for (const auto& cam : Cameras)
-			{
-				if (cam.ID == id)
-				{
-					return index;
-				}
-
-				index++;
-			}
-
-			return -1;
 		}
 
 		Cam::MapCamera* GetLinkedCamera(const Cam::MapTrigger& trigger)
@@ -418,47 +386,18 @@ namespace
 			return ret;
 		}
 
-		void RemoveTrigger(Cam::MapTrigger* trigger)
+		void RemoveTriggerFromID(size_t triggerid)
 		{
-			if (!trigger)
-			{
-				return;
-			}
-
 			MESSAGE_BEGIN(MSG_ONE, HLCamMessage::RemoveTrigger, nullptr, LocalPlayer->pev);
-			WRITE_SHORT(trigger->ID);
+			WRITE_SHORT(triggerid);
 			MESSAGE_END();
 
-			if (trigger->ID == CurrentHighlightTriggerID)
+			if (triggerid == CurrentHighlightTriggerID)
 			{
 				UnHighlightAll();
 			}
 
-			{
-				auto targetcam = GetLinkedCamera(*trigger);
-
-				auto& container = targetcam->LinkedTriggerIDs;
-
-				container.erase
-				(
-					std::remove_if(container.begin(), container.end(), [trigger](const size_t& otherid)
-					{
-						return otherid == trigger->ID;
-					})
-				);
-			}
-
-			{
-				auto& container = Triggers;
-
-				container.erase
-				(
-					std::remove_if(container.begin(), container.end(), [trigger](const Cam::MapTrigger& other)
-					{
-						return other.ID == trigger->ID;
-					})
-				);
-			}
+			Triggers.erase(triggerid);
 		}
 
 		/*
@@ -476,15 +415,15 @@ namespace
 			WRITE_SHORT(camera->ID);
 			MESSAGE_END();
 
-			if (camera->TargetCamera)
-			{
-				camera->TargetCamera->Use(nullptr, nullptr, USE_OFF, 0);
-				UTIL_Remove(camera->TargetCamera);
-			}
-
 			if (camera == ActiveCamera)
 			{
+				ActiveCamera->TargetCamera->Use(nullptr, nullptr, USE_OFF, 0);
 				ActiveCamera = nullptr;
+			}
+
+			if (camera->TargetCamera)
+			{
+				UTIL_Remove(camera->TargetCamera);
 			}
 
 			if (camera->TriggerType == Cam::Shared::CameraTriggerType::ByUserTrigger)
@@ -492,18 +431,13 @@ namespace
 				while (!camera->LinkedTriggerIDs.empty())
 				{
 					auto curtrigid = camera->LinkedTriggerIDs[0];
+					RemoveTriggerFromID(curtrigid);
 
-					RemoveTrigger(FindTriggerByID(curtrigid));
+					camera->LinkedTriggerIDs.pop_back();
 				}
 			}
 
-			Cameras.erase
-			(
-				std::remove_if(Cameras.begin(), Cameras.end(), [camera](const Cam::MapCamera& other)
-				{
-					return other.ID == camera->ID;
-				})
-			);
+			Cameras.erase(camera->ID);
 		}
 
 		Cam::Shared::StateType CurrentState = Cam::Shared::StateType::Inactive;
@@ -537,7 +471,7 @@ namespace
 
 			for (const auto& trigid : camera.LinkedTriggerIDs)
 			{
-				ret.Append(GetInterprocessTriggerInfo(*FindTriggerByID(trigid)));
+				ret << trigid;
 			}
 
 			ret << camera.MaxSpeed;
@@ -771,9 +705,8 @@ namespace
 				case Message::Camera_AddTriggerToCamera:
 				{
 					auto cameraid = data.GetValue<size_t>();
-					auto cameraindex = TheCamMap.GetCameraIndexFromID(cameraid);
 
-					TheCamMap.InvokeMessageFunction([cameraid, cameraindex]
+					TheCamMap.InvokeMessageFunction([cameraid]
 					{
 						if (!EnsureInactiveState())
 						{
@@ -788,7 +721,7 @@ namespace
 							newtrig.ID = TheCamMap.NextTriggerID;
 							newtrig.LinkedCameraID = cameraid;
 
-							auto& newcam = TheCamMap.Cameras[cameraindex];
+							auto& newcam = TheCamMap.Cameras[cameraid];
 
 							newcam.LinkedTriggerIDs.push_back(newtrig.ID);
 
@@ -805,9 +738,9 @@ namespace
 
 							TheCamMap.CreationTriggerID = newtrig.ID;
 
-							TheCamMap.NextTriggerID++;
+							TheCamMap.Triggers[TheCamMap.NextTriggerID] = std::move(newtrig);
 
-							TheCamMap.Triggers.push_back(newtrig);
+							TheCamMap.NextTriggerID++;
 						}
 					});
 
@@ -817,9 +750,8 @@ namespace
 				case Message::SetViewToCamera:
 				{
 					auto cameraid = data.GetValue<size_t>();
-					auto cameraindex = TheCamMap.GetCameraIndexFromID(cameraid);
 
-					TheCamMap.InvokeMessageFunction([cameraid, cameraindex]
+					TheCamMap.InvokeMessageFunction([cameraid]
 					{
 						if (!EnsureInactiveState())
 						{
@@ -828,7 +760,7 @@ namespace
 
 						if (TheCamMap.CurrentSelectionCameraID == cameraid)
 						{
-							auto& camera = TheCamMap.Cameras[cameraindex];
+							auto& camera = TheCamMap.Cameras[cameraid];
 
 							if (TheCamMap.ActiveCamera)
 							{
@@ -893,9 +825,8 @@ namespace
 				case Message::MoveToCamera:
 				{
 					auto cameraid = data.GetValue<size_t>();
-					auto cameraindex = TheCamMap.GetCameraIndexFromID(cameraid);
 
-					TheCamMap.InvokeMessageFunction([cameraid, cameraindex]
+					TheCamMap.InvokeMessageFunction([cameraid]
 					{
 						if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive &&
 							TheCamMap.CurrentState != Cam::Shared::StateType::AdjustingCamera)
@@ -906,7 +837,7 @@ namespace
 
 						if (TheCamMap.CurrentSelectionCameraID == cameraid)
 						{
-							const auto& targetcam = TheCamMap.Cameras[cameraindex];
+							const auto& targetcam = TheCamMap.Cameras[cameraid];
 
 							TheCamMap.LocalPlayer->pev->origin = targetcam.Position - TheCamMap.LocalPlayer->pev->view_ofs;
 
@@ -922,9 +853,8 @@ namespace
 				case Message::MoveToTrigger:
 				{
 					auto triggerid = data.GetValue<size_t>();
-					auto triggerindex = TheCamMap.GetTriggerIndexFromID(triggerid);
-
-					TheCamMap.InvokeMessageFunction([triggerid, triggerindex]
+					
+					TheCamMap.InvokeMessageFunction([triggerid]
 					{
 						if (TheCamMap.CurrentState != Cam::Shared::StateType::Inactive &&
 							TheCamMap.CurrentState != Cam::Shared::StateType::AdjustingCamera)
@@ -935,7 +865,7 @@ namespace
 
 						if (TheCamMap.CurrentSelectionTriggerID == triggerid)
 						{
-							const auto& targettrig = TheCamMap.Triggers[triggerindex];
+							const auto& targettrig = TheCamMap.Triggers[triggerid];
 							TheCamMap.LocalPlayer->pev->origin = targettrig.CenterPos;
 						}
 					});
@@ -947,10 +877,8 @@ namespace
 				{
 					auto cameraid = data.GetValue<size_t>();
 					auto fov = data.GetValue<int>();
-					
-					auto cameraindex = TheCamMap.GetCameraIndexFromID(cameraid);
 
-					TheCamMap.InvokeMessageFunction([cameraid, fov, cameraindex]
+					TheCamMap.InvokeMessageFunction([cameraid, fov]
 					{
 						if (!EnsureInactiveState())
 						{
@@ -973,7 +901,7 @@ namespace
 
 						else
 						{
-							endcamera = &TheCamMap.Cameras[cameraindex];
+							endcamera = &TheCamMap.Cameras[cameraid];
 						}
 
 						endcamera->FOV = fov;
@@ -988,9 +916,7 @@ namespace
 					auto cameraid = data.GetValue<size_t>();
 					auto speed = data.GetValue<int>();
 
-					auto cameraindex = TheCamMap.GetCameraIndexFromID(cameraid);
-
-					TheCamMap.InvokeMessageFunction([cameraid, speed, cameraindex]
+					TheCamMap.InvokeMessageFunction([cameraid, speed]
 					{
 						if (!EnsureInactiveState())
 						{
@@ -1012,7 +938,7 @@ namespace
 
 						else
 						{
-							endcamera = &TheCamMap.Cameras[cameraindex];
+							endcamera = &TheCamMap.Cameras[cameraid];
 						}
 
 						endcamera->MaxSpeed = speed;
@@ -1027,9 +953,7 @@ namespace
 					auto cameraid = data.GetValue<size_t>();
 					auto looktype = data.GetValue<unsigned char>();
 
-					auto cameraindex = TheCamMap.GetCameraIndexFromID(cameraid);
-
-					TheCamMap.InvokeMessageFunction([cameraid, looktype, cameraindex]
+					TheCamMap.InvokeMessageFunction([cameraid, looktype]
 					{
 						if (!EnsureInactiveState())
 						{
@@ -1051,7 +975,7 @@ namespace
 
 						else
 						{
-							endcamera = &TheCamMap.Cameras[cameraindex];
+							endcamera = &TheCamMap.Cameras[cameraid];
 						}
 
 						endcamera->LookType = static_cast<decltype(endcamera->LookType)>(looktype);
@@ -1066,9 +990,7 @@ namespace
 					auto cameraid = data.GetValue<size_t>();
 					auto planetype = data.GetValue<unsigned char>();
 
-					auto cameraindex = TheCamMap.GetCameraIndexFromID(cameraid);
-
-					TheCamMap.InvokeMessageFunction([cameraid, planetype, cameraindex]
+					TheCamMap.InvokeMessageFunction([cameraid, planetype]
 					{
 						if (!EnsureInactiveState())
 						{
@@ -1090,7 +1012,7 @@ namespace
 
 						else
 						{
-							endcamera = &TheCamMap.Cameras[cameraindex];
+							endcamera = &TheCamMap.Cameras[cameraid];
 						}
 
 						endcamera->PlaneType = static_cast<decltype(endcamera->PlaneType)>(planetype);
@@ -1105,9 +1027,7 @@ namespace
 					auto cameraid = data.GetValue<size_t>();
 					auto zoomtype = data.GetValue<unsigned char>();
 
-					auto cameraindex = TheCamMap.GetCameraIndexFromID(cameraid);
-
-					TheCamMap.InvokeMessageFunction([cameraid, zoomtype, cameraindex]
+					TheCamMap.InvokeMessageFunction([cameraid, zoomtype]
 					{
 						if (!EnsureInactiveState())
 						{
@@ -1129,7 +1049,7 @@ namespace
 
 						else
 						{
-							endcamera = &TheCamMap.Cameras[cameraindex];
+							endcamera = &TheCamMap.Cameras[cameraid];
 						}
 
 						endcamera->ZoomType = static_cast<decltype(endcamera->ZoomType)>(zoomtype);
@@ -1144,9 +1064,7 @@ namespace
 					auto cameraid = data.GetValue<size_t>();
 					auto time = data.GetValue<float>();
 
-					auto cameraindex = TheCamMap.GetCameraIndexFromID(cameraid);
-
-					TheCamMap.InvokeMessageFunction([cameraid, time, cameraindex]
+					TheCamMap.InvokeMessageFunction([cameraid, time]
 					{
 						if (!EnsureInactiveState())
 						{
@@ -1168,7 +1086,7 @@ namespace
 
 						else
 						{
-							endcamera = &TheCamMap.Cameras[cameraindex];
+							endcamera = &TheCamMap.Cameras[cameraid];
 						}
 
 						endcamera->ZoomData.ZoomTime = time;
@@ -1183,9 +1101,7 @@ namespace
 					auto cameraid = data.GetValue<size_t>();
 					auto fov = data.GetValue<float>();
 
-					auto cameraindex = TheCamMap.GetCameraIndexFromID(cameraid);
-
-					TheCamMap.InvokeMessageFunction([cameraid, fov, cameraindex]
+					TheCamMap.InvokeMessageFunction([cameraid, fov]
 					{
 						if (!EnsureInactiveState())
 						{
@@ -1207,7 +1123,7 @@ namespace
 
 						else
 						{
-							endcamera = &TheCamMap.Cameras[cameraindex];
+							endcamera = &TheCamMap.Cameras[cameraid];
 						}
 
 						endcamera->ZoomData.EndFov = fov;
@@ -1222,9 +1138,7 @@ namespace
 					auto cameraid = data.GetValue<size_t>();
 					auto interptype = data.GetValue<unsigned char>();
 
-					auto cameraindex = TheCamMap.GetCameraIndexFromID(cameraid);
-
-					TheCamMap.InvokeMessageFunction([cameraid, interptype, cameraindex]
+					TheCamMap.InvokeMessageFunction([cameraid, interptype]
 					{
 						if (!EnsureInactiveState())
 						{
@@ -1246,7 +1160,7 @@ namespace
 
 						else
 						{
-							endcamera = &TheCamMap.Cameras[cameraindex];
+							endcamera = &TheCamMap.Cameras[cameraid];
 						}
 
 						endcamera->ZoomData.InterpMethod = static_cast<decltype(endcamera->ZoomData.InterpMethod)>(interptype);
@@ -1261,9 +1175,7 @@ namespace
 					auto cameraid = data.GetValue<size_t>();
 					auto&& namestr = data.GetNormalString();
 
-					auto cameraindex = TheCamMap.GetCameraIndexFromID(cameraid);
-
-					TheCamMap.InvokeMessageFunction([cameraid, cameraindex, namestr]
+					TheCamMap.InvokeMessageFunction([cameraid, namestr]
 					{
 						if (!EnsureInactiveState())
 						{
@@ -1285,7 +1197,7 @@ namespace
 
 						else
 						{
-							endcamera = &TheCamMap.Cameras[cameraindex];
+							endcamera = &TheCamMap.Cameras[cameraid];
 						}
 
 						if (endcamera->TriggerType == Cam::Shared::CameraTriggerType::ByName)
@@ -1305,9 +1217,7 @@ namespace
 					auto cameraid = data.GetValue<size_t>();
 					auto&& namestr = data.GetNormalString();
 
-					auto cameraindex = TheCamMap.GetCameraIndexFromID(cameraid);
-
-					TheCamMap.InvokeMessageFunction([cameraid, cameraindex, namestr]
+					TheCamMap.InvokeMessageFunction([cameraid, namestr]
 					{
 						if (!EnsureInactiveState())
 						{
@@ -1329,7 +1239,7 @@ namespace
 
 						else
 						{
-							endcamera = &TheCamMap.Cameras[cameraindex];
+							endcamera = &TheCamMap.Cameras[cameraid];
 						}
 
 						if (endcamera->LookType == Cam::Shared::CameraLookType::AtTarget)
@@ -1347,9 +1257,7 @@ namespace
 					auto cameraid = data.GetValue<size_t>();
 					auto useattachment = data.GetValue<bool>();
 
-					auto cameraindex = TheCamMap.GetCameraIndexFromID(cameraid);
-
-					TheCamMap.InvokeMessageFunction([cameraid, cameraindex, useattachment]
+					TheCamMap.InvokeMessageFunction([cameraid, useattachment]
 					{
 						if (!EnsureInactiveState())
 						{
@@ -1371,7 +1279,7 @@ namespace
 
 						else
 						{
-							endcamera = &TheCamMap.Cameras[cameraindex];
+							endcamera = &TheCamMap.Cameras[cameraid];
 						}
 
 						endcamera->UseAttachment = useattachment;
@@ -1386,9 +1294,7 @@ namespace
 					auto cameraid = data.GetValue<size_t>();
 					auto&& namestr = data.GetNormalString();
 
-					auto cameraindex = TheCamMap.GetCameraIndexFromID(cameraid);
-
-					TheCamMap.InvokeMessageFunction([cameraid, cameraindex, namestr]
+					TheCamMap.InvokeMessageFunction([cameraid, namestr]
 					{
 						if (!EnsureInactiveState())
 						{
@@ -1410,7 +1316,7 @@ namespace
 
 						else
 						{
-							endcamera = &TheCamMap.Cameras[cameraindex];
+							endcamera = &TheCamMap.Cameras[cameraid];
 						}
 
 						endcamera->AttachmentData.Name = namestr;
@@ -1429,9 +1335,7 @@ namespace
 					data >> offset.y;
 					data >> offset.z;
 
-					auto cameraindex = TheCamMap.GetCameraIndexFromID(cameraid);
-
-					TheCamMap.InvokeMessageFunction([cameraid, cameraindex, offset]
+					TheCamMap.InvokeMessageFunction([cameraid, offset]
 					{
 						if (!EnsureInactiveState())
 						{
@@ -1453,7 +1357,7 @@ namespace
 
 						else
 						{
-							endcamera = &TheCamMap.Cameras[cameraindex];
+							endcamera = &TheCamMap.Cameras[cameraid];
 						}
 
 						endcamera->AttachmentData.Offset = offset;
@@ -1466,16 +1370,15 @@ namespace
 				case Message::Camera_Remove:
 				{
 					auto cameraid = data.GetValue<size_t>();
-					auto cameraindex = TheCamMap.GetCameraIndexFromID(cameraid);
 
-					TheCamMap.InvokeMessageFunction([cameraid, cameraindex]
+					TheCamMap.InvokeMessageFunction([cameraid]
 					{
 						if (!EnsureInactiveState())
 						{
 							return;
 						}
 
-						TheCamMap.RemoveCamera(&TheCamMap.Cameras[cameraindex]);
+						TheCamMap.RemoveCamera(&TheCamMap.Cameras[cameraid]);
 					});
 
 					break;
@@ -1484,16 +1387,15 @@ namespace
 				case Message::Trigger_Remove:
 				{
 					auto triggerid = data.GetValue<size_t>();
-					auto triggerindex = TheCamMap.GetTriggerIndexFromID(triggerid);
 
-					TheCamMap.InvokeMessageFunction([triggerid, triggerindex]
+					TheCamMap.InvokeMessageFunction([triggerid]
 					{
 						if (!EnsureInactiveState())
 						{
 							return;
 						}
 
-						TheCamMap.RemoveTrigger(&TheCamMap.Triggers[triggerindex]);
+						TheCamMap.RemoveTriggerFromID(triggerid);
 					});
 
 					break;
@@ -1616,12 +1518,13 @@ namespace
 							curtrig.SetupPositions();
 
 							curtrig.ID = TheCamMap.NextTriggerID;
-							TheCamMap.NextTriggerID++;
 
 							curtrig.LinkedCameraID = curcam.ID;
 
 							curcam.LinkedTriggerIDs.push_back(curtrig.ID);
-							TheCamMap.Triggers.emplace_back(std::move(curtrig));
+							TheCamMap.Triggers[TheCamMap.NextTriggerID] = std::move(curtrig);
+
+							TheCamMap.NextTriggerID++;
 						}
 					}
 				}
@@ -1793,7 +1696,7 @@ namespace
 
 				curcam.TargetCamera->SetupHLCamera(curcam);
 
-				TheCamMap.Cameras.push_back(curcam);
+				TheCamMap.Cameras[curcam.ID] = std::move(curcam);
 			}
 		}
 	}
@@ -1881,8 +1784,8 @@ void Cam::Deactivate()
 
 	for (auto& cam : TheCamMap.Cameras)
 	{
-		UTIL_Remove(cam.TargetCamera);
-		cam.TargetCamera = nullptr;
+		UTIL_Remove(cam.second.TargetCamera);
+		cam.second.TargetCamera = nullptr;
 	}
 
 	ShouldPauseMessageThread = false;
@@ -1993,9 +1896,9 @@ namespace
 
 			TheCamMap.CreationTriggerID = newtrig.ID;
 
-			TheCamMap.NextTriggerID++;
+			TheCamMap.Triggers[TheCamMap.NextTriggerID] = std::move(newtrig);
 
-			TheCamMap.Triggers.push_back(newtrig);
+			TheCamMap.NextTriggerID++;
 		}
 
 		else
@@ -2017,7 +1920,7 @@ namespace
 		g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Created camera with ID \"%u\"\n", TheCamMap.NextCameraID);
 
 		TheCamMap.NextCameraID++;
-		TheCamMap.Cameras.push_back(std::move(newcam));
+		TheCamMap.Cameras[newcam.ID] = std::move(newcam);
 	}
 
 	void HLCAM_StartEdit()
@@ -2097,7 +2000,7 @@ namespace
 			pack << static_cast<uint16>(TheCamMap.Cameras.size());
 			for (const auto& cam : TheCamMap.Cameras)
 			{
-				pack.Append(TheCamMap.GetInterprocessCameraInfo(cam));
+				pack.Append(TheCamMap.GetInterprocessCameraInfo(cam.second));
 			}
 
 			TheCamMap.GameServer.Write
@@ -2168,8 +2071,10 @@ namespace
 
 		rapidjson::Value root(rapidjson::kArrayType);
 
-		for (const auto& cam : TheCamMap.Cameras)
+		for (const auto& camitr : TheCamMap.Cameras)
 		{
+			const auto& cam = camitr.second;
+
 			rapidjson::Value thisvalue(rapidjson::kObjectType);
 
 			rapidjson::Value cameraval(rapidjson::kObjectType);
@@ -2566,7 +2471,7 @@ void Cam::OnPlayerPostUpdate(CBasePlayer* player)
 
 			for (auto& trig : TheCamMap.Triggers)
 			{
-				float distance = (trig.CenterPos - startpos).Length2D();
+				float distance = (trig.second.CenterPos - startpos).Length2D();
 
 				if (distance > maxsearchdist)
 				{
@@ -2575,7 +2480,7 @@ void Cam::OnPlayerPostUpdate(CBasePlayer* player)
 
 				DepthInfo info;
 				info.Distance = distance;
-				info.Trigger = &trig;
+				info.Trigger = &trig.second;
 
 				depthlist.push_back(info);
 			}
@@ -2645,8 +2550,10 @@ void Cam::OnPlayerPostUpdate(CBasePlayer* player)
 	const auto& playerposmax = TheCamMap.LocalPlayer->pev->absmax;
 	const auto& playerposmin = TheCamMap.LocalPlayer->pev->absmin;
 
-	for (auto& trig : TheCamMap.Triggers)
+	for (auto& trigitr : TheCamMap.Triggers)
 	{
+		auto& trig = trigitr.second;
+
 		if (LocalUtility::IsBoxIntersectingBox(playerposmin, playerposmax, trig.MinPos, trig.MaxPos))
 		{
 			PlayerEnterTrigger(trig);

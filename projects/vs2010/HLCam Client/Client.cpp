@@ -14,8 +14,8 @@ namespace
 {
 	struct HLCamClient
 	{
-		std::vector<Cam::ClientCamera> Cameras;
-		std::vector<Cam::ClientTrigger> Triggers;
+		std::unordered_map<size_t, Cam::ClientCamera> Cameras;
+		std::unordered_map<size_t, Cam::ClientTrigger> Triggers;
 
 		bool InEditMode = false;
 
@@ -28,12 +28,11 @@ namespace
 
 		Cam::ClientTrigger* FindTriggerByID(size_t id)
 		{
-			for (auto& trig : Triggers)
+			auto it = Triggers.find(id);
+
+			if (it != Triggers.end())
 			{
-				if (trig.ID == id)
-				{
-					return &trig;
-				}
+				return &it->second;
 			}
 
 			return nullptr;
@@ -41,12 +40,11 @@ namespace
 
 		Cam::ClientCamera* FindCameraByID(size_t id)
 		{
-			for (auto& cam : Cameras)
+			auto it = Cameras.find(id);
+
+			if (it != Cameras.end())
 			{
-				if (cam.ID == id)
-				{
-					return &cam;
-				}
+				return &it->second;
 			}
 
 			return nullptr;
@@ -57,34 +55,9 @@ namespace
 			return FindCameraByID(trigger.LinkedCameraID);
 		}
 
-		void RemoveTrigger(Cam::ClientTrigger* trigger)
+		void RemoveTriggerFromID(size_t triggerid)
 		{
-			if (!trigger)
-			{
-				return;
-			}
-
-			{
-				auto targetcam = GetLinkedCamera(*trigger);
-
-				auto& container = targetcam->LinkedTriggerIDs;
-
-				container.erase
-				(
-					std::remove_if(container.begin(), container.end(), [trigger](const size_t& otherid)
-					{
-						return otherid == trigger->ID;
-					})
-				);
-			}
-
-			Triggers.erase
-			(
-				std::remove_if(Triggers.begin(), Triggers.end(), [trigger](const Cam::ClientTrigger& other)
-				{
-					return other.ID == trigger->ID;
-				})
-			);
+			Triggers.erase(triggerid);
 		}
 
 		/*
@@ -104,17 +77,13 @@ namespace
 				{
 					auto curtrigid = camera->LinkedTriggerIDs[0];
 
-					RemoveTrigger(FindTriggerByID(curtrigid));
+					RemoveTriggerFromID(curtrigid);
+
+					camera->LinkedTriggerIDs.pop_back();
 				}
 			}
 
-			Cameras.erase
-			(
-				std::remove_if(Cameras.begin(), Cameras.end(), [camera](const Cam::ClientCamera& other)
-				{
-					return other.ID == camera->ID;
-				})
-			);
+			Cameras.erase(camera->ID);
 		}
 
 		Cam::Shared::StateType CurrentState = Cam::Shared::StateType::Inactive;
@@ -589,7 +558,7 @@ int HLCamClient_OnCameraCreatedMessage(const char* name, int size, void* buffer)
 		strcpy_s(newcam.Name, READ_STRING());
 	}
 
-	TheCamClient.Cameras.push_back(newcam);
+	TheCamClient.Cameras[newcam.ID] = std::move(newcam);
 
 	return 1;
 }
@@ -615,7 +584,7 @@ int HLCamClient_OnTriggerCreatedMessage(const char* name, int size, void* buffer
 			TheCamClient.CurrentTriggerID = newtrig.ID;
 			TheCamClient.CurrentState = Cam::Shared::StateType::NeedsToCreateTriggerCorner1;
 
-			TheCamClient.Triggers.push_back(newtrig);
+			TheCamClient.Triggers[newtrig.ID] = std::move(newtrig);
 			break;
 		}
 
@@ -667,9 +636,7 @@ int HLCamClient_RemoveTrigger(const char* name, int size, void* buffer)
 	BEGIN_READ(buffer, size);
 
 	size_t trigid = READ_SHORT();
-
-	auto targettrig = TheCamClient.FindTriggerByID(trigid);
-	TheCamClient.RemoveTrigger(targettrig);
+	TheCamClient.RemoveTriggerFromID(trigid);
 
 	return 1;
 }
@@ -1010,12 +977,12 @@ namespace Cam
 		return TheCamClient.InEditMode;
 	}
 
-	const std::vector<ClientTrigger>& GetAllTriggers()
+	const std::unordered_map<size_t, ClientTrigger>& GetAllTriggers()
 	{
 		return TheCamClient.Triggers;
 	}
 
-	const std::vector<ClientCamera>& GetAllCameras()
+	const std::unordered_map<size_t, ClientCamera>& GetAllCameras()
 	{
 		return TheCamClient.Cameras;
 	}

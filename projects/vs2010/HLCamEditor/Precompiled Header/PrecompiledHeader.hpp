@@ -56,6 +56,7 @@
 #include <atomic>
 #include <mutex>
 #include <chrono>
+#include <unordered_map>
 
 #include "boost\interprocess\ipc\message_queue.hpp"
 #include "Shared\Interprocess\Interprocess.hpp"

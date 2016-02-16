@@ -2,6 +2,7 @@
 #include "extdll.h"
 #include "Shared\Shared.hpp"
 #include <vector>
+#include <unordered_map>
 #include <string>
 
 class CTriggerCamera;

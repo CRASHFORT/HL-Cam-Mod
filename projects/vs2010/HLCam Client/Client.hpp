@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <unordered_map>
 #include "Shared\Shared.hpp"
 
 namespace Cam
@@ -48,8 +49,8 @@ namespace Cam
 		bool Selected = false;
 	};
 
-	const std::vector<ClientTrigger>& GetAllTriggers();
-	const std::vector<ClientCamera>& GetAllCameras();
+	const std::unordered_map<size_t, ClientTrigger>& GetAllTriggers();
+	const std::unordered_map<size_t, ClientCamera>& GetAllCameras();
 
 	void GetActiveCameraPosition(float* outpos);
 }

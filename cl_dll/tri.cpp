@@ -293,8 +293,10 @@ void CL_DLLEXPORT HUD_DrawTransparentTriangles( void )
 
 		gEngfuncs.pTriAPI->SpriteTexture(WhiteSpriteModel, 0);
 
-		for (const auto& trig : triggers)
+		for (const auto& trigitr : triggers)
 		{
+			const auto& trig = trigitr.second;
+
 			auto corner1 = VectorFromArray(trig.Corner1);
 			auto corner2 = VectorFromArray(trig.Corner2);
 
@@ -346,8 +348,10 @@ void CL_DLLEXPORT HUD_DrawTransparentTriangles( void )
 		gEngfuncs.pTriAPI->RenderMode(kRenderNormal);
 		gEngfuncs.pTriAPI->Color4f(1, 0, 0, 1);
 
-		for (const auto& cam : cameras)
+		for (const auto& camitr : cameras)
 		{
+			const auto& cam = camitr.second;
+
 			/*
 				Don't render cams that are in the primary view.
 			*/
@@ -440,8 +444,10 @@ void HUD_DrawOrthoTriangles()
 	{
 		const auto& cameras = Cam::GetAllCameras();
 
-		for (auto& cam : cameras)
+		for (auto& camitr : cameras)
 		{
+			auto& cam = camitr.second;
+
 			if (cam.InPreview)
 			{
 				continue;

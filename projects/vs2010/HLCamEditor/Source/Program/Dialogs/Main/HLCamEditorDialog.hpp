@@ -25,7 +25,7 @@ namespace App
 	{
 		size_t ID;
 		bool IsSingle;
-		std::vector<HLTrigger> LinkedTriggers;
+		std::vector<size_t> LinkedTriggerIDs;
 
 		std::string Name;
 
@@ -75,8 +75,9 @@ namespace App
 		
 		std::string Name;
 		
-		std::vector<HLCamera> Cameras;
-		std::vector<HLUserData> AllUserData;
+		std::unordered_map<size_t, HLCamera> Cameras;
+		std::unordered_map<size_t, HLTrigger> Triggers;
+		std::unordered_map<size_t, HLUserData> AllUserData;
 
 		size_t NextUserDataID = 0;
 	};
@@ -102,8 +103,6 @@ protected:
 	DECLARE_MESSAGE_MAP()
 
 private:
-	void RebuildPropertyGrid();
-
 	Shared::Interprocess::Server AppServer;
 	Shared::Interprocess::Client GameClient;
 
@@ -130,7 +129,7 @@ private:
 	void AddCameraAndTriggerToList(App::HLCamera& camera);
 
 	void AddTriggerToCamera(App::HLCamera& camera, App::HLTrigger&& trigger);	
-	void AddCamerasTriggersToList(App::HLCamera& camera, std::vector<App::HLTrigger>& triggers);
+	void AddCamerasTriggersToList(App::HLCamera& camera, std::vector<size_t>& triggers);
 
 	struct
 	{
