@@ -33,8 +33,6 @@ namespace
 {
 	HSPRITE WhiteSprite = 0;
 	model_s* WhiteSpriteModel;
-
-	HSPRITE PlayerPingSprite = 0;
 }
 
 namespace Tri
@@ -58,8 +56,6 @@ namespace Tri
 	{
 		WhiteSprite = gEngfuncs.pfnSPR_Load("sprites\\white.spr");
 		WhiteSpriteModel = const_cast<model_s*>(gEngfuncs.GetSpritePointer(WhiteSprite));
-
-		PlayerPingSprite = gEngfuncs.pfnSPR_Load("sprites\\640_train.spr");
 	}
 }
 
@@ -515,15 +511,29 @@ void HUD_DrawOrthoTriangles()
 				int g;
 				int b;
 				UnpackRGB(r, g, b, RGB_YELLOWISH);
-				gEngfuncs.pfnSPR_Set(PlayerPingSprite, r, g, b);
 
-				wrect_t region;
-				region.left = 0;
-				region.top = 77;
-				region.bottom = 96;
-				region.right = 96;
+				constexpr auto triwidth = 24;
+				constexpr auto triheight = 12;
 
-				gEngfuncs.pfnSPR_DrawAdditive(2, screen.x - (region.right / 2), screen.y, &region);
+				auto point1 = screen;
+				auto point2 = screen;
+				auto point3 = screen;
+				point1.x -= triwidth;
+				point2.y += triheight;
+				point3.x += triwidth;
+
+				gEngfuncs.pTriAPI->SpriteTexture(WhiteSpriteModel, 0);
+				gEngfuncs.pTriAPI->RenderMode(kRenderNormal);
+				gEngfuncs.pTriAPI->Color4ub(r, g, b, 0);
+
+				gEngfuncs.pTriAPI->Begin(TRI_TRIANGLES);
+
+				auto vertexfunc = gEngfuncs.pTriAPI->Vertex3fv;
+				vertexfunc(point1);
+				vertexfunc(point2);
+				vertexfunc(point3);
+
+				gEngfuncs.pTriAPI->End();
 			}
 		}
 	}
