@@ -14,16 +14,11 @@ public:
 	void EXPORT CameraThink();
 	
 	void ZoomAddon();
-
-	virtual int Save(CSave &save) override;
-	virtual int Restore(CRestore &restore) override;
 	
 	virtual int	ObjectCaps() override
 	{
-		return CBaseEntity::ObjectCaps() & ~FCAP_ACROSS_TRANSITION;
+		return CBaseEntity::ObjectCaps() & ~FCAP_ACROSS_TRANSITION | FCAP_DONT_SAVE;
 	}
-
-	static TYPEDESCRIPTION m_SaveData[];
 
 	EHANDLE PlayerHandle;
 	EHANDLE TargetHandle;

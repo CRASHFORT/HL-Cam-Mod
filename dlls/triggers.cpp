@@ -2143,15 +2143,6 @@ void CTriggerChangeTarget::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, U
 
 LINK_ENTITY_TO_CLASS(trigger_camera, CTriggerCamera);
 
-// Global Savedata for changelevel friction modifier
-TYPEDESCRIPTION	CTriggerCamera::m_SaveData[] =
-{
-	DEFINE_FIELD(CTriggerCamera, PlayerHandle, FIELD_EHANDLE),
-	DEFINE_FIELD(CTriggerCamera, TargetHandle, FIELD_EHANDLE),
-};
-
-IMPLEMENT_SAVERESTORE(CTriggerCamera, CBaseDelay);
-
 namespace
 {
 	namespace Interpolate

@@ -801,35 +801,38 @@ void ParmsNewLevel( void )
 
 }
 
+bool HL_IsChangingLevel = false;
+
+using ChangeLevelType = decltype(g_engfuncs.pfnChangeLevel);
+
+ChangeLevelType ChangeLevel_Original = nullptr;
+
+void Changelevel_New(char* fromlevel, char* newlevel)
+{
+	HL_IsChangingLevel = true;
+	ChangeLevel_Original(fromlevel, newlevel);
+}
 
 void ParmsChangeLevel( void )
 {
-	/*
-		CRASH FORT:
-		This function gets called 3 times:
-		* 1st time on old map (g_serveractive = 1)
-		* 2nd time on new map (g_serveractive = 0)
-		* 3rd time on new map (g_serveractive = 1)
+	// retrieve the pointer to the save data
+	SAVERESTOREDATA* pSaveData = (SAVERESTOREDATA*)gpGlobals->pSaveData;
 
-		The first time is before ServerDeactivate, we need to remove
-		our own created entities here or else they will forever fill up
-		the edict list and eventually crash the game.
-	*/
-	static int callcount = 0;
-
-	if (callcount == 0 && g_serveractive == 1)
+	if (pSaveData)
 	{
-		callcount -= 3;
+		pSaveData->connectionCount = BuildChangeList(pSaveData->levelList, MAX_LEVEL_CONNECTIONS);
+	}
+
+	/*
+		This function also gets called when saving / restoring and we only want
+		to remove our entities when going to a new level.
+	*/
+	if (HL_IsChangingLevel)
+	{
 		Cam::Deactivate();
 	}
 
-	callcount++;
-
-	// retrieve the pointer to the save data
-	SAVERESTOREDATA *pSaveData = (SAVERESTOREDATA *)gpGlobals->pSaveData;
-
-	if ( pSaveData )
-		pSaveData->connectionCount = BuildChangeList( pSaveData->levelList, MAX_LEVEL_CONNECTIONS );
+	HL_IsChangingLevel = false;
 }
 
 
@@ -848,9 +851,14 @@ void StartFrame( void )
 	g_ulFrameCount++;
 }
 
-
 void ClientPrecache( void )
 {
+	if (!ChangeLevel_Original)
+	{
+		ChangeLevel_Original = g_engfuncs.pfnChangeLevel;
+		g_engfuncs.pfnChangeLevel = Changelevel_New;
+	}
+
 	// setup precaches always needed
 	PRECACHE_SOUND("player/sprayer.wav");			// spray paint sound for PreAlpha
 	
