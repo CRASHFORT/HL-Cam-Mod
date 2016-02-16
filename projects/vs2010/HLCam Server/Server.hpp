@@ -29,6 +29,8 @@ namespace Cam
 
 	void Restore(const RestoreData& data);
 
+	void NamedCameraActivate(size_t id);
+
 	/*
 		Internal output functions that we answer.
 	*/

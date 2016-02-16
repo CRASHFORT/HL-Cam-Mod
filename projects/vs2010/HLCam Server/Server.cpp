@@ -1823,6 +1823,8 @@ namespace
 				WRITE_COORD(camera->Position.y);
 				WRITE_COORD(camera->Position.z);
 				MESSAGE_END();
+
+				TheCamMap.ActiveCamera = camera;
 			}
 		}
 	}
@@ -1862,7 +1864,6 @@ namespace
 			ActivateNewCamera(newcam);
 
 			TheCamMap.ActiveTrigger = &trig;
-			TheCamMap.ActiveCamera = newcam;
 
 			TheCamMap.LocalPlayer->LastTriggerID = trig.ID;
 		}
@@ -1906,6 +1907,11 @@ void Cam::Restore(const RestoreData& data)
 {
 	CameraRestore = data;
 	NeedsRestore = true;
+}
+
+void Cam::NamedCameraActivate(size_t id)
+{
+	ActivateNewCamera(TheCamMap.FindCameraByID(id));
 }
 
 namespace

@@ -2204,6 +2204,13 @@ void CTriggerCamera::Use(CBaseEntity* activator, CBaseEntity* caller, USE_TYPE u
 		return;
 	}
 
+	else if (HLCam.TriggerType == Cam::Shared::CameraTriggerType::ByName &&
+		!Cam::IsInEditMode() &&
+		usetype == USE_ON)
+	{
+		Cam::NamedCameraActivate(HLCam.ID);
+	}
+
 	/*
 		CRASH FORT:
 		Our cameras have special behaviour in which they do not have
