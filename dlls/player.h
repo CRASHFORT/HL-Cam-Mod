@@ -177,6 +177,12 @@ public:
 	int			m_iClientHideHUD;
 	float		m_iFOV;			// field of view
 	float		m_iClientFOV;	// client's known FOV
+
+	/*
+		CRASH FORT:
+	*/
+	size_t LastTriggerID = 0;
+
 	// usable player items 
 	CBasePlayerItem	*m_rgpPlayerItems[MAX_ITEM_TYPES];
 	CBasePlayerItem *m_pActiveItem;

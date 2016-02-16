@@ -117,6 +117,11 @@ TYPEDESCRIPTION	CBasePlayer::m_playerSaveData[] =
 	DEFINE_FIELD( CBasePlayer, m_pTank, FIELD_EHANDLE ),
 	DEFINE_FIELD( CBasePlayer, m_iHideHUD, FIELD_INTEGER ),
 	DEFINE_FIELD( CBasePlayer, m_iFOV, FIELD_FLOAT ),
+
+	/*
+		CRASH FORT:
+	*/
+	DEFINE_FIELD(CBasePlayer, LastTriggerID, FIELD_INTEGER),
 	
 	//DEFINE_FIELD( CBasePlayer, m_fDeadTime, FIELD_FLOAT ), // only used in multiplayer games
 	//DEFINE_FIELD( CBasePlayer, m_fGameHUDInitialized, FIELD_INTEGER ), // only used in multiplayer games
@@ -1853,19 +1858,6 @@ void CBasePlayer::UpdateStatusBar()
 	}
 }
 
-/*
-	CRASH FORT:
-*/
-namespace Cam
-{
-	bool IsInEditMode();
-}
-
-
-
-
-
-
 #define CLIMB_SHAKE_FREQUENCY	22	// how many frames in between screen shakes when climbing
 #define	MAX_CLIMB_SPEED			200	// fastest vertical climbing speed possible
 #define	CLIMB_SPEED_DEC			15	// climbing deceleration rate
@@ -3028,6 +3020,7 @@ void CBasePlayer::RenewItems(void)
 
 }
 
+#include "HLCam Server\Server.hpp"
 
 int CBasePlayer::Restore( CRestore &restore )
 {
@@ -3088,6 +3081,13 @@ int CBasePlayer::Restore( CRestore &restore )
 	//			Barring that, we clear it out here instead of using the incorrect restored time value.
 	m_flNextAttack = UTIL_WeaponTimeBase();
 #endif
+
+	/*
+		CRASH FORT:
+	*/
+	Cam::RestoreData camrestore;
+	camrestore.TriggerID = LastTriggerID;
+	Cam::Restore(camrestore);
 
 	return status;
 }

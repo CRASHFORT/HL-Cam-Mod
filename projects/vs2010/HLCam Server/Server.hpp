@@ -22,6 +22,13 @@ namespace Cam
 	void Deactivate();
 	void CloseServer();
 
+	struct RestoreData
+	{
+		size_t TriggerID;
+	};
+
+	void Restore(const RestoreData& data);
+
 	/*
 		Internal output functions that we answer.
 	*/

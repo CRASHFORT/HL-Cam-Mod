@@ -604,6 +604,9 @@ namespace
 	static std::atomic_bool ShouldCloseMessageThread{false};
 	static std::atomic_bool ShouldPauseMessageThread{false};
 	static MapCam TheCamMap;
+	
+	static Cam::RestoreData CameraRestore;
+	static bool NeedsRestore = false;
 
 	constexpr auto DeepIdleSleepTime = 1000ms;
 	constexpr auto IdleSleepTime = 100ms;
@@ -1807,26 +1810,18 @@ namespace
 		TheCamMap.NeedsToSendMapUpdate = true;
 	}
 
-	void ActivateNewCamera(Cam::MapTrigger& trig)
+	void ActivateNewCamera(Cam::MapCamera* camera)
 	{
-		auto linkedcam = TheCamMap.GetLinkedCamera(trig);
-
-		if (!linkedcam)
+		if (camera->TargetCamera)
 		{
-			g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Camera has no linked trigger\n");
-			return;
-		}
-
-		if (linkedcam->TargetCamera)
-		{
-			if (TheCamMap.ActiveCamera != linkedcam)
+			if (TheCamMap.ActiveCamera != camera)
 			{
-				linkedcam->TargetCamera->Use(nullptr, nullptr, USE_ON, 1);
+				camera->TargetCamera->Use(nullptr, nullptr, USE_ON, 1);
 
 				MESSAGE_BEGIN(MSG_ONE, HLCamMessage::CameraSwitch, nullptr, TheCamMap.LocalPlayer->pev);
-				WRITE_COORD(linkedcam->Position.x);
-				WRITE_COORD(linkedcam->Position.y);
-				WRITE_COORD(linkedcam->Position.z);
+				WRITE_COORD(camera->Position.x);
+				WRITE_COORD(camera->Position.y);
+				WRITE_COORD(camera->Position.z);
 				MESSAGE_END();
 			}
 		}
@@ -1840,15 +1835,15 @@ namespace
 			{
 				TheCamMap.ActiveTrigger->Active = false;
 
-				auto linkedcam = TheCamMap.GetLinkedCamera(*TheCamMap.ActiveTrigger);
+				auto oldcamera = TheCamMap.GetLinkedCamera(*TheCamMap.ActiveTrigger);
 
-				if (!linkedcam)
+				if (!oldcamera)
 				{
 					g_engfuncs.pfnAlertMessage(at_console, "HLCAM: Trigger has no linked camera\n");
 					return;
 				}
 
-				if (linkedcam->TargetCamera)
+				if (oldcamera->TargetCamera)
 				{
 					/*
 						Previous camera has to be told to be disabled to allow us
@@ -1856,16 +1851,20 @@ namespace
 					*/
 					if (trig.LinkedCameraID != TheCamMap.ActiveTrigger->LinkedCameraID)
 					{
-						linkedcam->TargetCamera->Use(nullptr, nullptr, USE_OFF, 1);
+						oldcamera->TargetCamera->Use(nullptr, nullptr, USE_OFF, 1);
 					}
 				}
 			}
 
+			auto newcam = TheCamMap.GetLinkedCamera(trig);
+
 			trig.Active = true;
-			ActivateNewCamera(trig);
+			ActivateNewCamera(newcam);
 
 			TheCamMap.ActiveTrigger = &trig;
-			TheCamMap.ActiveCamera = TheCamMap.GetLinkedCamera(trig);
+			TheCamMap.ActiveCamera = newcam;
+
+			TheCamMap.LocalPlayer->LastTriggerID = trig.ID;
 		}
 	}
 }
@@ -1901,6 +1900,12 @@ void Cam::CloseServer()
 
 	TheCamMap.GameServer.Stop();
 	TheCamMap.AppClient.Disconnect();
+}
+
+void Cam::Restore(const RestoreData& data)
+{
+	CameraRestore = data;
+	NeedsRestore = true;
 }
 
 namespace
@@ -2320,6 +2325,23 @@ void Cam::OnPlayerPreUpdate(CBasePlayer* player)
 		MESSAGE_END();
 
 		TheCamMap.NeedsToSendResetMessage = false;
+	}
+
+	if (NeedsRestore)
+	{
+		NeedsRestore = false;
+
+		auto trig = TheCamMap.FindTriggerByID(CameraRestore.TriggerID);
+
+		if (trig)
+		{
+			PlayerEnterTrigger(*trig);
+		}
+
+		else
+		{
+			g_engfuncs.pfnAlertMessage(at_console, "Restored trigger no longer exists\n");
+		}
 	}
 
 	using StateType = Cam::Shared::StateType;
