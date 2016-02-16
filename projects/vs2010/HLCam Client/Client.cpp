@@ -75,8 +75,7 @@ namespace
 			{
 				while (!camera->LinkedTriggerIDs.empty())
 				{
-					auto curtrigid = camera->LinkedTriggerIDs[0];
-
+					auto curtrigid = camera->LinkedTriggerIDs.back();
 					RemoveTriggerFromID(curtrigid);
 
 					camera->LinkedTriggerIDs.pop_back();

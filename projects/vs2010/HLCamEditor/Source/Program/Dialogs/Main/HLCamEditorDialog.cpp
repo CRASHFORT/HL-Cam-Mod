@@ -654,12 +654,10 @@ void HLCamEditorDialog::AddSingleCameraToList(App::HLCamera& camera)
 
 void HLCamEditorDialog::AddCameraAndTrigger(App::HLCamera&& camera, App::HLTrigger&& trigger)
 {
-	AddCameraAndTriggerToList(camera);
-
-	camera.LinkedTriggerIDs.push_back(trigger.ID);
-	
 	CurrentMap.Triggers[trigger.ID] = std::move(trigger);
 	CurrentMap.Cameras[camera.ID] = std::move(camera);
+
+	AddCameraAndTriggerToList(CurrentMap.Cameras[camera.ID]);
 }
 
 void HLCamEditorDialog::AddCameraAndTriggerToList(App::HLCamera& camera)
@@ -684,9 +682,11 @@ void HLCamEditorDialog::AddCameraAndTriggerToList(App::HLCamera& camera)
 
 void HLCamEditorDialog::AddTriggerToCamera(App::HLCamera& camera, App::HLTrigger&& trigger)
 {
-	std::vector<size_t> entry{trigger.ID};
-	AddCamerasTriggersToList(camera, entry);
 	camera.LinkedTriggerIDs.push_back(trigger.ID);
+
+	CurrentMap.Triggers[trigger.ID] = std::move(trigger);
+
+	AddCamerasTriggersToList(camera, std::vector<size_t>{trigger.ID});
 }
 
 void HLCamEditorDialog::AddCamerasTriggersToList(App::HLCamera& camera, std::vector<size_t>& triggers)
