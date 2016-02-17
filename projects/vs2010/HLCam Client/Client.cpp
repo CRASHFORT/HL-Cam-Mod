@@ -940,7 +940,13 @@ namespace Cam
 
 				auto player = gEngfuncs.GetLocalPlayer();
 
-				Vector position = player->attachment[0];
+				Vector viewoffset;
+				gEngfuncs.pEventAPI->EV_LocalPlayerViewheight(viewoffset);
+
+				Vector position = player->origin;
+				position.x += viewoffset.x;
+				position.y += viewoffset.y;
+				position.z += viewoffset.z;
 
 				Vector forward;
 				gEngfuncs.pfnAngleVectors(viewangles, forward, nullptr, nullptr);
