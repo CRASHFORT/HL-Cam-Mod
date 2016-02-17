@@ -183,6 +183,8 @@ namespace
 			}
 
 		} AimGuide;
+
+		Cam::EnemyPingData EnemyPing;
 	};
 
 	static HLCamClient TheCamClient;
@@ -776,6 +778,32 @@ int HLCamClient_CameraSwitch(const char* name, int size, void* buffer)
 	return 1;
 }
 
+int HLCamClient_EnemyPingTargetSwitched(const char* name, int size, void* buffer)
+{
+	BEGIN_READ(buffer, size);
+
+	auto state = READ_BYTE();
+
+	auto& ping = TheCamClient.EnemyPing;
+
+	if (state == 1)
+	{
+		ping.EntityID = READ_SHORT();
+		ping.ZOffset = READ_SHORT();
+
+		ping.EntityPtr = gEngfuncs.GetEntityByIndex(ping.EntityID);
+
+		ping.Active = true;
+	}
+
+	else if (state == 0)
+	{
+		ping.Active = false;
+	}
+
+	return 1;
+}
+
 namespace
 {
 	namespace Commands
@@ -857,6 +885,8 @@ namespace Cam
 		gEngfuncs.pfnHookUserMsg("CamPW", HLCamClient_CameraPreview);
 
 		gEngfuncs.pfnHookUserMsg("CamSwitch", HLCamClient_CameraSwitch);
+
+		gEngfuncs.pfnHookUserMsg("CamEnPng", HLCamClient_EnemyPingTargetSwitched);
 
 		gEngfuncs.pfnAddCommand("+hlcam_aimbeam", Commands::AimBeamOn);
 		gEngfuncs.pfnAddCommand("-hlcam_aimbeam", Commands::AimBeamOff);
@@ -974,6 +1004,11 @@ namespace Cam
 	bool InEditMode()
 	{
 		return TheCamClient.InEditMode;
+	}
+
+	const EnemyPingData& GetEnemyPingData()
+	{
+		return TheCamClient.EnemyPing;
 	}
 
 	const std::unordered_map<size_t, ClientTrigger>& GetAllTriggers()

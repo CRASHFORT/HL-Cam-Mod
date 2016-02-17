@@ -42,6 +42,8 @@ namespace Tri
 		cvar_t* RenderCameraText;
 		cvar_t* RenderPlayerPing;
 		cvar_t* RenderPlayerPingWhenHidden;
+
+		cvar_t* RenderEnemyPingOnAim;
 	}
 
 	void Init()
@@ -50,6 +52,8 @@ namespace Tri
 		Commands::RenderCameraText = regvar("hlcam_render_cameratext", "0", FCVAR_ARCHIVE);
 		Commands::RenderPlayerPing = regvar("hlcam_render_playerping", "0", FCVAR_ARCHIVE);
 		Commands::RenderPlayerPingWhenHidden = regvar("hlcam_render_playerping_hidden", "0", FCVAR_ARCHIVE);
+
+		Commands::RenderEnemyPingOnAim = regvar("hlcam_render_enemyping", "0", FCVAR_ARCHIVE);
 	}
 
 	void VidInit()
@@ -436,6 +440,32 @@ smackdab on the screen) add them here
 */
 void HUD_DrawOrthoTriangles()
 {
+	auto drawping = [](const Vector& position, const Vector& color)
+	{
+		constexpr auto triwidth = 24;
+		constexpr auto triheight = 12;
+
+		auto point1 = position;
+		auto point2 = position;
+		auto point3 = position;
+		point1.x -= triwidth;
+		point2.y += triheight;
+		point3.x += triwidth;
+
+		gEngfuncs.pTriAPI->SpriteTexture(WhiteSpriteModel, 0);
+		gEngfuncs.pTriAPI->RenderMode(kRenderNormal);
+		gEngfuncs.pTriAPI->Color4ub(color.x, color.y, color.z, 0);
+
+		gEngfuncs.pTriAPI->Begin(TRI_TRIANGLES);
+
+		auto vertexfunc = gEngfuncs.pTriAPI->Vertex3fv;
+		vertexfunc(point1);
+		vertexfunc(point2);
+		vertexfunc(point3);
+
+		gEngfuncs.pTriAPI->End();
+	};
+
 	if (Cam::InEditMode() && Tri::Commands::RenderCameraText->value > 0)
 	{
 		const auto& cameras = Cam::GetAllCameras();
@@ -512,28 +542,39 @@ void HUD_DrawOrthoTriangles()
 				int b;
 				UnpackRGB(r, g, b, RGB_YELLOWISH);
 
-				constexpr auto triwidth = 24;
-				constexpr auto triheight = 12;
+				drawping(screen, {r, g, b});
+			}
+		}
+	}
 
-				auto point1 = screen;
-				auto point2 = screen;
-				auto point3 = screen;
-				point1.x -= triwidth;
-				point2.y += triheight;
-				point3.x += triwidth;
+	if (!Cam::InEditMode() && Tri::Commands::RenderEnemyPingOnAim->value > 0)
+	{
+		const auto& pingdata = Cam::GetEnemyPingData();
 
-				gEngfuncs.pTriAPI->SpriteTexture(WhiteSpriteModel, 0);
-				gEngfuncs.pTriAPI->RenderMode(kRenderNormal);
-				gEngfuncs.pTriAPI->Color4ub(r, g, b, 0);
+		if (pingdata.Active)
+		{
+			auto endent = pingdata.EntityPtr;
 
-				gEngfuncs.pTriAPI->Begin(TRI_TRIANGLES);
+			if (endent)
+			{
+				auto renderpos = endent->origin;
+				renderpos.z = pingdata.ZOffset;
 
-				auto vertexfunc = gEngfuncs.pTriAPI->Vertex3fv;
-				vertexfunc(point1);
-				vertexfunc(point2);
-				vertexfunc(point3);
+				Vector screen;
 
-				gEngfuncs.pTriAPI->End();
+				if (!gEngfuncs.pTriAPI->WorldToScreen(renderpos, screen))
+				{
+					screen.x = XPROJECT(screen[0]);
+					screen.y = YPROJECT(screen[1]);
+					screen.z = 0.0f;
+
+					int r;
+					int g;
+					int b;
+					UnpackRGB(r, g, b, RGB_REDISH);
+
+					drawping(screen, {r, g, b});
+				}
 			}
 		}
 	}

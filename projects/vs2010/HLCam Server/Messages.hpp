@@ -110,6 +110,15 @@ namespace HLCamMessage
 		COORD x 3: New camera position
 	*/
 	AddMessage(CameraSwitch);
+
+	/*
+		BYTE: State: 1 if new target, 0 to hide
+		
+		->	State == 1:
+		|	SHORT: Target Entity ID
+		|	SHORT: Z offset from origin
+	*/
+	AddMessage(EnemyPing_TargetSwitched);
 }
 
 #undef AddMessage

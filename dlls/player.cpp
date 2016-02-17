@@ -225,6 +225,8 @@ void LinkUserMessages( void )
 
 	HLCamMessage::CameraSwitch = REG_USER_MSG("CamSwitch", 6);
 
+	HLCamMessage::EnemyPing_TargetSwitched = REG_USER_MSG("CamEnPng", -1);
+
 	gmsgCurWeapon = REG_USER_MSG("CurWeapon", 3);
 	gmsgGeigerRange = REG_USER_MSG("Geiger", 1);
 	gmsgFlashlight = REG_USER_MSG("Flashlight", 2);
@@ -2741,6 +2743,54 @@ pt_end:
 
 	// Track button info so we can detect 'pressed' and 'released' buttons next frame
 	m_afButtonLast = pev->button;
+
+	/*
+		CRASH FORT:
+	*/
+	UTIL_MakeVectors(pev->v_angle);
+
+	UTIL_MakeVectors(pev->v_angle);
+	auto startpos = GetGunPosition();
+	auto aimvec = gpGlobals->v_forward;
+	
+	TraceResult trace;
+	UTIL_TraceLine(startpos,
+				   startpos + aimvec * 1024,
+				   dont_ignore_monsters,
+				   ignore_glass,
+				   edict(),
+				   &trace);
+
+	auto edicthit = trace.pHit;
+
+	if (edicthit->v.solid != SOLID_BSP && edicthit != LastPingEdict)
+	{
+		if (edicthit->v.health > 0)
+		{
+			LastPingEdict = edicthit;
+
+			MESSAGE_BEGIN(MSG_ONE, HLCamMessage::EnemyPing_TargetSwitched, nullptr, pev);
+
+			WRITE_BYTE(1);
+			auto entindex = g_engfuncs.pfnIndexOfEdict(LastPingEdict);
+			WRITE_SHORT(entindex);
+			WRITE_SHORT(LastPingEdict->v.absmax.z + 28);
+
+			MESSAGE_END();
+		}
+	}
+
+	else
+	{
+		if (edicthit->v.solid == SOLID_BSP && LastPingEdict)
+		{
+			MESSAGE_BEGIN(MSG_ONE, HLCamMessage::EnemyPing_TargetSwitched, nullptr, pev);
+			WRITE_BYTE(0);
+			MESSAGE_END();
+
+			LastPingEdict = nullptr;
+		}
+	}
 }
 
 

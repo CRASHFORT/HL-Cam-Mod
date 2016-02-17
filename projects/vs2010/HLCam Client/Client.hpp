@@ -3,6 +3,8 @@
 #include <unordered_map>
 #include "Shared\Shared.hpp"
 
+struct cl_entity_s;
+
 namespace Cam
 {
 	void Init();
@@ -11,6 +13,16 @@ namespace Cam
 	void OnUpdate();
 
 	bool InEditMode();
+
+	struct EnemyPingData
+	{
+		bool Active = false;
+		cl_entity_s* EntityPtr;
+		int EntityID;
+		int ZOffset;
+	};
+
+	const EnemyPingData& GetEnemyPingData();
 
 	/*
 		Required data to render a client

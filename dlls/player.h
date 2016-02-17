@@ -182,6 +182,7 @@ public:
 		CRASH FORT:
 	*/
 	size_t LastTriggerID = 0;
+	edict_t* LastPingEdict = nullptr;
 
 	// usable player items 
 	CBasePlayerItem	*m_rgpPlayerItems[MAX_ITEM_TYPES];
