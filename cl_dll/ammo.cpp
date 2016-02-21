@@ -554,6 +554,14 @@ int CHudAmmo::MsgFunc_HideWeapon( const char *pszName, int iSize, void *pbuf )
 	return 1;
 }
 
+/*
+	CRASH FORT:
+*/
+namespace Cam
+{
+	bool InEditMode();
+}
+
 // 
 //  CurWeapon: Update hud state with the current weapon and clip count. Ammo
 //  counts are updated with AmmoX. Server assures that the Weapon ammo type 
@@ -610,20 +618,41 @@ int CHudAmmo::MsgFunc_CurWeapon(const char *pszName, int iSize, void *pbuf )
 
 	m_pWeapon = pWeapon;
 
-	if ( gHUD.m_iFOV >= 90 )
-	{ // normal crosshairs
-		if (fOnTarget && m_pWeapon->hAutoaim)
-			SetCrosshair(m_pWeapon->hAutoaim, m_pWeapon->rcAutoaim, 255, 255, 255);
-		else
-			SetCrosshair(m_pWeapon->hCrosshair, m_pWeapon->rcCrosshair, 255, 255, 255);
+	if (!Cam::InEditMode())
+	{
+		SetCrosshair(0, nullrc, 0, 0, 0);
 	}
-	else
-	{ // zoomed crosshairs
-		if (fOnTarget && m_pWeapon->hZoomedAutoaim)
-			SetCrosshair(m_pWeapon->hZoomedAutoaim, m_pWeapon->rcZoomedAutoaim, 255, 255, 255);
-		else
-			SetCrosshair(m_pWeapon->hZoomedCrosshair, m_pWeapon->rcZoomedCrosshair, 255, 255, 255);
 
+	else
+	{
+		// normal crosshairs
+		if (gHUD.m_iFOV >= 90)
+		{
+			if (fOnTarget && m_pWeapon->hAutoaim)
+			{
+				SetCrosshair(m_pWeapon->hAutoaim, m_pWeapon->rcAutoaim, 255, 255, 255);
+			}
+
+			else
+			{
+				SetCrosshair(m_pWeapon->hCrosshair, m_pWeapon->rcCrosshair, 255, 255, 255);
+			}
+
+		}
+
+		// zoomed crosshairs
+		else
+		{
+			if (fOnTarget && m_pWeapon->hZoomedAutoaim)
+			{
+				SetCrosshair(m_pWeapon->hZoomedAutoaim, m_pWeapon->rcZoomedAutoaim, 255, 255, 255);
+			}
+
+			else
+			{
+				SetCrosshair(m_pWeapon->hZoomedCrosshair, m_pWeapon->rcZoomedCrosshair, 255, 255, 255);
+			}
+		}
 	}
 
 	m_fFade = 200.0f; //!!!
